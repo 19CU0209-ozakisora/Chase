@@ -6,11 +6,13 @@
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 	: m_proot_(NULL)
+	, actionend_(false)
 	, is_rotation_(true)
 	, player_rotation_ (0.f)
 	, debugmode_(false)
 	, m_pplayermesh_(NULL)
 	, input_rotation_scale_(0.f)
+	, speed_scale_(0.f)
 	, m_parrow_(NULL)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -24,7 +26,9 @@ APlayerCharacter::APlayerCharacter()
 
 	m_parrow_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_parrow_"));
 	m_parrow_->SetupAttachment(RootComponent);
-	//m_parrow_->SetupAttachment(Cast<USceneComponent>(m_pplayermesh_));
+
+	//m_parrow_->OnComponentHit.AddDynamic(this, &APlayerCharacter::ComponentHit);
+	//(this, &APlayerCharacter::ComponentHit);
 }
 
 // Called when the game starts or when spawned
@@ -38,10 +42,10 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (!is_rotation_)
+		
+	if (!is_rotation_ && !hit)
 	{
-		AddMovementInput(Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector(), 10);
+		AddMovementInput(Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector(), speed_scale_);
 	}
 }
 
@@ -80,3 +84,16 @@ void APlayerCharacter::DeleteArrow()
 	}
 }
 
+// カプセルコンポーネントを参照している為同じものをBPに追加
+
+void APlayerCharacter::ComponentHit(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor->ActorHasTag("Stone"))
+	{
+		if (debugmode_)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("Stone Hit"), player_rotation_));
+		}
+		speed_scale_ = 0.f;
+	}
+}

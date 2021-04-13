@@ -34,6 +34,7 @@ public:
 private:
 	USceneComponent* m_proot_;
 	bool is_rotation_;
+	bool actionend_;
 	float player_rotation_;
 
 	void PlayerRotation(const float _axisval);
@@ -52,7 +53,17 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Player")
 		float input_rotation_scale_;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+		float speed_scale_;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+		bool hit;
+
+
 	// BPÇ≈èâä˙ê›íËèoóàÇ»Ç¢ïsãÔçáÇ†ÇË
 	UPROPERTY(EditAnywhere, Category = "Arrow")
 		UStaticMeshComponent* m_parrow_;
+
+	UFUNCTION()
+		void ComponentHit(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 };
