@@ -438,3 +438,6 @@ Game/Saved/Backup/ThirdPersonExampleMap_2021-04-13-20-08-51.umap
 Game/Saved/Backup/ThirdPersonExampleMap_2021-04-13-20-19-20.umap
 Game/Saved/Backup/ThirdPersonExampleMap_BuiltData_2021-04-13-16-09-43.uasset
 Game/Saved/Backup/ThirdPersonExampleMap_BuiltData_2021-04-13-20-19-20.uasset
+*.response
+*.exp
+Game/Saved/Backup/BP_PlayerCharacter_2021-04-13-23-30-06.uasset

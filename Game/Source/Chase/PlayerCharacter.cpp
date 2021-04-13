@@ -10,7 +10,7 @@ APlayerCharacter::APlayerCharacter()
 	, is_rotation_(true)
 	, player_rotation_ (0.f)
 	, debugmode_(false)
-	, m_pplayermesh_(NULL)
+	//, m_pplayermesh_(NULL)
 	, input_rotation_scale_(0.f)
 	, speed_scale_(0.f)
 	, m_parrow_(NULL)
@@ -20,8 +20,9 @@ APlayerCharacter::APlayerCharacter()
 
 	m_proot_ = CreateDefaultSubobject<USceneComponent>(TEXT("m_proot_"));
 	m_proot_ = RootComponent;
-
-	m_pplayermesh_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("m_pplayermesh_"));
+	
+	//m_pplayermesh_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("m_pplayermesh_"));
+	m_pplayermesh_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_pplayermesh_"));
 	m_pplayermesh_->SetupAttachment(RootComponent);
 
 	m_parrow_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_parrow_"));

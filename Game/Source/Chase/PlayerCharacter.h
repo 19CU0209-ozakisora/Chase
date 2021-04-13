@@ -3,7 +3,7 @@
 #pragma once
 
 
-#include "Engine/StaticMesh.h"		// 矢印の代用
+#include "Engine/StaticMesh.h"		// 矢印の代用(2021/04/13 Playerの代わりに使用)
 #include "Engine/SkeletalMesh.h"	// Playerメッシュ
 #include "Engine/Engine.h"			// スクリーンログ出力用
 #include "CoreMinimal.h"
@@ -47,8 +47,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Player")
 		bool debugmode_;
 
-	UPROPERTY(EditAnywhere, Category = "Player")
-		USkeletalMeshComponent* m_pplayermesh_;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+		// USkeletalMeshComponent* m_pplayermesh_;
+		class UStaticMeshComponent* m_pplayermesh_;
 
 	UPROPERTY(EditAnywhere, Category = "Player")
 		float input_rotation_scale_;
@@ -59,11 +60,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
 		bool hit;
 
-
 	// BPで初期設定出来ない不具合あり
-	UPROPERTY(EditAnywhere, Category = "Arrow")
-		UStaticMeshComponent* m_parrow_;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Arrow")
+		class UStaticMeshComponent* m_parrow_;
 
+	// カプセルコンポーネントを参照している為同じものをBPに追加
 	UFUNCTION()
 		void ComponentHit(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 };
