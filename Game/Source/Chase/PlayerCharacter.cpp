@@ -23,10 +23,10 @@ APlayerCharacter::APlayerCharacter()
 	
 	//m_pplayermesh_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("m_pplayermesh_"));
 	m_pplayermesh_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_pplayermesh_"));
-	m_pplayermesh_->SetupAttachment(RootComponent);
+	m_pplayermesh_->SetupAttachment(m_proot_);
 
 	m_parrow_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_parrow_"));
-	m_parrow_->SetupAttachment(RootComponent);
+	m_parrow_->SetupAttachment(m_pplayermesh_);
 
 	//m_parrow_->OnComponentHit.AddDynamic(this, &APlayerCharacter::ComponentHit);
 	//(this, &APlayerCharacter::ComponentHit);
@@ -46,6 +46,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 		
 	if (!is_rotation_ && !hit)
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Move"), player_rotation_));
 		AddMovementInput(Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector(), speed_scale_);
 	}
 }
@@ -63,11 +64,13 @@ void APlayerCharacter::PlayerRotation(const float _axisval)
 {
 	if (_axisval == 0.f || !is_rotation_)
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("not input"), player_rotation_));
 		return;
 	}
-	
+
 	player_rotation_ += (_axisval * input_rotation_scale_);
-	Cast<USceneComponent>(m_pplayermesh_) ->SetWorldRotation(FRotator(0.f, player_rotation_, 0.f));
+	Cast<USceneComponent>(m_pplayermesh_)->SetWorldRotation(FRotator(0.f, player_rotation_, 0.f));
+	UE_LOG(LogTemp, Warning, TEXT("%f"), player_rotation_);
 
 	if (debugmode_)
 	{
