@@ -326,7 +326,6 @@ Game/Intermediate/Build/Win64/UE4Editor/Inc/Chase/PlayerCharacter.generated.h
 Game/Saved/Autosaves/Game/BluePrints/BP_PlayerChara_Auto1.uasset
 Game/Saved/Autosaves/Game/BluePrints/BP_PlayerCharacter_Auto1.uasset
 Game/Saved/Autosaves/Game/BluePrints/BP_PlayerCharacter_Auto2.uasset
-Game/Saved/Autosaves/Game/BluePrints/GameMode_Chase_Auto1.uasset
 Game/Saved/Autosaves/Game/ThirdPersonCPP/Maps/ThirdPersonExampleMap_Auto2.umap
 Game/Saved/Backup/BP_PlayerChara_2021-04-03-15-44-12.uasset
 Game/Saved/Backup/BP_PlayerChara_2021-04-03-16-05-24.uasset
@@ -346,11 +345,6 @@ Game/Saved/Backup/ChaseCurling_Pro_2021-04-12-18-09-13.umap
 Game/Saved/Backup/ChaseCurling_Pro_2021-04-12-18-29-48.umap
 Game/Saved/Backup/ChaseCurling_Pro_BuiltData_2021-04-12-18-09-40.uasset
 Game/Saved/Backup/ChaseCurling_Pro_BuiltData_2021-04-12-18-29-48.uasset
-Game/Saved/Backup/GameMode_Chase_2021-04-03-15-05-57.uasset
-Game/Saved/Backup/GameMode_Chase_2021-04-03-15-55-49.uasset
-Game/Saved/Backup/GameMode_Chase_2021-04-03-16-06-55.uasset
-Game/Saved/Backup/GameMode_Chase_2021-04-12-18-54-22.uasset
-Game/Saved/Backup/GameMode_Chase_2021-04-12-19-03-33.uasset
 Game/Saved/Backup/ThirdPersonExampleMap_2021-04-03-15-05-56.umap
 Game/Saved/Backup/ThirdPersonExampleMap_2021-04-03-15-44-23.umap
 Game/Saved/Backup/ThirdPersonExampleMap_2021-04-12-18-54-21.umap
