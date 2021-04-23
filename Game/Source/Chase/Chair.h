@@ -6,6 +6,7 @@
 #include "Engine/SkeletalMesh.h"	// Playerメッシュ
 #include "Engine/Engine.h"			// スクリーンログ出力用
 // #include "Components/PrimitiveComponent.h"
+#include "GameFramework/FloatingPawnMovement.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Chair.generated.h"
@@ -42,47 +43,53 @@ public:
 private:
 
 	USceneComponent* m_proot_;						// ルートコンポーネント用(メッシュの親)
-	float player_rotation_;							// 
+	float player_rotation_;							// 回転量
+	float player_location_;							// 移動量
+	float input_value_;								// 入力値
 	int phase_cnt_;									// フェーズのカウント用変数
-	float player_location;
-	float input_value_;
 
-	void SetInputValue(const float _axisval);
-	void PlayerMove(const float _deltatime);
-	void PlayerRotation(const float _deltatime);		// 
-	void PlayerSlip(const float _deltatime);
+	void SetInputValue(const float _axisval);		// 入力された値
+	void PlayerMove(const float _deltatime);		// プレイヤーの移動
+	void PlayerRotation(const float _deltatime);	// プレイヤーの回転
+	void PlayerSlip(const float _deltatime);		// プレイヤーが滑る処理
 	void DeleteArrow();								// ガイドを消す関数
-	void NextPhase();
+	void NextPhase();								// 次の状態に変更する関数
 
 public:
 
-	UPROPERTY(EditAnywhere, Category = "Player")	// デバッグモードをONにするかどうか
-		bool debugmode_;
+	UPROPERTY(EditAnywhere, Category = "Player")	
+		bool debugmode_;												// デバッグモードをONにするかどうか
+		
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")	
+		bool hit_;														// 当たったかどうか
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")	// 椅子のメッシュ
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+		EPhase phase_;													// 現在のフェーズ格納用
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")	
+		float input_speed_scale_;												// 移動の倍率
+
+	UPROPERTY(EditAnywhere, Category = "Player")
+		float input_rotation_scale_;									// 回転入力倍率
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")	
+		float input_slip_scale_;												// 滑りの倍率
+		
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")	
+		float hitstop_scale_;											// ヒット時の減速の倍率
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
 		// USkeletalMeshComponent* m_pplayermesh_;
-		class UStaticMeshComponent* m_pplayermesh_;
-
-	UPROPERTY(EditAnywhere, Category = "Player")	// 回転入力倍率
-		float input_rotation_scale_;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")	// 移動の倍率
-		float speed_scale_;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")	// 移動の倍率
-		float slip_scale_;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")	// 当たったかどうか
-		bool hit;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")	// 当たったかどうか
-	EPhase phase_;									// 現在のフェーズ格納用
+		class UStaticMeshComponent* m_pplayermesh_;						// 椅子のメッシュ
 
 	// BPで初期設定出来ない不具合あり -> 再度BPを作り直すことで解消
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Arrow")
-		class UStaticMeshComponent* m_parrow_;
+		class UStaticMeshComponent* m_parrow_;							// ガイドのメッシュ
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Arrow")
+		UFloatingPawnMovement* m_floating_pawn_movement_;				// FloatingPawnMovementコンポーネント
 
 	// カプセルコンポーネントを参照している為同じものをBPに追加
 	UFUNCTION()
-		void ComponentHit(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+		void ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& HitResult );
 };

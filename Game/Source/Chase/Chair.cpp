@@ -7,11 +7,19 @@
 AChair::AChair()
 	: m_proot_(NULL)
 	, player_rotation_(0.f)
+	, player_location_(0.f)
+	, input_value_(0.f)
+	, phase_cnt_(0.f)
 	, debugmode_(false)
-	, m_pplayermesh_(NULL)
+	, hit_(false)
+	, phase_(EPhase::kMove)
+	, input_speed_scale_(0.f)
 	, input_rotation_scale_(0.f)
-	, speed_scale_(0.f)
+	, input_slip_scale_(0.f)
+	, hitstop_scale_(0.f)
+	, m_pplayermesh_(NULL)
 	, m_parrow_(NULL)
+	, m_floating_pawn_movement_(NULL)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -29,14 +37,17 @@ AChair::AChair()
 	m_parrow_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_parrow_"));
 	m_parrow_->SetupAttachment(m_pplayermesh_);
 
-	//m_parrow_->OnComponentHit.AddDynamic(this, &AChair::ComponentHit);
-	//(this, &AChair::ComponentHit);
+	// 移動関係のコンポーネントの追加
+	m_floating_pawn_movement_ = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("m_floating_pawn_movement_"));
 };
 
 // Called when the game starts or when spawned
 void AChair::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// ヒット時の関数のバインド
+	m_pplayermesh_->OnComponentHit.AddDynamic(this, &AChair::ComponentHit);
 }
 
 // Called every frame
@@ -50,16 +61,19 @@ void AChair::Tick(float DeltaTime)
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Move"), player_rotation_));
 		PlayerMove(DeltaTime);
 	}
+	// 回転
 	else if (phase_ == EPhase::kRotation)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Rotation"), player_rotation_));
 		PlayerRotation(DeltaTime);
 	}
-	else if (phase_ == EPhase::kSlip && !hit)
+	// 滑り
+	else if (phase_ == EPhase::kSlip && !hit_)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Slip"), player_rotation_));
 		PlayerSlip(DeltaTime);
 	}
+	// 行動終了
 	else if (phase_ == EPhase::kEnd)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("End"), player_rotation_));
@@ -71,6 +85,7 @@ void AChair::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	// 左右入力と決定キー
 	InputComponent->BindAxis("TurnRate", this, &AChair::SetInputValue);
 	InputComponent->BindAction("Decide", EInputEvent::IE_Pressed, this, &AChair::NextPhase);
 }
@@ -89,29 +104,55 @@ void AChair::SetInputValue(const float _axisval)
 		}
 	}
 
+	// 入力された値を格納
 	input_value_ = _axisval;
 }
 
 void AChair::DeleteArrow()
 {
-	// 条件式の中に本来は入れる
 	if (m_parrow_ != NULL)
 	{
 		Cast<USceneComponent>(m_parrow_)->DestroyComponent();
 	}
 }
 
-// カプセルコンポーネントを参照している為同じものをBPに追加
-
-void AChair::ComponentHit(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+// カプセルコンポーネントを参照している為同じものをBPに追加 -> BPからC++に移植(2021/04/23 尾崎)
+void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (OtherActor->ActorHasTag("Stone"))
+	// 直前まで椅子に当たっていない状態 かつ 当たった対象のタグがPlayerだった時
+	if (!hit_ && OtherActor->ActorHasTag("Player"))
 	{
 		if (debugmode_)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("Stone Hit"), player_rotation_));
+			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("Chair Hit")));
+			// 椅子のメッシュの前方向ベクトル
+			UE_LOG(LogTemp, Warning, TEXT("%f, %f, %f, "), m_pplayermesh_->GetForwardVector().X, m_pplayermesh_->GetForwardVector().Y, m_pplayermesh_->GetForwardVector().Z);
+			// floatingpawnmovementの速度
+			UE_LOG(LogTemp, Warning, TEXT("%f, %f, %f, "), m_floating_pawn_movement_->Velocity.X, m_floating_pawn_movement_->Velocity.Y, m_floating_pawn_movement_->Velocity.Z);
 		}
-		slip_scale_ = 0.f;
+
+		// 物理の働く向きの設定
+		m_pplayermesh_->SetConstraintMode(EDOFMode::XYPlane);
+
+		// 椅子に当たった状態に変更
+		hit_ = true;
+		phase_ = EPhase::kEnd;
+
+		// 当たった椅子に速度を与える(現状前方向ベクトルと速度で計算)
+		Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity = m_pplayermesh_->GetForwardVector() * m_floating_pawn_movement_->Velocity;
+
+		// 椅子の減速処理(X Y Z のいずれかが0だと計算してくれないっぽい？？？？)
+		m_floating_pawn_movement_->Velocity.X /= input_speed_scale_;
+		m_floating_pawn_movement_->Velocity.Y /= input_speed_scale_;
+		m_floating_pawn_movement_->Velocity.Z /= input_speed_scale_;
+		
+		if (debugmode_)
+		{
+			// 当たった椅子の速度
+			UE_LOG(LogTemp, Warning, TEXT("%f, %f, %f, "), Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.X, Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.Y, Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.Z);
+			// 椅子の速度
+			UE_LOG(LogTemp, Warning, TEXT("%f, %f, %f, "), m_floating_pawn_movement_->Velocity.X, m_floating_pawn_movement_->Velocity.Y, m_floating_pawn_movement_->Velocity.Z);
+		}
 	}
 }
 
@@ -125,6 +166,7 @@ void AChair::NextPhase()
 	phase_cnt_++;
 	phase_ = EPhase(phase_cnt_);
 
+	// 滑る直前にガイドを消す
 	if (phase_ == EPhase::kSlip)
 	{
 		DeleteArrow();
@@ -134,16 +176,16 @@ void AChair::NextPhase()
 
 void AChair::PlayerMove(const float _deltatime)
 {
-	FVector test = GetActorLocation();
-	player_location += (input_value_ * speed_scale_) * _deltatime;
-	test.Y = player_location;
-	//Cast<USceneComponent>(m_pplayermesh_)->SetWorldLocation(FVector(0.f, player_location, 0.f));
-	SetActorLocation(test);
-	UE_LOG(LogTemp, Warning, TEXT("%f"), player_rotation_);
+	// 現在の位置を取得し、入力値に補正をかけて計算後反映
+	FVector nowLocation = GetActorLocation();
+	player_location_ += (input_value_ * input_speed_scale_) * _deltatime;
+	nowLocation.Y = player_location_;
+	SetActorLocation(nowLocation);
 }
 
 void AChair::PlayerRotation(const float _deltatime)
 {
+	// 入力値に補正をかけて角度を設定
 	player_rotation_ += (input_value_* input_rotation_scale_) * _deltatime;
 	Cast<USceneComponent>(m_pplayermesh_)->SetWorldRotation(FRotator(0.f, player_rotation_, 0.f));
 	UE_LOG(LogTemp, Warning, TEXT("%f"), player_rotation_);
@@ -151,5 +193,5 @@ void AChair::PlayerRotation(const float _deltatime)
 
 void AChair::PlayerSlip(const float _deltatime)
 {
-	AddMovementInput(Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector(), slip_scale_);
+	AddMovementInput(Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector(), input_slip_scale_);
 }
