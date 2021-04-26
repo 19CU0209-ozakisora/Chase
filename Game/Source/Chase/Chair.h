@@ -61,7 +61,7 @@ public:
 		bool debugmode_;												// デバッグモードをONにするかどうか
 		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")	
-		bool hit_;														// 当たったかどうか
+		bool is_movement_;														// 当たったかどうか
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
 		EPhase phase_;													// 現在のフェーズ格納用
@@ -77,6 +77,9 @@ public:
 		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")	
 		float hitstop_scale_;											// ヒット時の減速の倍率
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+		float is_movement_scale_;												// ヒット時の速度の倍率
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
 		// USkeletalMeshComponent* m_pplayermesh_;
