@@ -10,6 +10,7 @@ AChair::AChair()
 	, player_location_(0.f)
 	, input_value_(0.f)
 	, phase_cnt_(0.f)
+	, def_maxspeed(0.f)
 	, debugmode_(false)
 	, is_movement_(false)
 	, phase_(EPhase::kMove)
@@ -48,6 +49,8 @@ void AChair::BeginPlay()
 
 	// ヒット時の関数のバインド
 	m_pplayermesh_->OnComponentHit.AddDynamic(this, &AChair::ComponentHit);
+
+	def_maxspeed = m_floating_pawn_movement_->GetMaxSpeed();
 }
 
 // Called every frame
@@ -88,6 +91,11 @@ void AChair::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	// 左右入力と決定キー
 	InputComponent->BindAxis("TurnRate", this, &AChair::SetInputValue);
 	InputComponent->BindAction("Decide", EInputEvent::IE_Pressed, this, &AChair::NextPhase);
+
+	// 力の強さの変更
+	InputComponent->BindAction("Switch_Slip_Power_Lv1", EInputEvent::IE_Pressed, this, &AChair::SwitchSlipPowerLv1);
+	InputComponent->BindAction("Switch_Slip_Power_Lv2", EInputEvent::IE_Pressed, this, &AChair::SwitchSlipPowerLv2);
+	InputComponent->BindAction("Switch_Slip_Power_Lv3", EInputEvent::IE_Pressed, this, &AChair::SwitchSlipPowerLv3);
 }
 
 void AChair::SetInputValue(const float _axisval)
@@ -200,10 +208,45 @@ void AChair::PlayerRotation(const float _deltatime)
 	// 入力値に補正をかけて角度を設定
 	player_rotation_ += (input_value_* input_rotation_scale_) * _deltatime;
 	Cast<USceneComponent>(m_pplayermesh_)->SetWorldRotation(FRotator(0.f, player_rotation_, 0.f));
-	UE_LOG(LogTemp, Warning, TEXT("%f"), player_rotation_);
 }
 
 void AChair::PlayerSlip(const float _deltatime)
 {
 	AddMovementInput(Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector(), input_slip_scale_);
+}
+
+void AChair::SwitchSlipPowerLv1()
+{
+	if (phase_ == EPhase::kMove || phase_ == EPhase::kRotation)
+	{
+		if (debugmode_)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Switch_Slip_Power_Lv1")));
+		}
+		m_floating_pawn_movement_->MaxSpeed = def_maxspeed * 0.5f;
+	}
+}
+
+void AChair::SwitchSlipPowerLv2()
+{
+	if (phase_ == EPhase::kMove || phase_ == EPhase::kRotation)
+	{
+		if (debugmode_)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Switch_Slip_Power_Lv2")));
+		}
+		m_floating_pawn_movement_->MaxSpeed = def_maxspeed;
+	}
+}
+
+void AChair::SwitchSlipPowerLv3()
+{
+	if (phase_ == EPhase::kMove || phase_ == EPhase::kRotation)
+	{
+		if (debugmode_)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Switch_Slip_Power_Lv3")));
+		}
+		m_floating_pawn_movement_->MaxSpeed = def_maxspeed * 1.5f;
+	}
 }

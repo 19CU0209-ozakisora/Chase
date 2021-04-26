@@ -47,6 +47,7 @@ private:
 	float player_location_;							// 移動量
 	float input_value_;								// 入力値
 	int phase_cnt_;									// フェーズのカウント用変数
+	float def_maxspeed;								// 初期状態の最高速度
 
 	void SetInputValue(const float _axisval);		// 入力された値
 	void PlayerMove(const float _deltatime);		// プレイヤーの移動
@@ -54,6 +55,9 @@ private:
 	void PlayerSlip(const float _deltatime);		// プレイヤーが滑る処理
 	void DeleteArrow();								// ガイドを消す関数
 	void NextPhase();								// 次の状態に変更する関数
+	void SwitchSlipPowerLv1();
+	void SwitchSlipPowerLv2();
+	void SwitchSlipPowerLv3();
 
 public:
 
