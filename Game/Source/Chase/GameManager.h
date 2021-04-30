@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Chair.h"
+#include "Playerchara.h"
 #include "GameManager.generated.h"
 
 UCLASS()
@@ -15,7 +17,6 @@ public:
 	// Sets default values for this actor's properties
 	AGameManager();
 
-protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -25,4 +26,13 @@ public:
 
 	UPROPERTY(EditAnywhere)
 		int maxroundnum_;
+
+	UPROPERTY(EditAnywhere)
+		int player_num_;
+
+	UPROPERTY(EditAnywhere)
+		AChair* control_chair;
+
+	UPROPERTY(EditAnywhere)
+		APlayerchara* player;
 };
