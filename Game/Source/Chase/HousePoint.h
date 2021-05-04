@@ -31,6 +31,9 @@ public:
 	//椅子がすべて止まった時の処理
 	void StopChair();
 
+	UFUNCTION(meta = (CallInEditor = "true"))
+		void GetEmitter();
+
 protected:
 	//ゲームスタート時、または起動時に発動する処理
 	virtual void BeginPlay() override;
