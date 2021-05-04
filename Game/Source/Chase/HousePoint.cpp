@@ -8,7 +8,11 @@
 
 //インクルード
 #include "HousePoint.h"
+#include "Particles/Emitter.h"
+#include "Kismet/GameplayStatics.h"
 #include"Chair.h"
+#include "Engine/World.h"
+#include "Engine/Engine.h"
 
 //コンストラクタ
 AHousePoint::AHousePoint()
@@ -44,6 +48,8 @@ void AHousePoint::BeginPlay()
 	//ハウスの中心点の座標確認用
 	//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("X %f"), m_thisLocation.X));
 	//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("Y %f"), m_thisLocation.Y));
+
+	GetEmitter();
 }
 
 //毎フレーム更新処理
@@ -61,5 +67,20 @@ void AHousePoint::StopChair()
 	//ハウスの中心座標と椅子の座標の距離の差を格納
 	m_differenceLocation = m_ChairLocation - m_thisLocation;
 
+}
+
+void AHousePoint::GetEmitter()
+{
+	TSubclassOf<AEmitter> findClass;
+	findClass = AEmitter::StaticClass();
+	TArray<AActor*> emitters;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), findClass, emitters);
+
+	if (emitters.Num())
+	{
+		AEmitter* emitter = Cast<AEmitter>(emitters[0]);
+		FString message = FString("EmitterName:") + emitter->GetName();
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, message);
+	}
 }
 
