@@ -41,7 +41,6 @@ public:
 
 
 private:
-
 	USceneComponent* m_proot_;						// ルートコンポーネント用(メッシュの親)
 	float player_rotation_;							// 回転量
 	float player_location_;							// 移動量
@@ -65,25 +64,25 @@ public:
 		bool debugmode_;												// デバッグモードをONにするかどうか
 		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")	
-		bool is_movement_;														// 当たったかどうか
+		bool is_movement_;												// 当たったかどうか
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
 		EPhase phase_;													// 現在のフェーズ格納用
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")	
-		float input_speed_scale_;												// 移動の倍率
+		float input_speed_scale_;										// 移動の倍率
 
 	UPROPERTY(EditAnywhere, Category = "Player")
 		float input_rotation_scale_;									// 回転入力倍率
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")	
-		float input_slip_scale_;												// 滑りの倍率
+		float input_slip_scale_;										// 滑りの倍率
 		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")	
 		float hitstop_scale_;											// ヒット時の減速の倍率
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
-		float is_movement_scale_;												// ヒット時の速度の倍率
+		float is_movement_scale_;										// ヒット時の速度の倍率
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
 		// USkeletalMeshComponent* m_pplayermesh_;

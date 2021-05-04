@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Chair.h"
 #include "Playerchara.generated.h"
 
 UCLASS()
@@ -25,4 +26,21 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+private:
+
+public:
+	bool cretae_flag;
+
+	UPROPERTY(EditAnywhere, Meta = (ClampMin = 1, ClampMax = 2),BlueprintReadWrite, Category = "Player")
+		int player_number_;												// âΩPÇ»ÇÃÇ©Çì¸ÇÍÇÈïœêî
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		USceneComponent* chair_spawner_;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	AChair* control_chair_;
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "MyF")
+		void CreateChair();
 };

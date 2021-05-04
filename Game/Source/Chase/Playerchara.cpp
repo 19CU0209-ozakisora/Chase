@@ -5,9 +5,12 @@
 
 // Sets default values
 APlayerchara::APlayerchara()
+	: player_number_(1)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	chair_spawner_ = CreateDefaultSubobject<USceneComponent>(TEXT("chair_spawner_"));
 
 }
 
@@ -16,6 +19,18 @@ void APlayerchara::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	FName tagname;
+	if (player_number_ == 1)
+	{
+		Tags.Add("Player1");
+	}
+	else if (player_number_ == 2)
+	{
+		Tags.Add("Player2");
+	}
+	/* ‚±‚ñ‚ÈŠ´‚¶‚Å‚â‚è‚½‚©‚Á‚½
+	FName tagname = "Player" + player_number_;
+	Tags.Add(tagname); */
 }
 
 // Called every frame
@@ -31,4 +46,3 @@ void APlayerchara::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 }
-
