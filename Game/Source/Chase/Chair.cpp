@@ -128,7 +128,7 @@ void AChair::DeleteArrow()
 void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	// ‚Æ‚Ü‚Á‚Ä‚¢‚é ‚©‚Â “–‚½‚Á‚½‘ÎÛ‚Ìƒ^ƒO‚ªPlayer‚¾‚Á‚½
-	if (OtherActor->ActorHasTag("Player"))
+	if (OtherActor->ActorHasTag("P1Chair") || OtherActor->ActorHasTag("P2Chair") || OtherActor->ActorHasTag("Player")) // Player‚Í‚»‚Ì‚¤‚¿Á‚µ‚Ü‚·
 	{
 		if (Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity == FVector::ZeroVector)
 		{
