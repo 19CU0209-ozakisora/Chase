@@ -2,7 +2,6 @@
 //ƒRƒƒ“ƒg‰»
 
 #include "ChaseGameMode.h"
-#include "ChaseCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 
 AChaseGameMode::AChaseGameMode()
