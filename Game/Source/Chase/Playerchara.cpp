@@ -18,16 +18,7 @@ APlayerchara::APlayerchara()
 void APlayerchara::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	FName tagname;
-	if (player_number_ == 1)
-	{
-		Tags.Add("Player1");
-	}
-	else if (player_number_ == 2)
-	{
-		Tags.Add("Player2");
-	}
+
 	/* ‚±‚ñ‚ÈŠ´‚¶‚Å‚â‚è‚½‚©‚Á‚½
 	FName tagname = "Player" + player_number_;
 	Tags.Add(tagname); */

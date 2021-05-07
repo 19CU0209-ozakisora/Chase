@@ -128,7 +128,12 @@ void AChair::DeleteArrow()
 // カプセルコンポーネントを参照している為同じものをBPに追加 -> BPからC++に移植(2021/04/23 尾崎)
 void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	// とまっている かつ 当たった対象のタグがPlayerだった時
+	// 椅子以外の物にぶつかったら return
+	if (Cast<AChair>(OtherActor) == false)
+	{
+		return;
+	}
+
 	if(Cast<AChair>(OtherActor)->name_ == "P1Chair" || Cast<AChair>(OtherActor)->name_ == "P2Chair")
 	//if (OtherActor->ActorHasTag("P1Chair") || OtherActor->ActorHasTag("P2Chair") || OtherActor->ActorHasTag("Player")) // Playerはそのうち消します
 	{

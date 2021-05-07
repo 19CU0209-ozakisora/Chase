@@ -41,13 +41,16 @@ void AGameManager::Tick(float DeltaTime)
 
 	if (nowroundnum_ % 2 == 1)
 	{
-		if (players_[0]->control_chair_->phase_ == EPhase::kEnd)
+		if (players_[0]->control_chair_ != NULL)
 		{
-			if (TimeCheck(DeltaTime))
+			if (players_[0]->control_chair_->phase_ == EPhase::kEnd)
 			{
-				players_[1]->CreateChair();
-				chairs_.Add(players_[0]->control_chair_);
-				++nowroundnum_;
+				if (TimeCheck(DeltaTime))
+				{
+					players_[1]->CreateChair();
+					chairs_.Add(players_[1]->control_chair_);
+					++nowroundnum_;
+				}
 			}
 		}
 	}
