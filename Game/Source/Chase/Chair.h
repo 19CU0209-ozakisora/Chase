@@ -85,6 +85,9 @@ public:
 		float is_movement_scale_;										// ヒット時の速度の倍率
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+		FString name_;													// 椅子の名前を入れる変数(P1 or P2しか入れないけど)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
 		// USkeletalMeshComponent* m_pplayermesh_;
 		class UStaticMeshComponent* m_pplayermesh_;						// 椅子のメッシュ
 

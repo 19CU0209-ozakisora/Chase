@@ -50,6 +50,7 @@ void AChair::BeginPlay()
 	// ヒット時の関数のバインド
 	m_pplayermesh_->OnComponentHit.AddDynamic(this, &AChair::ComponentHit);
 
+
 	def_maxspeed = m_floating_pawn_movement_->GetMaxSpeed();
 }
 
@@ -128,7 +129,8 @@ void AChair::DeleteArrow()
 void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	// とまっている かつ 当たった対象のタグがPlayerだった時
-	if (OtherActor->ActorHasTag("P1Chair") || OtherActor->ActorHasTag("P2Chair") || OtherActor->ActorHasTag("Player")) // Playerはそのうち消します
+	if(Cast<AChair>(OtherActor)->name_ == "P1Chair" || Cast<AChair>(OtherActor)->name_ == "P2Chair")
+	//if (OtherActor->ActorHasTag("P1Chair") || OtherActor->ActorHasTag("P2Chair") || OtherActor->ActorHasTag("Player")) // Playerはそのうち消します
 	{
 		if (Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity == FVector::ZeroVector)
 		{
@@ -143,19 +145,19 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 			}
 
 			// 物理の働く向きの設定
-			m_pplayermesh_->SetConstraintMode(EDOFMode::XYPlane);
+			//m_pplayermesh_->SetConstraintMode(EDOFMode::XYPlane);
 
 			// 椅子に当たった状態に変更
-			is_movement_ = true;
-			phase_ = EPhase::kEnd;
+			//is_movement_ = true;
+			//phase_ = EPhase::kEnd;
 
 			// 当たった椅子に速度を与える(現状前方向ベクトルと速度で計算)
 			Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity = m_pplayermesh_->GetForwardVector() * m_floating_pawn_movement_->Velocity * is_movement_scale_;
 
 			// 椅子の減速処理(X Y Z のいずれかが0だと計算してくれないっぽい？？？？)
-			m_floating_pawn_movement_->Velocity.X /= hitstop_scale_;
-			m_floating_pawn_movement_->Velocity.Y /= hitstop_scale_;
-			m_floating_pawn_movement_->Velocity.Z /= hitstop_scale_;
+			//m_floating_pawn_movement_->Velocity.X /= hitstop_scale_;
+			//m_floating_pawn_movement_->Velocity.Y /= hitstop_scale_;
+			//m_floating_pawn_movement_->Velocity.Z /= hitstop_scale_;
 
 			if (debugmode_)
 			{
