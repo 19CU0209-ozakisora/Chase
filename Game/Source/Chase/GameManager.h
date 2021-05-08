@@ -26,15 +26,14 @@ private:
 	int nowroundnum_;
 	float time_cnt_;
 
+	bool TimeCheck(float _deltatime);
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(EditAnywhere)
 		int maxroundnum_;
-
-	UPROPERTY(EditAnywhere)
-		int player_num_;
 
 	UPROPERTY(EditAnywhere)
 		AChair* control_chair_;
@@ -47,6 +46,4 @@ public:
 
 	UPROPERTY(EditAnywhere)
 		TArray<AChair*> chairs_;
-
-	bool TimeCheck(float _deltatime);
 };

@@ -1,5 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+//--------------------------------------------------------------
+//クラス名：Chair.cpp
+//概要	  ：椅子の制御用クラス
+//作成日　：2021/04/22
+//作成者　：19CU0209 尾崎蒼宙
+//更新履歴：2021/04/22 尾崎蒼宙 作成
+//			2021/04/23 尾崎蒼宙 ヒット時の処理をBPからC++に移植
+//			2021/04/26 尾崎蒼宙 力の強さを変えるプログラムの作成
+//			2021/05/07 尾崎蒼宙 タグで処理させていた部分をFStringに変更
+//								椅子が椅子以外の物にぶつかった時のクラッシュ修正 
+//--------------------------------------------------------------
 
 #include "Chair.h"
 
@@ -9,18 +18,20 @@ AChair::AChair()
 	, player_rotation_(0.f)
 	, player_location_(0.f)
 	, input_value_(0.f)
-	, phase_cnt_(0.f)
+	, phase_cnt_(0)
 	, def_maxspeed(0.f)
 	, debugmode_(false)
 	, is_movement_(false)
-	, phase_(EPhase::kMove)
+	, phase_(EPhase::kStay)
 	, input_speed_scale_(0.f)
 	, input_rotation_scale_(0.f)
 	, input_slip_scale_(0.f)
 	, hitstop_scale_(0.f)
+	, is_movement_scale_(0.f)
+	, name_("")
+	, m_floating_pawn_movement_(NULL)
 	, m_pplayermesh_(NULL)
 	, m_parrow_(NULL)
-	, m_floating_pawn_movement_(NULL)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -49,7 +60,6 @@ void AChair::BeginPlay()
 
 	// ヒット時の関数のバインド
 	m_pplayermesh_->OnComponentHit.AddDynamic(this, &AChair::ComponentHit);
-
 
 	def_maxspeed = m_floating_pawn_movement_->GetMaxSpeed();
 }
@@ -135,7 +145,6 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 	}
 
 	if(Cast<AChair>(OtherActor)->name_ == "P1Chair" || Cast<AChair>(OtherActor)->name_ == "P2Chair")
-	//if (OtherActor->ActorHasTag("P1Chair") || OtherActor->ActorHasTag("P2Chair") || OtherActor->ActorHasTag("Player")) // Playerはそのうち消します
 	{
 		if (Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity == FVector::ZeroVector)
 		{
@@ -150,19 +159,19 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 			}
 
 			// 物理の働く向きの設定
-			//m_pplayermesh_->SetConstraintMode(EDOFMode::XYPlane);
+			m_pplayermesh_->SetConstraintMode(EDOFMode::XYPlane);
 
 			// 椅子に当たった状態に変更
-			//is_movement_ = true;
-			//phase_ = EPhase::kEnd;
+			is_movement_ = true;
+			phase_ = EPhase::kEnd;
 
 			// 当たった椅子に速度を与える(現状前方向ベクトルと速度で計算)
 			Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity = m_pplayermesh_->GetForwardVector() * m_floating_pawn_movement_->Velocity * is_movement_scale_;
 
 			// 椅子の減速処理(X Y Z のいずれかが0だと計算してくれないっぽい？？？？)
-			//m_floating_pawn_movement_->Velocity.X /= hitstop_scale_;
-			//m_floating_pawn_movement_->Velocity.Y /= hitstop_scale_;
-			//m_floating_pawn_movement_->Velocity.Z /= hitstop_scale_;
+			m_floating_pawn_movement_->Velocity.X /= hitstop_scale_;
+			m_floating_pawn_movement_->Velocity.Y /= hitstop_scale_;
+			m_floating_pawn_movement_->Velocity.Z /= hitstop_scale_;
 
 			if (debugmode_)
 			{
@@ -220,6 +229,7 @@ void AChair::PlayerRotation(const float _deltatime)
 void AChair::PlayerSlip(const float _deltatime)
 {
 	AddMovementInput(Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector(), input_slip_scale_);
+	UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "), Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector().X, Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector().Y, Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector().Z);
 }
 
 void AChair::SwitchSlipPowerLv1()

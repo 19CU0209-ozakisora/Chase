@@ -1,4 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -15,6 +14,7 @@
 UENUM(BlueprintType)
 enum class EPhase : uint8
 {
+	kStay UMETA(DisplayName = "Stay"),				// 待機状態
 	kMove UMETA(DisplayName = "Move"),				// 移動状態
 	kRotation UMETA(DisplayName = "Rotation"),		// 回転状態
 	kSlip UMETA(DisplayName = "Slip"),				// 滑り状態
@@ -58,47 +58,47 @@ private:
 	void SwitchSlipPowerLv2();
 	void SwitchSlipPowerLv3();
 
+	// カプセルコンポーネントを参照している為同じものをBPに追加
+	UFUNCTION()
+		void ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& HitResult);
+
 public:
 
-	UPROPERTY(EditAnywhere, Category = "Player")	
+	UPROPERTY(EditAnywhere, Category = "Default Setting")	
 		bool debugmode_;												// デバッグモードをONにするかどうか
 		
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")	
 		bool is_movement_;												// 当たったかどうか
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
 		EPhase phase_;													// 現在のフェーズ格納用
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")	
 		float input_speed_scale_;										// 移動の倍率
 
-	UPROPERTY(EditAnywhere, Category = "Player")
+	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		float input_rotation_scale_;									// 回転入力倍率
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")	
 		float input_slip_scale_;										// 滑りの倍率
 		
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")	
 		float hitstop_scale_;											// ヒット時の減速の倍率
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		float is_movement_scale_;										// ヒット時の速度の倍率
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
 		FString name_;													// 椅子の名前を入れる変数(P1 or P2しか入れないけど)
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		UFloatingPawnMovement* m_floating_pawn_movement_;				// FloatingPawnMovementコンポーネント
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		// USkeletalMeshComponent* m_pplayermesh_;
 		class UStaticMeshComponent* m_pplayermesh_;						// 椅子のメッシュ
 
 	// BPで初期設定出来ない不具合あり -> 再度BPを作り直すことで解消
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Arrow")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		class UStaticMeshComponent* m_parrow_;							// ガイドのメッシュ
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Arrow")
-		UFloatingPawnMovement* m_floating_pawn_movement_;				// FloatingPawnMovementコンポーネント
-
-	// カプセルコンポーネントを参照している為同じものをBPに追加
-	UFUNCTION()
-		void ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& HitResult );
 };

@@ -32,15 +32,21 @@ private:
 public:
 	bool cretae_flag;
 
-	UPROPERTY(EditAnywhere, Meta = (ClampMin = 1, ClampMax = 2),BlueprintReadWrite, Category = "Player")
+	UPROPERTY(EditAnywhere, Meta = (ClampMin = 1, ClampMax = 2),BlueprintReadWrite, Category = "Default Settings")
 		int player_number_;												// âΩPÇ»ÇÃÇ©Çì¸ÇÍÇÈïœêî
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		USceneComponent* chair_spawner_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	AChair* control_chair_;
+		USceneComponent* chair_stack_;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
+		AChair* control_chair_;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "MyF")
 		void CreateChair();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "MyF")
+		void GetOperate();
 };
