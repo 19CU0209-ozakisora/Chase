@@ -98,4 +98,7 @@ public:
 	// カプセルコンポーネントを参照している為同じものをBPに追加
 	UFUNCTION()
 		void ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& HitResult );
+
+	UPROPERTY(EditAnywhere ,Category = "Player" )
+		FString m_PlayerNumberName;
 };
