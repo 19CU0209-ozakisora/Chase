@@ -1,36 +1,31 @@
-//--------------------------------------------------------------
-//クラス名：GameManager.cpp
-//概要	  ：椅子の制御用クラス
-//作成日　：2021/04/22
-//作成者　：19CU0209 尾崎蒼宙
-//更新履歴：2021/04/26 尾崎蒼宙 作成
-//			2021/04/23 尾崎蒼宙 ヒット時の処理をBPからC++に移植
-//			2021/05/04 尾崎蒼宙 現在のターン・どちらの番か・椅子の生成などを追加
-//			2021/05/07 尾崎蒼宙 GameManagerの修正
-//--------------------------------------------------------------
-#include "GameManager.h"
+// Fill out your copyright notice in the Description page of Project Settings.
 
-// Sets default values
+
+//インクルード
+#include "GameManager.h"
+#include "Chair.h"
+
+//コンストラクタ
 AGameManager::AGameManager()
-	: nowroundnum_(0)
-	, time_cnt_(0.f)
-	, maxroundnum_(10)
-	, control_chair_(NULL)
-	, chair_create_time(0.f)
-	, players_()
-	, chairs_()
+	: maxroundnum_(10)
+	,m_teamPoint1P(0)
+	,m_teamPoint2P(0)
+	,m_thisLocation(FVector::ZeroVector)
+	,m_bFunctionCheck(false)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 }
 
-// Called when the game starts or when spawned
+//ゲームスタート時、または生成時に呼ばれる処理
 void AGameManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// レベル上に配置しているPlayerの検索及び格納
+	//ハウスの中心座標を格納
+	m_thisLocation = GetActorLocation();
+
 	TSubclassOf<APlayerchara> findClass;
 	findClass = APlayerchara::StaticClass();
 	TArray<AActor*> temp;
@@ -41,92 +36,66 @@ void AGameManager::BeginPlay()
 		players_.Add(Cast<APlayerchara>(temp[i]));
 	}
 
-	// ゲームの最大ラウンド数 / 2 (for分の中でPlayer1とPlayer2の椅子の生成を同時に行うため、maxroundnum_ / 2にしています)
-	for (int n = 0; n < maxroundnum_ / 2; ++n)
-	{
-		// 椅子の生成及び位置の指定、管理するために配列に格納
-		players_[0]->CreateChair();
-		players_[0]->control_chair_->SetActorLocation(FVector(players_[0]->chair_stack_->GetComponentLocation().X, players_[0]->chair_stack_->GetComponentLocation().Y + n * 250, players_[0]->chair_stack_->GetComponentLocation().Z), false, nullptr, ETeleportType::TeleportPhysics);
-		chairs_.Add(players_[0]->control_chair_);
+	//探したいクラスを検索
+	TSubclassOf<AChair> AChairfindClass;
+	AChairfindClass = AChair::StaticClass();
+	TArray<AActor*> AActortemp;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AChairfindClass, AActortemp);
 
-		players_[1]->CreateChair();
-		players_[1]->control_chair_->SetActorLocation(FVector(players_[1]->chair_stack_->GetComponentLocation().X, players_[1]->chair_stack_->GetComponentLocation().Y + n * 250, players_[1]->chair_stack_->GetComponentLocation().Z), false, nullptr, ETeleportType::TeleportPhysics);
-		chairs_.Add(players_[1]->control_chair_);
+	for (int i = 0; i < AActortemp.Num(); ++i)
+	{
+		m_pAChair[i] = Cast<AChair>(AActortemp[i]);
+		/*if (m_pAChair[i] != NULL)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("isu addless is Not NULL "));
+		}*/
 	}
 
-	// Player[0]が管理している椅子の視点に変更
-	players_[0]->GetOperate();
+	StopChair();
+
+	players_[0]->CreateChair();
+	chairs_.Add(players_[0]->control_chair_);
 	++nowroundnum_;
 }
 
-// Called every frame
+//毎フレーム更新処理
 void AGameManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// 奇数ターンの時(Player1の番)
 	if (nowroundnum_ % 2 == 1)
 	{
-		// NULLチェック
-		if (players_[0]->control_chair_ != NULL)
+		if (players_[0]->control_chair_->phase_ == EPhase::kEnd)
 		{
-			// 現在操作している椅子が椅子に当たる or 一定ラインまで行ってしまったら
-			if (players_[0]->control_chair_->phase_ == EPhase::kEnd)
+			if (TimeCheck(DeltaTime))
 			{
-				// 一定秒数経過後、操作する椅子の変更
-				if (TimeCheck(DeltaTime))
-				{
-					players_[1]->control_chair_ = chairs_[nowroundnum_];
-					players_[1]->GetOperate();
-					
-					// 椅子の配列の個数分だけ椅子のSpawnDefaultController()関数を呼ぶ
-					// 本来は操作する椅子の変更後、前まで操作していた椅子だけSpawnDefaultController()関数
-					// を使用すれば良い予定だが、処理は通ったものの上手く機能しないためfor文で無理やり行っています。かなりよろしくない
-					for (int i = 0; i < chairs_.Num(); ++i)
-					{
-						chairs_[i]->SpawnDefaultController();
-						// chairs_[i]->b();
-					}
-
-					// players_[1]->CreateChair();						// 2021/05/08 BeginPlayで生成するように変更
-					// chairs_.Add(players_[1]->control_chair_);		
-
-					++nowroundnum_;
-				}
+				players_[1]->CreateChair();
+				
+				chairs_.Add(players_[0]->control_chair_);
+				++nowroundnum_;
 			}
 		}
 	}
-	// 奇数ターンの時(Player2の番)
 	else if (nowroundnum_ % 2 == 0)
 	{
-		// NULLチェック
-		if (players_[1]->control_chair_ != NULL)
+		if (players_[1]->control_chair_->phase_ == EPhase::kEnd)
 		{
-			// 現在操作している椅子が椅子に当たる or 一定ラインまで行ってしまったら
-			if (players_[1]->control_chair_->phase_ == EPhase::kEnd)
+			if (TimeCheck(DeltaTime))
 			{
-				// 一定秒数経過後、操作する椅子の変更
-				if (TimeCheck(DeltaTime))
-				{
-					// 上と同じ(長いので割愛)
-					players_[0]->control_chair_ = chairs_[nowroundnum_];
-					players_[0]->GetOperate();
-					for (int i = 0; i < chairs_.Num(); ++i)
-					{
-						chairs_[i]->SpawnDefaultController();
-						//chairs_[i]->b();
-					}
-
-					//chairs_[nowroundnum_]->b();
-
-					// players_[0]->CreateChair();						// 2021/05/08 BeginPlayで生成するように変更
-					// chairs_.Add(players_[0]->control_chair_);
-
-					++nowroundnum_;
-				}
+				players_[0]->CreateChair();
+				chairs_.Add(players_[0]->control_chair_);
+				++nowroundnum_;
 			}
 		}
 	}
+
+	//ラウンドが10になったら
+	/*if (nowroundnum_ > 10)
+	{
+		//椅子が10個止まった時の処理
+		StopChair();
+	}*/
+
 }
 
 bool AGameManager::TimeCheck(float _deltatime)
@@ -146,4 +115,110 @@ bool AGameManager::TimeCheck(float _deltatime)
 		time_cnt_ = 0.f;
 		return true;
 	}
+}
+
+//椅子が止まった時の処理
+void AGameManager::StopChair()
+{
+	//見つかった椅子のオブジェクト、座標を取得
+	for (int i = 0; i < 10; ++i)
+	{
+		m_ChairDistance[i] = sqrt(((m_thisLocation.X - m_pAChair[i]->GetActorLocation().X) * (m_thisLocation.X - m_pAChair[i]->GetActorLocation().X))
+			+ ((m_thisLocation.Y - m_pAChair[i]->GetActorLocation().Y) * (m_thisLocation.Y - m_pAChair[i]->GetActorLocation().Y)));
+	}
+
+	//ログ確認用
+	for (int n = 0; n < 10; ++n)
+	{
+		//FString name = (chairs[n].chair_obj_)->GetName();
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, name);
+		UE_LOG(LogTemp, Warning, TEXT("kyori before = %f"), m_ChairDistance[n]);
+
+		if (m_pAChair[n]->m_PlayerNumberName == "P1Chair")
+		{
+			UE_LOG(LogTemp, Warning, TEXT("P1Chair"));
+		}
+		else if (m_pAChair[n]->m_PlayerNumberName == "P2Chair")
+		{
+			UE_LOG(LogTemp, Warning, TEXT("P2Chair"));
+		}
+	}
+
+	//椅子の近さをソート
+	ChairSort();
+	//得点計算
+	SetPoint();
+}
+
+//椅子の近い順にソート
+void AGameManager::ChairSort()
+{
+	//変数宣言
+	//交換用変数
+	AChair* tmp;
+	//配列番号用変数
+	int dataCount01;
+	int dataCount02;
+
+	//2点間の距離でソ－トをかける
+	for (dataCount01 = 0; dataCount01 < 10; ++dataCount01)
+	{
+		for (dataCount02 = 0; dataCount02 < 9 - dataCount01; ++dataCount02)
+		{
+			if (m_ChairDistance[dataCount02 + 1]< m_ChairDistance[dataCount02])
+			{
+				tmp = m_pAChair[dataCount02 + 1];
+				m_pAChair[dataCount02 + 1] = m_pAChair[dataCount02];
+				m_pAChair[dataCount02] = tmp;
+				float ftmp = m_ChairDistance[dataCount02 + 1];
+				m_ChairDistance[dataCount02 + 1] = m_ChairDistance[dataCount02];
+				m_ChairDistance[dataCount02] = ftmp;
+			}
+		}
+	}
+	//ログで確認用
+	for (int n = 0; n < 10; ++n)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("kyori after = %f"), m_ChairDistance[n]);
+		if (m_pAChair[n]->m_PlayerNumberName == "P1Chair")
+		{
+			UE_LOG(LogTemp, Warning, TEXT("P1Chair"));
+		}
+		else if (m_pAChair[n]->m_PlayerNumberName == "P2Chair")
+		{
+			UE_LOG(LogTemp, Warning, TEXT("P2Chair"));
+		}
+	}
+}
+
+//得点計算
+void AGameManager::SetPoint()
+{
+	int i = 0;
+	for (; i < 10; ++i)
+	{
+		if (m_pAChair[0]->m_PlayerNumberName == m_pAChair[i + 1]->m_PlayerNumberName)
+		{
+			continue;
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	if(m_pAChair[0]->m_PlayerNumberName == "P1Chair")
+	{
+		//  そのタグにポイントを入れる
+		m_teamPoint1P = i + 1 + m_teamPoint1P;
+	}
+	else if (m_pAChair[0]->m_PlayerNumberName == "P2Chair")
+	{
+		m_teamPoint2P = i + 1 + m_teamPoint2P;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("P1Point %d"), m_teamPoint1P);
+	UE_LOG(LogTemp, Warning, TEXT("P2Point %d"), m_teamPoint2P);
+
+	//得点計算後、Tick()を無効にする
+	PrimaryActorTick.SetTickFunctionEnable(false);
 }
