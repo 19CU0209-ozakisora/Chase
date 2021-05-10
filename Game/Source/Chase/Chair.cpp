@@ -18,7 +18,7 @@ AChair::AChair()
 	, player_rotation_(0.f)
 	, player_location_(0.f)
 	, input_value_(0.f)
-	, phase_cnt_(0)
+	, phase_cnt_(1)
 	, def_maxspeed(0.f)
 	, debugmode_(false)
 	, is_movement_(false)
@@ -28,7 +28,7 @@ AChair::AChair()
 	, input_slip_scale_(0.f)
 	, hitstop_scale_(0.f)
 	, is_movement_scale_(0.f)
-	, name_("")
+	, m_name_("")
 	, m_floating_pawn_movement_(NULL)
 	, m_pplayermesh_(NULL)
 	, m_parrow_(NULL)
@@ -144,7 +144,7 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 		return;
 	}
 
-	if(Cast<AChair>(OtherActor)->name_ == "P1Chair" || Cast<AChair>(OtherActor)->name_ == "P2Chair")
+	if(Cast<AChair>(OtherActor)->m_name_ == "P1Chair" || Cast<AChair>(OtherActor)->m_name_ == "P2Chair")
 	{
 		if (Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity == FVector::ZeroVector)
 		{

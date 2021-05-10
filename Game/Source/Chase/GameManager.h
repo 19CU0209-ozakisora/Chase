@@ -9,14 +9,15 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameManager.generated.h"
 
-struct FChair
+// 2021/05/10 尾崎 コメント化(試作で作ったもの)
+/*struct FChair
 {
 	AChair* chair_obj_;
-	FVector location_;
 
 	//2点間の距離を格納する変数
 	float Vectormeter_;
 };
+*/
 
 UCLASS()
 class CHASE_API AGameManager : public AActor
@@ -30,34 +31,27 @@ public:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void Tick(float DeltaTime) override;
+
+
+//---------------------------------------------------------
+// 尾崎 蒼宙
 private:
 
+	bool TimeCheck(float _deltatime);
 	int nowroundnum_;
 	float time_cnt_;
 
+	TArray<APlayerchara*> m_players_;		// Player管理用
+	TArray<AChair*> m_chairs_;				// Chair管理用(得点計算処理があるので構造体の方が良いかも)
+
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(EditAnywhere)
-		int maxroundnum_;
+		int m_maxroundnum_;					// 椅子を投げる最大の数
 
-	UPROPERTY(EditAnywhere)
-		int player_num_;
-
-	UPROPERTY(EditAnywhere)
-		AChair* control_chair_;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
-		float chair_create_time;
-
-	UPROPERTY(EditAnywhere)
-		TArray<APlayerchara*> players_;
-
-	UPROPERTY(EditAnywhere)
-		TArray<AChair*> chairs_;
-
-	bool TimeCheck(float _deltatime);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		float m_chair_create_time_;
 
 //---------------------------------------------------------
 //2021/05/06:　野田　変数、関数追加
@@ -95,10 +89,8 @@ private:
 
 //-------------------------------------------------------
 
-	// 2021 04/30 尾崎 構造体の宣言追加
-	TArray<FChair*> chairs;
-
-	AChair* m_pAChair[10] = {NULL};
+	// 2021 05/10 尾崎  m_chairs_に変更
+	// AChair* m_pAChair[10] = {NULL};
 
 	float m_ChairDistance[10] = {0.f};
 
