@@ -15,11 +15,13 @@
 UENUM(BlueprintType)
 enum class EPhase : uint8
 {
-	kStay UMETA(DisplayName = "Stay"),				// 移動状態
-	kMove UMETA(DisplayName = "Move"),				// 移動状態
-	kRotation UMETA(DisplayName = "Rotation"),		// 回転状態
-	kSlip UMETA(DisplayName = "Slip"),				// 滑り状態
-	kEnd UMETA(DisplayName = "End"),				// 行動終了
+	kStay UMETA(DisplayName = "Stay"),					// 待機状態
+	kMove UMETA(DisplayName = "Move"),					// 横移動状態
+	kRotation UMETA(DisplayName = "Rotation"),			// 投げる方向の変更状態
+	kSpin UMETA(DisplayName = "Spin"),					// スピン状態
+	kPawerChange UMETA(DisplayName = "PawerChange"),	// パワー変更
+	kSlip UMETA(DisplayName = "Slip"),					// 滑り状態
+	kEnd UMETA(DisplayName = "End"),					// 行動終了
 };
 
 UCLASS()
@@ -43,15 +45,23 @@ public:
 
 private:
 	USceneComponent* m_proot_;						// ルートコンポーネント用(メッシュの親)
-	float player_rotation_;							// 回転量
-	float player_location_;							// 移動量
-	float input_value_;								// 入力値
-	int phase_cnt_;									// フェーズのカウント用変数
-	float def_maxspeed;								// 初期状態の最高速度
+	bool m_first_player_spin_input_flag_;			// 初めてスティックを倒したか否かのフラグ用
+	float m_player_rotation_;						// 回転量
+	float m_player_location_;						// 移動量
+	float m_player_spin_value_;						// スピン量
+	float m_player_spin_angle_;						// スティックを回した角度
+	float m_preb_player_spin_input_;				// スピン時の前回の入力
+	float m_first_player_spin_input_angle_;			// 初めてスティックを倒した角度の保存用
+	int m_player_spin_cnt_;							// 何回転したか
+	FVector2D m_input_value_;						// 入力値
+	int m_phase_cnt_;								// フェーズのカウント用変数
+	float m_def_maxspeed;							// 初期状態の最高速度
 
-	void SetInputValue(const float _axisval);		// 入力された値
-	void PlayerMove(const float _deltatime);		// プレイヤーの移動
-	void PlayerRotation(const float _deltatime);	// プレイヤーの回転
+	void SetInputValue_X(const float _axisval);		// 入力された値_X
+	void SetInputValue_Y(const float _axisval);		// 入力された値_Y
+	void PlayerMove(const float _deltatime);		// プレイヤーの横移動
+	void PlayerRotation(const float _deltatime);	// プレイヤーの投げる方向の変更
+	void PlayerSpin(const float _deltatime);		// プレイヤーの回転
 	void PlayerSlip(const float _deltatime);		// プレイヤーが滑る処理
 	void DeleteArrow();								// ガイドを消す関数
 	void NextPhase();								// 次の状態に変更する関数
@@ -66,31 +76,34 @@ private:
 public:
 
 	UPROPERTY(EditAnywhere, Category = "Default Setting")	
-		bool debugmode_;												// デバッグモードをONにするかどうか
+		bool m_debugmode_;												// デバッグモードをONにするかどうか
 		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")	
-		bool is_movement_;												// 当たったかどうか
+		bool m_is_movement_;											// 当たったかどうか
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
-		EPhase phase_;													// 現在のフェーズ格納用
+		EPhase m_phase_;												// 現在のフェーズ格納用
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")	
-		float input_speed_scale_;										// 移動の倍率
+		float m_input_speed_scale_;										// 移動の倍率
 
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
-		float input_rotation_scale_;									// 回転入力倍率
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")	
-		float input_slip_scale_;										// 滑りの倍率
-		
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")	
-		float hitstop_scale_;											// ヒット時の減速の倍率
+		float m_input_rotation_scale_;									// 角度を決めるときの入力倍率
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
-		float is_movement_scale_;										// ヒット時の速度の倍率
+		float m_input_spin_scale_;										// スピンの倍率(スティック一回転辺り何度回転させるか)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")	
+		float m_input_slip_scale_;										// 滑りの倍率
+		
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")	
+		float m_hitstop_scale_;											// ヒット時の減速の倍率
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		float m_is_movement_scale_;										// ヒット時の速度の倍率
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
-		FString m_name_;													// 椅子の名前を入れる変数(P1 or P2しか入れないけど)
+		FString m_name_;												// 椅子の名前を入れる変数(P1 or P2しか入れないけど)
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		// USkeletalMeshComponent* m_pplayermesh_;
@@ -102,4 +115,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		UFloatingPawnMovement* m_floating_pawn_movement_;				// FloatingPawnMovementコンポーネント
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		float b;
 };

@@ -78,6 +78,7 @@ void AGameManager::BeginPlay()
 	*/
 
 	// Player[0]が管理している椅子の視点に変更
+	//m_players_[0]->control_chair_ = m_chairs_[0];
 	m_players_[0]->GetOperate();
 	++nowroundnum_;
 }
@@ -94,7 +95,7 @@ void AGameManager::Tick(float DeltaTime)
 		if (m_players_[0]->control_chair_ != NULL)
 		{
 			// 現在操作している椅子が椅子に当たる or 一定ラインまで行ってしまったら
-			if (m_players_[0]->control_chair_->phase_ == EPhase::kEnd)
+			if (m_players_[0]->control_chair_->m_phase_ == EPhase::kEnd)
 			{
 				// 一定秒数経過後、操作する椅子の変更
 				if (TimeCheck(DeltaTime))
@@ -124,7 +125,7 @@ void AGameManager::Tick(float DeltaTime)
 		if (m_players_[1]->control_chair_ != NULL)
 		{
 			// 現在操作している椅子が椅子に当たる or 一定ラインまで行ってしまったら
-			if (m_players_[1]->control_chair_->phase_ == EPhase::kEnd)
+			if (m_players_[1]->control_chair_->m_phase_ == EPhase::kEnd)
 			{
 				// 一定秒数経過後、操作する椅子の変更
 				if (TimeCheck(DeltaTime))
