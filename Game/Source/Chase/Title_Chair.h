@@ -41,9 +41,6 @@ private:
 	//椅子移動
 	void MoveChair(float deltaTime_);
 
-	//椅子を消す処理
-	void DestroyChair();
-
 	//時間取得
 	float m_movetime_;
 
@@ -58,12 +55,14 @@ private:
 	UPROPERTY(EditAnywhere)
 		float m_stopchairtime_;
 
+	//椅子を最終的にどこに止めるかの座標取得用
 	UPROPERTY(EditAnywhere)
 		float m_location_x_;
 
 	//椅子カウント
 	float m_chaircnt_;
 
+	//椅子が発射した際、消えるまでの時間
 	UPROPERTY(EditAnywhere)
 	float m_chaircntmax_;
 
