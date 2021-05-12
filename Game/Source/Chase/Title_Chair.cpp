@@ -35,39 +35,42 @@ ATitle_Chair::ATitle_Chair()
 
 }
 
-// Called when the game starts or when spawned
+//ゲームスタート時、または生成時に呼ばれる処理
 void ATitle_Chair::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-// Called every frame
+//毎フレーム更新処理
 void ATitle_Chair::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	//表示可能時間をカウント
 	m_visibletime_ += DeltaTime;
 
-
+	//表示時間が指定した時間を超えるまで非表示
 	if (m_visibletime_ < m_visibletimemax_)
 	{
 		m_pstaticmeshcomp_->SetVisibility(false);
 	}
 	else
 	{
+		//指定した時間を超えたらメッシュを表示
 		m_pstaticmeshcomp_->SetVisibility(true);
 		MoveChair(DeltaTime);
 	}
 
 }
 
+//椅子を動かす
 void ATitle_Chair::MoveChair(float deltaTime_)
 {
 
 	//移動用に新しく座標を設定
 	FVector v_newactorlocation_ = GetActorLocation();
-
+	//回転する
 	FRotator v_newactorrotation_ = GetActorRotation();
 
 	//繰り返し運動
@@ -80,6 +83,7 @@ void ATitle_Chair::MoveChair(float deltaTime_)
 
 	v_newactorrotation_.Yaw += move_ * 3.0f;
 
+	//発射した椅子の時間をカウント
 	++m_chaircnt_;
 
 	//UE_LOG(LogTemp, Warning, TEXT("m_chaircnt = %f"), m_chaircnt_);
@@ -91,22 +95,28 @@ void ATitle_Chair::MoveChair(float deltaTime_)
 
 	SetActorRotation(FRotator(v_newactorrotation_));
 
+	//椅子を止める処理
 	if (m_visibletime_ > m_visibletimemax_ + m_stopchairtime_)
 	{
+		//各設定されたX座標を呼び出し
 		v_newactorlocation_.X = m_location_x_;
 
 		//座標呼び出し
 		SetActorLocation(FVector(v_newactorlocation_));
 
+		//椅子の発車時間が指定した時間を超えたら
 		if (m_chaircnt_ >= m_chaircntmax_)
 		{
+			//メッシュを非表示
 			m_pstaticmeshcomp_->SetVisibility(false);
 
+			//スタート座標に椅子を戻す
 			v_newactorlocation_.X = 2650.f;
 
 			//座標呼び出し
 			SetActorLocation(FVector(v_newactorlocation_));
 
+			//Tick()で足されていた変数の初期化
 			m_visibletime_ = 0.f;
 
 			m_chaircnt_ = 0.0f;
