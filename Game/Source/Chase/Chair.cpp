@@ -24,6 +24,7 @@ AChair::AChair()
 	, m_preb_player_spin_input_(0.f)
 	, m_first_player_spin_input_angle_(0.f)
 	, m_player_spin_cnt_(0)
+	, m_forward_vec_(FVector::ZeroVector)
 	, m_input_value_(FVector2D::ZeroVector)
 	, m_phase_cnt_(1)
 	, m_def_maxspeed(0.f)
@@ -97,6 +98,10 @@ void AChair::Tick(float DeltaTime)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Spin")));
 		PlayerSpin(DeltaTime);
+	}
+	else if (m_phase_ == EPhase::kPawerChange)
+	{
+		m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 	}
 	// ääÇË
 	else if (m_phase_ == EPhase::kSlip && !m_is_movement_)
@@ -230,7 +235,11 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 
 void AChair::NextPhase()
 {
-	if (m_phase_ == EPhase::kSlip)
+	if (m_phase_ == EPhase::kRotation)
+	{
+		m_forward_vec_ = Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector();
+	}
+	else if (m_phase_ == EPhase::kSlip)
 	{
 		return;
 	}
@@ -242,9 +251,8 @@ void AChair::NextPhase()
 	{
 		//m_player_spin_value_ = m_pplayermesh_->GetRelativeRotationFromWorld().Y;
 	}
-
 	// ääÇÈíºëOÇ…ÉKÉCÉhÇè¡Ç∑
-	if (m_phase_ == EPhase::kSlip)
+	else if (m_phase_ == EPhase::kSlip)
 	{
 		DeleteArrow();
 		return;
@@ -328,7 +336,8 @@ void AChair::PlayerSpin(const float _deltatime)
 
 void AChair::PlayerSlip(const float _deltatime)
 {
-	AddMovementInput(Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector(), m_input_slip_scale_);
+	m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
+	AddMovementInput(m_forward_vec_, m_input_slip_scale_);
 	UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "), Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector().X, Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector().Y, Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector().Z);
 }
 

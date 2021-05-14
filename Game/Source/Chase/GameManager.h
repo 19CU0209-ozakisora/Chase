@@ -39,13 +39,16 @@ public:
 private:
 
 	bool TimeCheck(float _deltatime);
-	int nowroundnum_;
 	float time_cnt_;
 
 	TArray<APlayerchara*> m_players_;		// Player管理用
-	TArray<AChair*> m_chairs_;				// Chair管理用(得点計算処理があるので構造体の方が良いかも)
 
 public:	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		TArray<AChair*> m_chairs_;				// Chair管理用(得点計算処理があるので構造体の方が良いかも)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+	int nowroundnum_;
 
 	UPROPERTY(EditAnywhere)
 		int m_maxroundnum_;					// 椅子を投げる最大の数

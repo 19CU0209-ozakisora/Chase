@@ -53,6 +53,7 @@ private:
 	float m_preb_player_spin_input_;				// スピン時の前回の入力
 	float m_first_player_spin_input_angle_;			// 初めてスティックを倒した角度の保存用
 	int m_player_spin_cnt_;							// 何回転したか
+	FVector m_forward_vec_;
 	FVector2D m_input_value_;						// 入力値
 	int m_phase_cnt_;								// フェーズのカウント用変数
 	float m_def_maxspeed;							// 初期状態の最高速度
