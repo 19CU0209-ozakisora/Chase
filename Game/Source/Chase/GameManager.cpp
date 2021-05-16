@@ -33,17 +33,23 @@ void AGameManager::BeginPlay()
 {
 	Super::BeginPlay();
 
+	TSubclassOf<AHouseCenter> AHouseCenterfindClass;
+	AHouseCenterfindClass = AHouseCenter::StaticClass();
+	TArray<AActor*> AHouseCentertemp;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AHouseCenterfindClass, AHouseCentertemp);
+	
+
 	//ハウスの中心座標を格納
-	m_thisLocation = GetActorLocation();
+	m_thisLocation = AHouseCentertemp[0]->GetActorLocation();
 
-	TSubclassOf<APlayerchara> findClass;
-	findClass = APlayerchara::StaticClass();
-	TArray<AActor*> temp;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), findClass, temp);
+	TSubclassOf<APlayerchara> APlayercharafindClass;
+	APlayercharafindClass = APlayerchara::StaticClass();
+	TArray<AActor*> APlayercharatemp;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayercharafindClass, APlayercharatemp);
 
-	for (int i = 0; i < temp.Num(); ++i)
+	for (int i = 0; i < APlayercharatemp.Num(); ++i)
 	{
-		m_players_.Add(Cast<APlayerchara>(temp[i]));
+		m_players_.Add(Cast<APlayerchara>(APlayercharatemp[i]));
 	}
 
 	// ゲームの最大ラウンド数 / 2 (for分の中でPlayer1とPlayer2の椅子の生成を同時に行うため、m_maxroundnum_ / 2にしています)

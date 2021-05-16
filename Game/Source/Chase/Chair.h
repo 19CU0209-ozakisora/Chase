@@ -46,6 +46,7 @@ public:
 private:
 	USceneComponent* m_proot_;						// ルートコンポーネント用(メッシュの親)
 	bool m_first_player_spin_input_flag_;			// 初めてスティックを倒したか否かのフラグ用
+	float m_angle_corection_;						// スピン時の補正用の変数
 	float m_player_rotation_;						// 回転量
 	float m_player_location_;						// 移動量
 	float m_player_spin_value_;						// スピン量
@@ -53,10 +54,11 @@ private:
 	float m_preb_player_spin_input_;				// スピン時の前回の入力
 	float m_first_player_spin_input_angle_;			// 初めてスティックを倒した角度の保存用
 	int m_player_spin_cnt_;							// 何回転したか
-	FVector m_forward_vec_;
+	int m_power_level_;								// パワーのレベルのカウント用
+	FVector m_forward_vec_;							// 前方向ベクトル
 	FVector2D m_input_value_;						// 入力値
 	int m_phase_cnt_;								// フェーズのカウント用変数
-	float m_def_maxspeed;							// 初期状態の最高速度
+	float m_def_maxspeed_;							// 初期状態の最高速度
 
 	void SetInputValue_X(const float _axisval);		// 入力された値_X
 	void SetInputValue_Y(const float _axisval);		// 入力された値_Y
@@ -69,6 +71,7 @@ private:
 	void SwitchSlipPowerLv1();
 	void SwitchSlipPowerLv2();
 	void SwitchSlipPowerLv3();
+	void SwitchSlipPower();
 
 	// カプセルコンポーネントを参照している為同じものをBPに追加
 	UFUNCTION()
@@ -116,7 +119,4 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		UFloatingPawnMovement* m_floating_pawn_movement_;				// FloatingPawnMovementコンポーネント
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
-		float b;
 };

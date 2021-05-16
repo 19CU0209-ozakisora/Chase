@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Chair.h"
 #include "Playerchara.h"
+#include "HouseCenter.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameManager.generated.h"
 

@@ -17,6 +17,7 @@
 AChair::AChair()
 	: m_proot_(NULL)
 	, m_first_player_spin_input_flag_(true)
+	, m_angle_corection_(90.f)
 	, m_player_rotation_(0.f)
 	, m_player_location_(0.f)
 	, m_player_spin_value_(0.f)
@@ -24,10 +25,11 @@ AChair::AChair()
 	, m_preb_player_spin_input_(0.f)
 	, m_first_player_spin_input_angle_(0.f)
 	, m_player_spin_cnt_(0)
+	, m_power_level_(1)
 	, m_forward_vec_(FVector::ZeroVector)
 	, m_input_value_(FVector2D::ZeroVector)
 	, m_phase_cnt_(1)
-	, m_def_maxspeed(0.f)
+	, m_def_maxspeed_(0.f)
 	, m_debugmode_(false)
 	, m_is_movement_(false)
 	, m_phase_(EPhase::kStay)
@@ -44,10 +46,6 @@ AChair::AChair()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	// ルートコンポーネントの設定
-	//m_proot_ = CreateDefaultSubobject<USceneComponent>(TEXT("m_proot_"));
-	//m_proot_ = RootComponent;
 
 	// 椅子のメッシュの設定
 	//m_pplayermesh_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("m_pplayermesh_"));
@@ -69,8 +67,8 @@ void AChair::BeginPlay()
 
 	// ヒット時の関数のバインド
 	m_pplayermesh_->OnComponentHit.AddDynamic(this, &AChair::ComponentHit);
-
-	m_def_maxspeed = m_floating_pawn_movement_->GetMaxSpeed();
+	// m_floating_pawn_movement_ の最大速度を格納
+	m_def_maxspeed_ = m_floating_pawn_movement_->GetMaxSpeed();
 }
 
 // Called every frame
@@ -90,23 +88,23 @@ void AChair::Tick(float DeltaTime)
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Rotation")));
 		PlayerRotation(DeltaTime);
 	}
-	else if (m_phase_ == EPhase::kPawerChange)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("PawerChange")));
-	}
+	// スピン
 	else if (m_phase_ == EPhase::kSpin)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Spin")));
 		PlayerSpin(DeltaTime);
 	}
+	// 力の変更
 	else if (m_phase_ == EPhase::kPawerChange)
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("PowerChange")));
 		m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 	}
 	// 滑り
 	else if (m_phase_ == EPhase::kSlip && !m_is_movement_)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Slip")));
+		m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 		PlayerSlip(DeltaTime);
 	}
 	// 行動終了
@@ -130,6 +128,7 @@ void AChair::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	InputComponent->BindAction("Switch_Slip_Power_Lv1", EInputEvent::IE_Pressed, this, &AChair::SwitchSlipPowerLv1);
 	InputComponent->BindAction("Switch_Slip_Power_Lv2", EInputEvent::IE_Pressed, this, &AChair::SwitchSlipPowerLv2);
 	InputComponent->BindAction("Switch_Slip_Power_Lv3", EInputEvent::IE_Pressed, this, &AChair::SwitchSlipPowerLv3);
+	InputComponent->BindAction("Switch_Slip_Power", EInputEvent::IE_Pressed, this, &AChair::SwitchSlipPower);
 }
 
 void AChair::SetInputValue_X(const float _axisval)
@@ -185,61 +184,54 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 	return;
 	}
 
-	if (Cast<AChair>(OtherActor)->m_name_ == "P1Chair" || Cast<AChair>(OtherActor)->m_name_ == "P2Chair" || Cast<AChair>(OtherActor)->m_name_ == "Default")
+	if (Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity == FVector::ZeroVector)
 	{
-		if (Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity == FVector::ZeroVector)
+		UE_LOG(LogTemp, Warning, TEXT("True"));
+		if (m_debugmode_)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("True"));
-			if (m_debugmode_)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("Chair Hit")));
-				// 椅子のメッシュの前方向ベクトル
-				UE_LOG(LogTemp, Warning, TEXT("this forwardVector = %f, %f, %f, "), m_pplayermesh_->GetForwardVector().X, m_pplayermesh_->GetForwardVector().Y, m_pplayermesh_->GetForwardVector().Z);
-				// floatingpawnmovementの速度
-				UE_LOG(LogTemp, Warning, TEXT("this component speed = %f, %f, %f, "), m_floating_pawn_movement_->Velocity.X, m_floating_pawn_movement_->Velocity.Y, m_floating_pawn_movement_->Velocity.Z);
-			}
-
-			// 物理の働く向きの設定
-			m_pplayermesh_->SetConstraintMode(EDOFMode::XYPlane);
-
-			// 椅子に当たった状態に変更
-			m_is_movement_ = true;
-			m_phase_ = EPhase::kEnd;
-
-			// 当たった椅子に速度を与える(現状前方向ベクトルと速度で計算)
-			Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity = m_pplayermesh_->GetForwardVector() * m_floating_pawn_movement_->Velocity * m_is_movement_scale_;
-
-			// 椅子の減速処理(X Y Z のいずれかが0だと計算してくれないっぽい？？？？)
-			m_floating_pawn_movement_->Velocity.X /= m_hitstop_scale_;
-			m_floating_pawn_movement_->Velocity.Y /= m_hitstop_scale_;
-			m_floating_pawn_movement_->Velocity.Z /= m_hitstop_scale_;
-
-			if (m_debugmode_)
-			{
-				// 当たった椅子の速度
-				UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "), Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.X, Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.Y, Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.Z);
-				// 椅子の速度
-				UE_LOG(LogTemp, Warning, TEXT("this after hit speed = %f, %f, %f, "), m_floating_pawn_movement_->Velocity.X, m_floating_pawn_movement_->Velocity.Y, m_floating_pawn_movement_->Velocity.Z);
-			}
+			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("Chair Hit")));
+			// 椅子のメッシュの前方向ベクトル
+			UE_LOG(LogTemp, Warning, TEXT("this forwardVector = %f, %f, %f, "), m_pplayermesh_->GetForwardVector().X, m_pplayermesh_->GetForwardVector().Y, m_pplayermesh_->GetForwardVector().Z);
+			// floatingpawnmovementの速度
+			UE_LOG(LogTemp, Warning, TEXT("this component speed = %f, %f, %f, "), m_floating_pawn_movement_->Velocity.X, m_floating_pawn_movement_->Velocity.Y, m_floating_pawn_movement_->Velocity.Z);
 		}
-		else
+
+		// 物理の働く向きの設定
+		m_pplayermesh_->SetConstraintMode(EDOFMode::XYPlane);
+
+		// 椅子に当たった状態に変更
+		m_is_movement_ = true;
+		m_phase_ = EPhase::kEnd;
+
+		// 当たった椅子に速度を与える(現状前方向ベクトルと速度で計算)
+		Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity = m_pplayermesh_->GetForwardVector() * m_floating_pawn_movement_->Velocity * m_is_movement_scale_;
+
+		// 椅子の減速処理(X Y Z のいずれかが0だと計算してくれないっぽい？？？？)
+		m_floating_pawn_movement_->Velocity.X /= m_hitstop_scale_;
+		m_floating_pawn_movement_->Velocity.Y /= m_hitstop_scale_;
+		m_floating_pawn_movement_->Velocity.Z /= m_hitstop_scale_;
+
+		if (m_debugmode_)
 		{
-			if (m_debugmode_)
-			{
-				FVector vec = Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity;
-				UE_LOG(LogTemp, Warning, TEXT("false(X = %f, Y = %f, Z = %f)"), vec.X, vec.Y, vec.Z);
-			}
+			// 当たった椅子の速度
+			UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "), Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.X, Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.Y, Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.Z);
+			// 椅子の速度
+			UE_LOG(LogTemp, Warning, TEXT("this after hit speed = %f, %f, %f, "), m_floating_pawn_movement_->Velocity.X, m_floating_pawn_movement_->Velocity.Y, m_floating_pawn_movement_->Velocity.Z);
+		}
+	}
+	else
+	{
+		if (m_debugmode_)
+		{
+			FVector vec = Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity;
+			UE_LOG(LogTemp, Warning, TEXT("false(X = %f, Y = %f, Z = %f)"), vec.X, vec.Y, vec.Z);
 		}
 	}
 }
 
 void AChair::NextPhase()
 {
-	if (m_phase_ == EPhase::kRotation)
-	{
-		m_forward_vec_ = Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector();
-	}
-	else if (m_phase_ == EPhase::kSlip)
+	if (m_phase_ == EPhase::kSlip)
 	{
 		return;
 	}
@@ -247,9 +239,10 @@ void AChair::NextPhase()
 	m_phase_cnt_++;
 	m_phase_ = EPhase(m_phase_cnt_);
 
+	// 回転の時に決定キーを押したら
 	if (m_phase_ == EPhase::kSpin)
 	{
-		//m_player_spin_value_ = m_pplayermesh_->GetRelativeRotationFromWorld().Y;
+		m_forward_vec_ = Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector();
 	}
 	// 滑る直前にガイドを消す
 	else if (m_phase_ == EPhase::kSlip)
@@ -279,7 +272,7 @@ void AChair::PlayerSpin(const float _deltatime)
 {
 	// 入力されたVector2を角度をに変換度、上入力が0度になるように補正後
 	// 上入力 -> 0, 右入力 -> 90, 下入力 -> 180, 左入力 -> 270
-	m_player_spin_angle_ = (atan2(-m_input_value_.Y, m_input_value_.X) * 180.f / PI) + b;
+	m_player_spin_angle_ = (atan2(-m_input_value_.Y, m_input_value_.X) * 180.f / PI) + m_angle_corection_;
 
 	// -180°~ 180°の範囲になっている為、0° ~ 360°に補正するためにマイナス値が入った場合360を加算
 	if (m_player_spin_angle_ < 0.f)
@@ -336,43 +329,77 @@ void AChair::PlayerSpin(const float _deltatime)
 
 void AChair::PlayerSlip(const float _deltatime)
 {
-	m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 	AddMovementInput(m_forward_vec_, m_input_slip_scale_);
 	UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "), Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector().X, Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector().Y, Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector().Z);
 }
 
 void AChair::SwitchSlipPowerLv1()
 {
-	if (m_phase_ == EPhase::kMove || m_phase_ == EPhase::kRotation)
+	if (m_phase_ == EPhase::kPawerChange)
 	{
 		if (m_debugmode_)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Switch_Slip_Power_Lv1")));
 		}
-		m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed * 0.5f;
+		m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed_ * 0.5f;
 	}
 }
 
 void AChair::SwitchSlipPowerLv2()
 {
-	if (m_phase_ == EPhase::kMove || m_phase_ == EPhase::kRotation)
+	if (m_phase_ == EPhase::kPawerChange)
 	{
 		if (m_debugmode_)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Switch_Slip_Power_Lv2")));
 		}
-		m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed;
+		m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed_;
 	}
 }
 
 void AChair::SwitchSlipPowerLv3()
 {
-	if (m_phase_ == EPhase::kMove || m_phase_ == EPhase::kRotation)
+	if (m_phase_ == EPhase::kPawerChange)
 	{
 		if (m_debugmode_)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Switch_Slip_Power_Lv3")));
 		}
-		m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed * 1.5f;
+		m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed_ * 1.5f;
+	}
+}
+
+void AChair::SwitchSlipPower()
+{
+	if (m_phase_ == EPhase::kPawerChange)
+	{
+
+		++m_power_level_;
+		m_power_level_ %= 3;
+
+		if (m_power_level_ == 0)
+		{
+			if (m_debugmode_)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Switch_Slip_Power_Lv1")));
+			}
+			m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed_ * 0.5f;
+		}
+		else if (m_power_level_ == 1)
+		{
+			if (m_debugmode_)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Switch_Slip_Power_Lv2")));
+			}
+			m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed_;
+		}
+		else
+		{
+			if (m_debugmode_)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Switch_Slip_Power_Lv3")));
+			}
+			m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed_ * 1.5f;
+		}
 	}
 }
