@@ -39,8 +39,11 @@ void AGameManager::BeginPlay()
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AHouseCenterfindClass, AHouseCentertemp);
 	
 
-	//ハウスの中心座標を格納
-	m_thisLocation = AHouseCentertemp[0]->GetActorLocation();
+	for (int i = 0; i < AHouseCentertemp.Num(); ++i)
+	{
+		//ハウスの中心座標を格納
+		m_thisLocation = AHouseCentertemp[0]->GetActorLocation();
+	}
 
 	TSubclassOf<APlayerchara> APlayercharafindClass;
 	APlayercharafindClass = APlayerchara::StaticClass();
