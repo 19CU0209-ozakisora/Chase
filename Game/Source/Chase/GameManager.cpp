@@ -121,7 +121,10 @@ void AGameManager::Tick(float DeltaTime)
 						// m_chairs_[i]->b();
 					}
 
-					++nowroundnum_;
+					if (nowroundnum_ < m_maxroundnum_)
+					{
+						++nowroundnum_;
+					}
 				}
 			}
 		}
@@ -147,7 +150,10 @@ void AGameManager::Tick(float DeltaTime)
 						m_chairs_[i]->SpawnDefaultController();
 					}
 
-					++nowroundnum_;
+					if (nowroundnum_ < m_maxroundnum_)
+					{
+						++nowroundnum_;
+					}
 				}
 			}
 		}
