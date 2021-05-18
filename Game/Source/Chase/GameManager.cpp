@@ -39,8 +39,11 @@ void AGameManager::BeginPlay()
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AHouseCenterfindClass, AHouseCentertemp);
 	
 
-	//ハウスの中心座標を格納
-	m_thisLocation = AHouseCentertemp[0]->GetActorLocation();
+	for (int i = 0; i < AHouseCentertemp.Num(); ++i)
+	{
+		//ハウスの中心座標を格納
+		m_thisLocation = AHouseCentertemp[0]->GetActorLocation();
+	}
 
 	TSubclassOf<APlayerchara> APlayercharafindClass;
 	APlayercharafindClass = APlayerchara::StaticClass();
@@ -51,6 +54,17 @@ void AGameManager::BeginPlay()
 	{
 		m_players_.Add(Cast<APlayerchara>(APlayercharatemp[i]));
 	}
+
+	if (m_players_[0] != NULL && m_players_.Num() == 2)
+	{
+		if (m_players_[0]->GetFName() != "BP_Player1")
+		{
+			APlayerchara* PlayerTemp = m_players_[0];
+			m_players_[0] = m_players_[1];
+			m_players_[1] = PlayerTemp;
+		}
+	}
+
 
 	// ゲームの最大ラウンド数 / 2 (for分の中でPlayer1とPlayer2の椅子の生成を同時に行うため、m_maxroundnum_ / 2にしています)
 	for (int n = 0; n < m_maxroundnum_ / 2; ++n)
@@ -118,7 +132,10 @@ void AGameManager::Tick(float DeltaTime)
 						// m_chairs_[i]->b();
 					}
 
-					++nowroundnum_;
+					if (nowroundnum_ < m_maxroundnum_)
+					{
+						++nowroundnum_;
+					}
 				}
 			}
 		}
@@ -144,7 +161,10 @@ void AGameManager::Tick(float DeltaTime)
 						m_chairs_[i]->SpawnDefaultController();
 					}
 
-					++nowroundnum_;
+					if (nowroundnum_ < m_maxroundnum_)
+					{
+						++nowroundnum_;
+					}
 				}
 			}
 		}

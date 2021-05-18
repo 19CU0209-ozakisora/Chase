@@ -42,9 +42,13 @@ private:
 	bool TimeCheck(float _deltatime);
 	float time_cnt_;
 
-	TArray<APlayerchara*> m_players_;		// Player管理用
+	
 
 public:	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		TArray<APlayerchara*> m_players_;		// Player管理用
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		TArray<AChair*> m_chairs_;				// Chair管理用(得点計算処理があるので構造体の方が良いかも)
 
