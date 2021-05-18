@@ -55,6 +55,17 @@ void AGameManager::BeginPlay()
 		m_players_.Add(Cast<APlayerchara>(APlayercharatemp[i]));
 	}
 
+	if (m_players_[0] != NULL && m_players_.Num() == 2)
+	{
+		if (m_players_[0]->GetFName() != "BP_Player1")
+		{
+			APlayerchara* PlayerTemp = m_players_[0];
+			m_players_[0] = m_players_[1];
+			m_players_[1] = PlayerTemp;
+		}
+	}
+
+
 	// ゲームの最大ラウンド数 / 2 (for分の中でPlayer1とPlayer2の椅子の生成を同時に行うため、m_maxroundnum_ / 2にしています)
 	for (int n = 0; n < m_maxroundnum_ / 2; ++n)
 	{
