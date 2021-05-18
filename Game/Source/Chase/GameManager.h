@@ -20,7 +20,7 @@
 };
 */
 
-UCLASS()
+UCLASS(BluePrintable)
 class CHASE_API AGameManager : public AActor
 {
 	GENERATED_BODY()
@@ -80,9 +80,11 @@ public:
 private:
 
 	//チームポイント（1P用）
+	//UPROPERTY(BlueprintReadOnly)
 	int m_teamPoint1P;
 
-	//チームポイント（2P用）
+	//チームポイント（2P用）]
+	//UPROPERTY(BlueprintReadOnly)
 	int m_teamPoint2P;
 
 	//自分自身の座標

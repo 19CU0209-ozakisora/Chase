@@ -151,11 +151,11 @@ void AGameManager::Tick(float DeltaTime)
 	}
 
 	//ラウンドが10になったら
-	/*if (nowroundnum_ > 10)
+	if (nowroundnum_ == 10)
 	{
 		//椅子が10個止まった時の処理
 		StopChair();
-	}*/
+	}
 
 }
 
@@ -269,11 +269,11 @@ void AGameManager::SetPoint()
 	if(m_chairs_[0]->m_name_ == "P1Chair")
 	{
 		//  そのタグにポイントを入れる
-		m_teamPoint1P = i + 1 + m_teamPoint1P;
+		m_teamPoint1P += i + 1 + m_teamPoint1P;
 	}
 	else if (m_chairs_[0]->m_name_ == "P2Chair")
 	{
-		m_teamPoint2P = i + 1 + m_teamPoint2P;
+		m_teamPoint2P += i + 1 + m_teamPoint2P;
 	}
 	UE_LOG(LogTemp, Warning, TEXT("P1Point %d"), m_teamPoint1P);
 	UE_LOG(LogTemp, Warning, TEXT("P2Point %d"), m_teamPoint2P);
