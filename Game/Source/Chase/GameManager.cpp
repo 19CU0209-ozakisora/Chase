@@ -153,17 +153,28 @@ void AGameManager::Tick(float DeltaTime)
 				// 一定秒数経過後、操作する椅子の変更
 				if (TimeCheck(DeltaTime))
 				{
-					// 上と同じ(長いので割愛)
-					m_players_[0]->control_chair_ = m_chairs_[nowroundnum_];
-					m_players_[0]->GetOperate();
-					for (int i = 0; i < m_chairs_.Num(); ++i)
+					if (nowroundnum_ <= m_chairs_.Num() - 1)
 					{
-						m_chairs_[i]->SpawnDefaultController();
-					}
+						if (m_chairs_[nowroundnum_] != NULL)
+						{
+							// 上と同じ(長いので割愛)
+							m_players_[0]->control_chair_ = m_chairs_[nowroundnum_];
+							m_players_[0]->GetOperate();
+						}
+						else
+						{
+							GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("C")));
+						}
 
-					if (nowroundnum_ < m_maxroundnum_)
-					{
-						++nowroundnum_;
+						for (int i = 0; i < m_chairs_.Num(); ++i)
+						{
+							m_chairs_[i]->SpawnDefaultController();
+						}
+
+						if (nowroundnum_ < m_maxroundnum_)
+						{
+							++nowroundnum_;
+						}
 					}
 				}
 			}
@@ -171,7 +182,7 @@ void AGameManager::Tick(float DeltaTime)
 	}
 
 	//ラウンドが10になったら
-	if (nowroundnum_ == 10)
+	if (nowroundnum_ == 10 && m_players_[1]->control_chair_->m_phase_ == EPhase::kEnd)
 	{
 		//椅子が10個止まった時の処理
 		StopChair();
