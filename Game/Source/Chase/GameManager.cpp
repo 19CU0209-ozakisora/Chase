@@ -99,7 +99,12 @@ void AGameManager::BeginPlay()
 
 	// Player[0]が管理している椅子の視点に変更
 	//m_players_[0]->control_chair_ = m_chairs_[0];
-	m_players_[0]->GetOperate();
+	if (m_chairs_[0] != NULL && m_players_[0])
+	{
+		m_players_[0]->control_chair_ = m_chairs_[0];
+		m_players_[0]->GetOperate();
+	}
+
 	++nowroundnum_;
 }
 
@@ -107,21 +112,33 @@ void AGameManager::BeginPlay()
 void AGameManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	FString k = "hello";
+	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, k);
 	// 奇数ターンの時(Player1の番)
 	if (nowroundnum_ % 2 == 1)
 	{
 		// NULLチェック
 		if (m_players_[0]->control_chair_ != NULL)
 		{
+			FString b = m_players_[0]->control_chair_->GetName();
+			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, b);
 			// 現在操作している椅子が椅子に当たる or 一定ラインまで行ってしまったら
 			if (m_players_[0]->control_chair_->m_phase_ == EPhase::kEnd)
 			{
 				// 一定秒数経過後、操作する椅子の変更
 				if (TimeCheck(DeltaTime))
 				{
-					m_players_[1]->control_chair_ = m_chairs_[nowroundnum_];
-					m_players_[1]->GetOperate();
+					FString a = m_players_[0]->control_chair_->GetName();
+					GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, a);
+					if (m_chairs_[nowroundnum_] != NULL)
+					{
+						m_players_[1]->control_chair_ = m_chairs_[nowroundnum_];
+						m_players_[1]->GetOperate();
+					}
+					else
+					{
+						GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("Chair NULL")));
+					}
 
 					// 椅子の配列の個数分だけ椅子のSpawnDefaultController()関数を呼ぶ
 					// 本来は操作する椅子の変更後、前まで操作していた椅子だけSpawnDefaultController()関数
@@ -147,15 +164,26 @@ void AGameManager::Tick(float DeltaTime)
 		// NULLチェック
 		if (m_players_[1]->control_chair_ != NULL)
 		{
+			FString b = m_players_[1]->control_chair_->GetName();
+			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, b);
 			// 現在操作している椅子が椅子に当たる or 一定ラインまで行ってしまったら
 			if (m_players_[1]->control_chair_->m_phase_ == EPhase::kEnd)
 			{
 				// 一定秒数経過後、操作する椅子の変更
 				if (TimeCheck(DeltaTime))
 				{
+					FString a = m_players_[1]->control_chair_->GetName();
+					GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, a);
+					if (m_chairs_[nowroundnum_] != NULL)
+					{
+						m_players_[0]->control_chair_ = m_chairs_[nowroundnum_];
+						m_players_[0]->GetOperate();
+					}
+					else
+					{
+						GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("Chair NULL")));
+					}
 					// 上と同じ(長いので割愛)
-					m_players_[0]->control_chair_ = m_chairs_[nowroundnum_];
-					m_players_[0]->GetOperate();
 					for (int i = 0; i < m_chairs_.Num(); ++i)
 					{
 						m_chairs_[i]->SpawnDefaultController();
@@ -182,6 +210,7 @@ void AGameManager::Tick(float DeltaTime)
 bool AGameManager::TimeCheck(float _deltatime)
 {
 	time_cnt_ += _deltatime;
+	UE_LOG(LogTemp, Log, TEXT("%f"), time_cnt_);
 
 	if (time_cnt_ <= m_chair_create_time_)
 	{

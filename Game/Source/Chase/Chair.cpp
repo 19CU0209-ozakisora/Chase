@@ -231,7 +231,7 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 
 void AChair::NextPhase()
 {
-	if (m_phase_ == EPhase::kSlip)
+	if (m_phase_ == EPhase::kSlip || m_phase_ == EPhase::kEnd)
 	{
 		return;
 	}
