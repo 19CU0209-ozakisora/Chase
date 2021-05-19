@@ -46,19 +46,19 @@ private:
 
 public:	
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
 		TArray<APlayerchara*> m_players_;		// Player管理用
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
 		TArray<AChair*> m_chairs_;				// Chair管理用(得点計算処理があるので構造体の方が良いかも)
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
 	int nowroundnum_;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
 		int m_maxroundnum_;					// 椅子を投げる最大の数
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
 		float m_chair_create_time_;
 
 //---------------------------------------------------------
