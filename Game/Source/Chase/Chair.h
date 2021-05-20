@@ -44,8 +44,8 @@ public:
 
 
 private:
-	USceneComponent* m_proot_;						// ルートコンポーネント用(メッシュの親)
 	bool m_first_player_spin_input_flag_;			// 初めてスティックを倒したか否かのフラグ用
+	bool m_slip_curve_;								//
 	float m_angle_corection_;						// スピン時の補正用の変数
 	float m_player_rotation_;						// 回転量
 	float m_player_location_;						// 移動量
@@ -72,12 +72,15 @@ private:
 	void SwitchSlipPowerLv2();
 	void SwitchSlipPowerLv3();
 	void SwitchSlipPower();
+	void SetSlipCurve();
 
 	// カプセルコンポーネントを参照している為同じものをBPに追加
 	UFUNCTION()
 		void ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& HitResult);
 
 public:
+	UPROPERTY(EditAnywhere, Category = "Default Setting")
+	USceneComponent* m_proot_;						// ルートコンポーネント用(メッシュの親)
 
 	UPROPERTY(EditAnywhere, Category = "Default Setting")	
 		bool m_debugmode_;												// デバッグモードをONにするかどうか
@@ -99,6 +102,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")	
 		float m_input_slip_scale_;										// 滑りの倍率
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		float m_input_slip_curve_;										// 滑っているときに曲がる量
 		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")	
 		float m_hitstop_scale_;											// ヒット時の減速の倍率
