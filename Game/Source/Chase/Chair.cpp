@@ -129,6 +129,10 @@ void AChair::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	InputComponent->BindAction("Switch_Slip_Power_Lv2", EInputEvent::IE_Pressed, this, &AChair::SwitchSlipPowerLv2);
 	InputComponent->BindAction("Switch_Slip_Power_Lv3", EInputEvent::IE_Pressed, this, &AChair::SwitchSlipPowerLv3);
 	InputComponent->BindAction("Switch_Slip_Power", EInputEvent::IE_Pressed, this, &AChair::SwitchSlipPower);
+
+	// ŠŠ‚Á‚Ä‚¢‚é‚Æ‚«‚É‹È‚°‚é‚©”Û‚©
+	InputComponent->BindAction("Slip_Curve", EInputEvent::IE_Pressed, this, &AChair::SetSlipCurve);
+	InputComponent->BindAction("Slip_Curve", EInputEvent::IE_Released, this, &AChair::SetSlipCurve);
 }
 
 void AChair::SetInputValue_X(const float _axisval)
@@ -243,12 +247,7 @@ void AChair::NextPhase()
 	if (m_phase_ == EPhase::kSpin)
 	{
 		m_forward_vec_ = Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector();
-	}
-	// ŠŠ‚é’¼‘O‚ÉƒKƒCƒh‚ðÁ‚·
-	else if (m_phase_ == EPhase::kSlip)
-	{
 		DeleteArrow();
-		return;
 	}
 }
 
@@ -329,7 +328,22 @@ void AChair::PlayerSpin(const float _deltatime)
 
 void AChair::PlayerSlip(const float _deltatime)
 {
+	if (m_slip_curve_)
+	{
+		if (m_player_spin_cnt_ > 0)
+		{
+			m_forward_vec_.X -= m_input_slip_curve_ * m_player_spin_cnt_;
+			m_forward_vec_.Y += m_input_slip_curve_ * m_player_spin_cnt_;
+		}
+		else if (m_player_spin_cnt_ < 0)
+		{
+			m_forward_vec_.X += m_input_slip_curve_ * m_player_spin_cnt_;
+			m_forward_vec_.Y -= m_input_slip_curve_ * m_player_spin_cnt_;
+		}
+	}
 	AddMovementInput(m_forward_vec_, m_input_slip_scale_);
+	//AddMovementInput(GetActorForwardVector(), m_input_slip_scale_);
+
 	UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "), Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector().X, Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector().Y, Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector().Z);
 }
 
@@ -402,4 +416,9 @@ void AChair::SwitchSlipPower()
 			m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed_ * 1.5f;
 		}
 	}
+}
+
+void AChair::SetSlipCurve()
+{
+	m_slip_curve_ = !m_slip_curve_;
 }
