@@ -217,6 +217,8 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 		m_floating_pawn_movement_->Velocity.Y /= m_hitstop_scale_;
 		m_floating_pawn_movement_->Velocity.Z /= m_hitstop_scale_;
 
+		Cast<AChair>(OtherActor)->Ragdoll();
+
 		if (m_debugmode_)
 		{
 			// “–‚½‚Á‚½ˆÖŽq‚Ì‘¬“x

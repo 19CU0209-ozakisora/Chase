@@ -125,4 +125,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		UFloatingPawnMovement* m_floating_pawn_movement_;				// FloatingPawnMovementコンポーネント
+
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "MyF")
+		void Ragdoll();
 };
