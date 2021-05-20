@@ -9,6 +9,8 @@
 //			2021/05/07 尾崎蒼宙 タグで処理させていた部分をFStringに変更
 //								椅子が椅子以外の物にぶつかった時のクラッシュ修正 
 //			2021/05/11 尾崎蒼宙 当たった時のm_name_の検索に「Default」を追加
+//			2021/05/12 尾崎蒼宙 構造体の追加
+//			2021/05/20 尾崎蒼宙 スピン処理の追加
 //--------------------------------------------------------------
 
 #include "Chair.h"
@@ -332,19 +334,26 @@ void AChair::PlayerSlip(const float _deltatime)
 	{
 		if (m_player_spin_cnt_ > 0)
 		{
-			m_forward_vec_.X -= m_input_slip_curve_ * m_player_spin_cnt_;
-			m_forward_vec_.Y += m_input_slip_curve_ * m_player_spin_cnt_;
+			if (m_forward_vec_.X > 0.1f)
+			{
+				m_forward_vec_.X -= m_input_slip_curve_ * m_player_spin_cnt_;
+				m_forward_vec_.Y += m_input_slip_curve_ * m_player_spin_cnt_;
+			}
 		}
 		else if (m_player_spin_cnt_ < 0)
 		{
-			m_forward_vec_.X += m_input_slip_curve_ * m_player_spin_cnt_;
-			m_forward_vec_.Y -= m_input_slip_curve_ * m_player_spin_cnt_;
+			if (m_forward_vec_.X > 0.1f)
+			{
+				m_forward_vec_.X += m_input_slip_curve_ * m_player_spin_cnt_;
+				m_forward_vec_.Y -= m_input_slip_curve_ * m_player_spin_cnt_;
+			}
+
 		}
 	}
 	AddMovementInput(m_forward_vec_, m_input_slip_scale_);
 	//AddMovementInput(GetActorForwardVector(), m_input_slip_scale_);
 
-	UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "), Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector().X, Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector().Y, Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector().Z);
+	UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "),m_forward_vec_.X, m_forward_vec_.Y, m_forward_vec_.Z);
 }
 
 void AChair::SwitchSlipPowerLv1()
