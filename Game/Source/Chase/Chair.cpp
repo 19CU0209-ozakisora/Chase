@@ -72,15 +72,15 @@ AChair::AChair()
 	//--------------------------------------------------------
 	//2021/05/21 野田
 	//何の音を再生するかをパスで指定、見つかったらオブジェクトに入れる
-	static ConstructHelpers::FObjectFinder<USoundBase> find_sound_deside_(TEXT("/Game/Music/SE/deside_8"));
+	static ConstructorHelpers::FObjectFinder<USoundBase> find_sound_deside_(TEXT("/Game/Music/SE/deside_8"));
 
 	if (find_sound_deside_.Succeeded())
 	{
 		m_sound_obj_ = find_sound_deside_.Object;
 	}
 
-	static ConstructHelpers::FObjectFinder<USoundBase> find_sound_chair_(TEXT("/Game/Music/SE/caster"));
-	if (find_sound_chair_.Succeed())
+	static ConstructorHelpers::FObjectFinder<USoundBase> find_sound_chair_(TEXT("/Game/Music/SE/caster"));
+	if (find_sound_chair_.Succeeded())
 	{
 		m_chair_obj_ = find_sound_chair_.Object;
 	}
