@@ -15,6 +15,14 @@
 
 #include "Chair.h"
 
+//--------------------------------------------------------------
+//2021/05/21 野田
+//インクルード
+#include "Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
+#include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
+#include "ActiveSound.h"
+//--------------------------------------------------------------
+
 // Sets default values
 AChair::AChair() 
 	: m_first_player_spin_input_flag_(true)
@@ -60,6 +68,24 @@ AChair::AChair()
 
 	// 移動関係のコンポーネントの追加
 	m_floating_pawn_movement_ = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("m_floating_pawn_movement_"));
+
+	//--------------------------------------------------------
+	//2021/05/21 野田
+	//何の音を再生するかをパスで指定、見つかったらオブジェクトに入れる
+	static ConstructHelpers::FObjectFinder<USoundBase> find_sound_deside_(TEXT("/Game/Music/SE/deside_8"));
+
+	if (find_sound_deside_.Succeeded())
+	{
+		m_sound_obj_ = find_sound_deside_.Object;
+	}
+
+	static ConstructHelpers::FObjectFinder<USoundBase> find_sound_chair_(TEXT("/Game/Music/SE/caster"));
+	if (find_sound_chair_.Succeed())
+	{
+		m_chair_obj_ = find_sound_chair_.Object;
+	}
+
+	//--------------------------------------------------------
 };
 
 // Called when the game starts or when spawned
@@ -108,12 +134,44 @@ void AChair::Tick(float DeltaTime)
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Slip")));
 		m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 		PlayerSlip(DeltaTime);
+
+		//----------------------------------------------------
+		//2021/05/21 野田
+		//音楽再生（椅子が転がる音）
+		//Tickで処理しているため、再生が重複しないようにする
+		if (m_audiocomponent_ == nullptr)
+		{
+			m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_chair_obj_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
+		}
+		//（再生中じゃない場合）
+		else if (!m_audiocomponent_->IsPlaying())
+		{
+			m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_chair_obj_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
+		}
+		//----------------------------------------------------
+
 	}
 	// 行動終了
 	else if (m_phase_ == EPhase::kEnd)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("End")));
 	}
+
+	//--------------------------------------------------
+	//2021/05/21 野田
+	//前のフレームのときのフェーズと今のフェーズが一致しない場合（フェーズ切り替えの瞬間）
+	if (m_prevphase_ != m_phase_)
+	{
+		if (m_phase_ != EPhase::kSlip)
+		{
+			//音再生（決定音）
+			m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_sound_obj_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
+		}
+	}
+
+	//フェーズを格納
+	m_prevphase_ = m_phase_;
+	//--------------------------------------------------
 }
 
 // Called to bind functionality to input

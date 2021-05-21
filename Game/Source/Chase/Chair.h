@@ -11,6 +11,10 @@
 #include "GameFramework/Pawn.h"
 #include "Chair.generated.h"
 
+//2021/05/21 野田
+//前方宣言
+class UAudioComponent;
+
 // 椅子のフェーズの列挙型
 UENUM(BlueprintType)
 enum class EPhase : uint8
@@ -59,6 +63,15 @@ private:
 	FVector2D m_input_value_;						// 入力値
 	int m_phase_cnt_;								// フェーズのカウント用変数
 	float m_def_maxspeed_;							// 初期状態の最高速度
+
+	//-------------------------------------------------------------
+	//2021/05/21 野田
+	//音楽を入れるコンポーネント
+	UAudioComponent* m_audiocomponent_;
+
+	//前のフェーズ管理用
+	EPhase m_prevphase_;
+	//-------------------------------------------------------------
 
 	void SetInputValue_X(const float _axisval);		// 入力された値_X
 	void SetInputValue_Y(const float _axisval);		// 入力された値_Y
@@ -127,6 +140,19 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		UFloatingPawnMovement* m_floating_pawn_movement_;				// FloatingPawnMovementコンポーネント
+
+	//---------------------------------------------------------
+	//2021/05/21 野田
+	//サウンドを入れるコンポーネント
+	//決定音
+	UPROPERTY()
+		USoundBase* m_sound_obj_;
+
+	//椅子の転がる音
+	UPROPERTY()
+		USoundBase* m_chair_obj_;
+
+	//---------------------------------------------------------
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "MyF")
 		void Ragdoll();
