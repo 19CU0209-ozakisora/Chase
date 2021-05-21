@@ -11,6 +11,7 @@
 //								m_PlayerNumberNameをm_name_に変更
 //								m_pAchairをm_chairs_に変更(役割の変更)
 //			2021/05/21 尾崎蒼宙 椅子の上の人間を消す処理の追加
+//			2021/05/21 尾崎蒼宙 消されたデータの復旧
 //--------------------------------------------------------------
 
 //インクルード
@@ -98,8 +99,8 @@ void AGameManager::BeginPlay()
 	}
 	*/
 
-	// Player[0]が管理している椅子の視点に変更
-	//m_players_[0]->control_chair_ = m_chairs_[0];
+	//Player[0]が管理している椅子の視点に変更
+	m_players_[0]->control_chair_ = m_chairs_[0];
 	m_players_[0]->GetOperate();
 	++nowroundnum_;
 }

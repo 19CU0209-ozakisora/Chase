@@ -335,6 +335,7 @@ void AChair::PlayerSpin(const float _deltatime)
 
 void AChair::PlayerSlip(const float _deltatime)
 {
+	// 曲がるボタンが押されていたら回転方向に向けて移動
 	if (m_slip_curve_)
 	{
 		if (m_player_spin_cnt_ > 0)
@@ -355,10 +356,13 @@ void AChair::PlayerSlip(const float _deltatime)
 
 		}
 	}
+	// 前方向ベクトルに向かって移動
 	AddMovementInput(m_forward_vec_, m_input_slip_scale_);
-	//AddMovementInput(GetActorForwardVector(), m_input_slip_scale_);
 
-	UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "),m_forward_vec_.X, m_forward_vec_.Y, m_forward_vec_.Z);
+	if (m_debugmode_)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "), m_forward_vec_.X, m_forward_vec_.Y, m_forward_vec_.Z);
+	}
 }
 
 void AChair::SwitchSlipPowerLv1()
