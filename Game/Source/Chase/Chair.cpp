@@ -16,9 +16,8 @@
 #include "Chair.h"
 
 // Sets default values
-AChair::AChair()
-	: m_proot_(NULL)
-	, m_first_player_spin_input_flag_(true)
+AChair::AChair() 
+	: m_first_player_spin_input_flag_(true)
 	, m_angle_corection_(90.f)
 	, m_player_rotation_(0.f)
 	, m_player_location_(0.f)
@@ -32,6 +31,7 @@ AChair::AChair()
 	, m_input_value_(FVector2D::ZeroVector)
 	, m_phase_cnt_(1)
 	, m_def_maxspeed_(0.f)
+	, m_ishit_(false)
 	, m_debugmode_(false)
 	, m_is_movement_(false)
 	, m_phase_(EPhase::kStay)
@@ -208,6 +208,9 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 		// 椅子に当たった状態に変更
 		m_is_movement_ = true;
 		m_phase_ = EPhase::kEnd;
+
+		// 椅子に当てられた為trueに
+		Cast<AChair>(OtherActor)->m_ishit_ = true;
 
 		// 当たった椅子に速度を与える(現状前方向ベクトルと速度で計算)
 		Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity = m_pplayermesh_->GetForwardVector() * m_floating_pawn_movement_->Velocity * m_is_movement_scale_;

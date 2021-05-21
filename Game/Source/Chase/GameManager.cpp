@@ -10,6 +10,7 @@
 //			2021/05/10 尾崎蒼宙 消されたデータの復旧
 //								m_PlayerNumberNameをm_name_に変更
 //								m_pAchairをm_chairs_に変更(役割の変更)
+//			2021/05/21 尾崎蒼宙 椅子の上の人間を消す処理の追加
 //--------------------------------------------------------------
 
 //インクルード
@@ -120,21 +121,32 @@ void AGameManager::Tick(float DeltaTime)
 				// 一定秒数経過後、操作する椅子の変更
 				if (TimeCheck(DeltaTime))
 				{
-					m_players_[1]->control_chair_ = m_chairs_[nowroundnum_];
-					m_players_[1]->GetOperate();
-
-					// 椅子の配列の個数分だけ椅子のSpawnDefaultController()関数を呼ぶ
-					// 本来は操作する椅子の変更後、前まで操作していた椅子だけSpawnDefaultController()関数
-					// を使用すれば良い予定だが、処理は通ったものの上手く機能しないためfor文で無理やり行っています。かなりよろしくない
-					for (int i = 0; i < m_chairs_.Num(); ++i)
+					// 配列の要素数外の参照をしないかどうか
+					if (nowroundnum_ <= m_chairs_.Num() - 1)
 					{
-						m_chairs_[i]->SpawnDefaultController();
-						// m_chairs_[i]->b();
-					}
+						if (m_chairs_[nowroundnum_] != NULL)
+						{
+							m_players_[1]->control_chair_ = m_chairs_[nowroundnum_];
+							m_players_[1]->GetOperate();
 
-					if (nowroundnum_ < m_maxroundnum_)
-					{
-						++nowroundnum_;
+							// 椅子の配列の個数分だけ椅子のSpawnDefaultController()関数を呼ぶ
+							// 本来は操作する椅子の変更後、前まで操作していた椅子だけSpawnDefaultController()関数
+							// を使用すれば良い予定だが、処理は通ったものの上手く機能しないためfor文で無理やり行っています。かなりよろしくない
+							for (int i = 0; i < m_chairs_.Num(); ++i)
+							{
+								m_chairs_[i]->SpawnDefaultController();
+								if (m_chairs_[i]->m_ishit_)
+								{
+									// NULLチェックは関数内で行います
+									m_chairs_[i]->DestroyHuman();
+								}
+							}
+
+							if (nowroundnum_ < m_maxroundnum_)
+							{
+								++nowroundnum_;
+							}
+						}
 					}
 				}
 			}
@@ -153,6 +165,7 @@ void AGameManager::Tick(float DeltaTime)
 				// 一定秒数経過後、操作する椅子の変更
 				if (TimeCheck(DeltaTime))
 				{
+					// 配列の要素数外の参照をしないかどうか
 					if (nowroundnum_ <= m_chairs_.Num() - 1)
 					{
 						if (m_chairs_[nowroundnum_] != NULL)
@@ -169,6 +182,11 @@ void AGameManager::Tick(float DeltaTime)
 						for (int i = 0; i < m_chairs_.Num(); ++i)
 						{
 							m_chairs_[i]->SpawnDefaultController();
+							if (m_chairs_[i]->m_ishit_)
+							{
+								// NULLチェックは関数内で行います
+								m_chairs_[i]->DestroyHuman();
+							}
 						}
 
 						if (nowroundnum_ < m_maxroundnum_)

@@ -84,6 +84,8 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Default Setting")	
 		bool m_debugmode_;												// デバッグモードをONにするかどうか
+
+	bool m_ishit_;									// 椅子に衝突されたらtrueに
 		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")	
 		bool m_is_movement_;											// 当たったかどうか
@@ -126,7 +128,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		UFloatingPawnMovement* m_floating_pawn_movement_;				// FloatingPawnMovementコンポーネント
 
-
 	UFUNCTION(BlueprintImplementableEvent, Category = "MyF")
 		void Ragdoll();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "MyF")
+		void DestroyHuman();
 };
