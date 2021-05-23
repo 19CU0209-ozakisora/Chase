@@ -242,60 +242,68 @@ void AChair::DeleteArrow()
 // カプセルコンポーネントを参照している為同じものをBPに追加 -> BPからC++に移植(2021/04/23 尾崎)
 void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	// 椅子以外の物にぶつかったら return
-	if (Cast<AChair>(OtherActor) == false)
+	// 椅子に当たった場合の処理
+	if (Cast<AChair>(OtherActor))
 	{
-	return;
-	}
-
-	if (Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity == FVector::ZeroVector)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("True"));
-		if (m_debugmode_)
+		if (Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity == FVector::ZeroVector)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("Chair Hit")));
-			// 椅子のメッシュの前方向ベクトル
-			UE_LOG(LogTemp, Warning, TEXT("this forwardVector = %f, %f, %f, "), m_pplayermesh_->GetForwardVector().X, m_pplayermesh_->GetForwardVector().Y, m_pplayermesh_->GetForwardVector().Z);
-			// floatingpawnmovementの速度
-			UE_LOG(LogTemp, Warning, TEXT("this component speed = %f, %f, %f, "), m_floating_pawn_movement_->Velocity.X, m_floating_pawn_movement_->Velocity.Y, m_floating_pawn_movement_->Velocity.Z);
+			UE_LOG(LogTemp, Warning, TEXT("True"));
+			if (m_debugmode_)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("Chair Hit")));
+				// 椅子のメッシュの前方向ベクトル
+				UE_LOG(LogTemp, Warning, TEXT("this forwardVector = %f, %f, %f, "), m_pplayermesh_->GetForwardVector().X, m_pplayermesh_->GetForwardVector().Y, m_pplayermesh_->GetForwardVector().Z);
+				// floatingpawnmovementの速度
+				UE_LOG(LogTemp, Warning, TEXT("this component speed = %f, %f, %f, "), m_floating_pawn_movement_->Velocity.X, m_floating_pawn_movement_->Velocity.Y, m_floating_pawn_movement_->Velocity.Z);
+			}
+
+			// 物理の働く向きの設定
+			m_pplayermesh_->SetConstraintMode(EDOFMode::XYPlane);
+
+			// 椅子に当たった状態に変更
+			m_is_movement_ = true;
+			m_phase_ = EPhase::kEnd;
+
+			// 椅子に当てられた為trueに
+			Cast<AChair>(OtherActor)->m_ishit_ = true;
+
+			// 当たった椅子に速度を与える(現状前方向ベクトルと速度で計算)
+			Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity = m_pplayermesh_->GetForwardVector() * m_floating_pawn_movement_->Velocity * m_is_movement_scale_;
+
+			// 椅子の減速処理(X Y Z のいずれかが0だと計算してくれないっぽい？？？？)
+			m_floating_pawn_movement_->Velocity.X /= m_hitstop_scale_;
+			m_floating_pawn_movement_->Velocity.Y /= m_hitstop_scale_;
+			m_floating_pawn_movement_->Velocity.Z /= m_hitstop_scale_;
+
+			Cast<AChair>(OtherActor)->Ragdoll();
+
+			if (m_debugmode_)
+			{
+				// 当たった椅子の速度
+				UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "), Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.X, Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.Y, Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.Z);
+				// 椅子の速度
+				UE_LOG(LogTemp, Warning, TEXT("this after hit speed = %f, %f, %f, "), m_floating_pawn_movement_->Velocity.X, m_floating_pawn_movement_->Velocity.Y, m_floating_pawn_movement_->Velocity.Z);
+			}
+		}
+		else
+		{
+			if (m_debugmode_)
+			{
+				FVector vec = Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity;
+				UE_LOG(LogTemp, Warning, TEXT("false(X = %f, Y = %f, Z = %f)"), vec.X, vec.Y, vec.Z);
+			}
 		}
 
-		// 物理の働く向きの設定
-		m_pplayermesh_->SetConstraintMode(EDOFMode::XYPlane);
-
-		// 椅子に当たった状態に変更
-		m_is_movement_ = true;
-		m_phase_ = EPhase::kEnd;
-
-		// 椅子に当てられた為trueに
-		Cast<AChair>(OtherActor)->m_ishit_ = true;
-
-		// 当たった椅子に速度を与える(現状前方向ベクトルと速度で計算)
-		Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity = m_pplayermesh_->GetForwardVector() * m_floating_pawn_movement_->Velocity * m_is_movement_scale_;
-
-		// 椅子の減速処理(X Y Z のいずれかが0だと計算してくれないっぽい？？？？)
-		m_floating_pawn_movement_->Velocity.X /= m_hitstop_scale_;
-		m_floating_pawn_movement_->Velocity.Y /= m_hitstop_scale_;
-		m_floating_pawn_movement_->Velocity.Z /= m_hitstop_scale_;
-
-		Cast<AChair>(OtherActor)->Ragdoll();
-
-		if (m_debugmode_)
-		{
-			// 当たった椅子の速度
-			UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "), Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.X, Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.Y, Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.Z);
-			// 椅子の速度
-			UE_LOG(LogTemp, Warning, TEXT("this after hit speed = %f, %f, %f, "), m_floating_pawn_movement_->Velocity.X, m_floating_pawn_movement_->Velocity.Y, m_floating_pawn_movement_->Velocity.Z);
-		}
 	}
-	else
+	/*
+	else if(OtherActor->ActorHasTag("ReflectionWall"))
 	{
-		if (m_debugmode_)
-		{
-			FVector vec = Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity;
-			UE_LOG(LogTemp, Warning, TEXT("false(X = %f, Y = %f, Z = %f)"), vec.X, vec.Y, vec.Z);
-		}
+		m_floating_pawn_movement_->Velocity.X = m_floating_pawn_movement_->Velocity.X * (1.f / m_floating_pawn_movement_->Velocity.X) * (-1.f);
+		m_floating_pawn_movement_->Velocity.Y = m_floating_pawn_movement_->Velocity.Y * (1.f / m_floating_pawn_movement_->Velocity.Y) * (-1.f);
 	}
+	*/
+
+	
 }
 
 void AChair::NextPhase()
