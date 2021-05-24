@@ -6,6 +6,7 @@
 #include "Engine/SkeletalMesh.h"	// Playerメッシュ
 #include "Engine/Engine.h"			// スクリーンログ出力用
 // #include "Components/PrimitiveComponent.h"
+#include "Math/Vector.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
@@ -50,6 +51,8 @@ public:
 private:
 	bool m_first_player_spin_input_flag_;			// 初めてスティックを倒したか否かのフラグ用
 	bool m_slip_curve_;								//
+	bool is_hit_wall_;
+	float m_wall_time;
 	float m_angle_corection_;						// スピン時の補正用の変数
 	float m_player_rotation_;						// 回転量
 	float m_player_location_;						// 移動量

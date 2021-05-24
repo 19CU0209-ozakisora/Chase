@@ -69,6 +69,8 @@ AChair::AChair()
 	// 移動関係のコンポーネントの追加
 	m_floating_pawn_movement_ = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("m_floating_pawn_movement_"));
 
+	m_wall_time = 5.f;
+
 	//--------------------------------------------------------
 	//2021/05/21 野田
 	//何の音を再生するかをパスで指定、見つかったらオブジェクトに入れる
@@ -103,6 +105,7 @@ void AChair::BeginPlay()
 void AChair::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	m_wall_time += DeltaTime;
 
 	// 移動
 	if (m_phase_ == EPhase::kMove)
@@ -298,8 +301,52 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 	/*
 	else if(OtherActor->ActorHasTag("ReflectionWall"))
 	{
-		m_floating_pawn_movement_->Velocity.X = m_floating_pawn_movement_->Velocity.X * (1.f / m_floating_pawn_movement_->Velocity.X) * (-1.f);
-		m_floating_pawn_movement_->Velocity.Y = m_floating_pawn_movement_->Velocity.Y * (1.f / m_floating_pawn_movement_->Velocity.Y) * (-1.f);
+		if (m_wall_time > 5.f)
+		{
+			FVector OtherActorForwadVecter;
+			OtherActorForwadVecter.X = OtherActor->GetActorRotation().Roll;
+			OtherActorForwadVecter.Y = OtherActor->GetActorRotation().Pitch;
+
+			OtherActorForwadVecter = OtherActorForwadVecter.GetSafeNormal();
+			OtherActorForwadVecter.Z = 0.f;
+
+			FVector scale;
+			scale = (m_forward_vec_ * OtherActorForwadVecter) * -1.f;
+
+			FVector RefrectionVecter;
+			RefrectionVecter = m_forward_vec_ + 2.f * scale * OtherActorForwadVecter;
+			RefrectionVecter = RefrectionVecter.GetSafeNormal();
+			m_forward_vec_ = RefrectionVecter;
+
+			m_wall_time = 0.f;
+			UE_LOG(LogTemp, Warning, TEXT("otherVec = %f :: %f :: %f"), OtherActorForwadVecter.X, OtherActorForwadVecter.Y, OtherActorForwadVecter.Z);
+			UE_LOG(LogTemp, Warning, TEXT("hansya = %f :: %f :: %f"), RefrectionVecter.X, RefrectionVecter.Y, RefrectionVecter.Z);
+
+			元
+						FVector OtherActorForwadVecter;
+			OtherActorForwadVecter.X = OtherActor->GetActorRotation().Roll;
+			OtherActorForwadVecter.Y = OtherActor->GetActorRotation().Pitch;
+
+			OtherActorForwadVecter = OtherActorForwadVecter.GetSafeNormal();
+			OtherActorForwadVecter.Z = 0.f;
+
+
+			FVector RefrectionVecter;
+			//RefrectionVecter = m_forward_vec_ + (2.f * (m_forward_vec_ * OtherActorForwadVecter) * OtherActorForwadVecter);
+			RefrectionVecter = m_forward_vec_ + OtherActorForwadVecter;
+			RefrectionVecter = RefrectionVecter.GetSafeNormal();
+			m_forward_vec_ = RefrectionVecter;
+
+			m_wall_time = 0.f;
+			UE_LOG(LogTemp, Warning, TEXT("otherVec = %f :: %f :: %f"), OtherActorForwadVecter.X, OtherActorForwadVecter.Y, OtherActorForwadVecter.Z);
+			UE_LOG(LogTemp, Warning, TEXT("hansya = %f :: %f :: %f"), RefrectionVecter.X, RefrectionVecter.Y, RefrectionVecter.Z);
+			
+			
+		}
+		
+
+		//m_floating_pawn_movement_->Velocity.X = m_floating_pawn_movement_->Velocity.X * (1.f / m_floating_pawn_movement_->Velocity.X) * (-1.f);
+		//m_floating_pawn_movement_->Velocity.Y = m_floating_pawn_movement_->Velocity.Y * (1.f / m_floating_pawn_movement_->Velocity.Y) * (-1.f);
 	}
 	*/
 
@@ -425,7 +472,7 @@ void AChair::PlayerSlip(const float _deltatime)
 	// 前方向ベクトルに向かって移動
 	AddMovementInput(m_forward_vec_, m_input_slip_scale_);
 
-	if (m_debugmode_)
+	//if (m_debugmode_)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "), m_forward_vec_.X, m_forward_vec_.Y, m_forward_vec_.Z);
 	}
