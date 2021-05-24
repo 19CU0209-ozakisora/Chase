@@ -11,17 +11,15 @@
 //			2021/05/11 尾崎蒼宙 当たった時のm_name_の検索に「Default」を追加
 //			2021/05/12 尾崎蒼宙 構造体の追加
 //			2021/05/20 尾崎蒼宙 スピン処理の追加
+//			2021/05/24 野田八雲 サウンド追加（一部変数名修正）
 //--------------------------------------------------------------
 
 #include "Chair.h"
 
-//--------------------------------------------------------------
-//2021/05/21 野田
-//インクルード
+//サウンド系インクルード
 #include "Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 #include "ActiveSound.h"
-//--------------------------------------------------------------
 
 // Sets default values
 AChair::AChair() 
@@ -69,23 +67,24 @@ AChair::AChair()
 	// 移動関係のコンポーネントの追加
 	m_floating_pawn_movement_ = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("m_floating_pawn_movement_"));
 
-	//--------------------------------------------------------
-	//2021/05/21 野田
+
 	//何の音を再生するかをパスで指定、見つかったらオブジェクトに入れる
+	//パスの書き方は、"/Game/Music/BGM or SE/サウンドの名前"（Contentは省略すること）
+	//決定音
 	static ConstructorHelpers::FObjectFinder<USoundBase> find_sound_deside_(TEXT("/Game/Music/SE/deside_8"));
 
 	if (find_sound_deside_.Succeeded())
 	{
-		m_sound_obj_ = find_sound_deside_.Object;
+		m_deside_sound_ = find_sound_deside_.Object;
 	}
 
+	//椅子が転がる音
 	static ConstructorHelpers::FObjectFinder<USoundBase> find_sound_chair_(TEXT("/Game/Music/SE/caster"));
 	if (find_sound_chair_.Succeeded())
 	{
-		m_chair_obj_ = find_sound_chair_.Object;
+		m_chair_roll_sound_ = find_sound_chair_.Object;
 	}
 
-	//--------------------------------------------------------
 };
 
 // Called when the game starts or when spawned
@@ -135,43 +134,31 @@ void AChair::Tick(float DeltaTime)
 		m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 		PlayerSlip(DeltaTime);
 
-		//----------------------------------------------------
-		//2021/05/21 野田
 		//音楽再生（椅子が転がる音）
-		//Tickで処理しているため、再生が重複しないようにする
+		//初回再生
 		if (m_audiocomponent_ == nullptr)
 		{
-			m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_chair_obj_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
+			m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_chair_roll_sound_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
 		}
-		//（再生中じゃない場合）
+		//初回再生、または前のフレームでサウンドが再生中じゃない場合、同じ音を初めから再生する
 		else if (!m_audiocomponent_->IsPlaying())
 		{
-			m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_chair_obj_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
+			m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_chair_roll_sound_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
 		}
-		//----------------------------------------------------
 
 	}
 	// 行動終了
 	else if (m_phase_ == EPhase::kEnd)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("End")));
-	}
 
-	//--------------------------------------------------
-	//2021/05/21 野田
-	//前のフレームのときのフェーズと今のフェーズが一致しない場合（フェーズ切り替えの瞬間）
-	if (m_prevphase_ != m_phase_)
-	{
-		if (m_phase_ != EPhase::kSlip)
+		//ぶつかっても転がる音が再生終了するまでSEが消えないのでここで転がる音を終了
+		if (m_audiocomponent_->IsPlaying())
 		{
-			//音再生（決定音）
-			m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_sound_obj_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
+			m_audiocomponent_->Stop();
 		}
 	}
 
-	//フェーズを格納
-	m_prevphase_ = m_phase_;
-	//--------------------------------------------------
 }
 
 // Called to bind functionality to input
@@ -314,6 +301,9 @@ void AChair::NextPhase()
 		m_forward_vec_ = Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector();
 		DeleteArrow();
 	}
+
+	//音再生（決定音）
+	m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_deside_sound_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
 }
 
 void AChair::PlayerMove(const float _deltatime)
