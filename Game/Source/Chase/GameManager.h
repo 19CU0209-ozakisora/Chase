@@ -61,6 +61,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
 		float m_chair_create_time_;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
+		float m_switch_level_time;			// レベル遷移の時間
+
 //---------------------------------------------------------
 //2021/05/06:　野田　変数、関数追加
 public:
