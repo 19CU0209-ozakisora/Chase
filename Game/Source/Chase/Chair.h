@@ -108,6 +108,9 @@ public:
 		float m_input_rotation_scale_;									// 角度を決めるときの入力倍率
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		float m_input_powerchange_scale_;								// 力の変更の倍率(どの位上げるか/下げるか)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		float m_input_spin_scale_;										// スピンの倍率(スティック一回転辺り何度回転させるか)
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")	

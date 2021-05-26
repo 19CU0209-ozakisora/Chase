@@ -11,17 +11,15 @@
 //			2021/05/11 尾崎蒼宙 当たった時のm_name_の検索に「Default」を追加
 //			2021/05/12 尾崎蒼宙 構造体の追加
 //			2021/05/20 尾崎蒼宙 スピン処理の追加
+//			2021/05/24 野田八雲 サウンド追加（一部変数名修正）
 //--------------------------------------------------------------
 
 #include "Chair.h"
 
-//--------------------------------------------------------------
-//2021/05/21 野田
-//インクルード
+//サウンド系インクルード
 #include "Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 #include "ActiveSound.h"
-//--------------------------------------------------------------
 
 // Sets default values
 AChair::AChair() 
@@ -45,6 +43,7 @@ AChair::AChair()
 	, m_phase_(EPhase::kStay)
 	, m_input_speed_scale_(0.f)
 	, m_input_rotation_scale_(0.f)
+	, m_input_powerchange_scale_(0.f)
 	, m_input_spin_scale_(0.f)
 	, m_input_slip_scale_(0.f)
 	, m_hitstop_scale_(0.f)
@@ -69,22 +68,23 @@ AChair::AChair()
 	// 移動関係のコンポーネントの追加
 	m_floating_pawn_movement_ = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("m_floating_pawn_movement_"));
 
-	m_wall_time = 5.f;
+	//m_wall_time = 5.f;
 
-	//--------------------------------------------------------
-	//2021/05/21 野田
 	//何の音を再生するかをパスで指定、見つかったらオブジェクトに入れる
+	//パスの書き方は、"/Game/Music/BGM or SE/サウンドの名前"（Contentは省略すること）
+	//決定音
 	static ConstructorHelpers::FObjectFinder<USoundBase> find_sound_deside_(TEXT("/Game/Music/SE/deside_8"));
 
 	if (find_sound_deside_.Succeeded())
 	{
-		m_sound_obj_ = find_sound_deside_.Object;
+		m_deside_sound_ = find_sound_deside_.Object;
 	}
 
+	//椅子が転がる音
 	static ConstructorHelpers::FObjectFinder<USoundBase> find_sound_chair_(TEXT("/Game/Music/SE/caster"));
 	if (find_sound_chair_.Succeeded())
 	{
-		m_chair_obj_ = find_sound_chair_.Object;
+		m_chair_roll_sound_ = find_sound_chair_.Object;
 	}
 
 	//--------------------------------------------------------
@@ -119,62 +119,43 @@ void AChair::Tick(float DeltaTime)
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Rotation")));
 		PlayerRotation(DeltaTime);
 	}
-	// スピン
-	else if (m_phase_ == EPhase::kSpin)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Spin")));
-		PlayerSpin(DeltaTime);
-	}
 	// 力の変更
 	else if (m_phase_ == EPhase::kPawerChange)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("PowerChange")));
-		m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 	}
 	// 滑り
 	else if (m_phase_ == EPhase::kSlip && !m_is_movement_)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Slip")));
-		m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
+		PlayerSpin(DeltaTime);
 		PlayerSlip(DeltaTime);
+		m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 
-		//----------------------------------------------------
-		//2021/05/21 野田
 		//音楽再生（椅子が転がる音）
-		//Tickで処理しているため、再生が重複しないようにする
+				//初回再生
 		if (m_audiocomponent_ == nullptr)
 		{
-			m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_chair_obj_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
+			m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_chair_roll_sound_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
 		}
-		//（再生中じゃない場合）
+		//初回再生、または前のフレームでサウンドが再生中じゃない場合、同じ音を初めから再生する
 		else if (!m_audiocomponent_->IsPlaying())
 		{
-			m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_chair_obj_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
+			m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_chair_roll_sound_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
 		}
-		//----------------------------------------------------
 
 	}
 	// 行動終了
 	else if (m_phase_ == EPhase::kEnd)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("End")));
-	}
 
-	//--------------------------------------------------
-	//2021/05/21 野田
-	//前のフレームのときのフェーズと今のフェーズが一致しない場合（フェーズ切り替えの瞬間）
-	if (m_prevphase_ != m_phase_)
-	{
-		if (m_phase_ != EPhase::kSlip)
+		//ぶつかっても転がる音が再生終了するまでSEが消えないのでここで転がる音を終了
+		if (m_audiocomponent_->IsPlaying())
 		{
-			//音再生（決定音）
-			m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_sound_obj_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
+			m_audiocomponent_->Stop();
 		}
 	}
-
-	//フェーズを格納
-	m_prevphase_ = m_phase_;
-	//--------------------------------------------------
 }
 
 // Called to bind functionality to input
@@ -349,8 +330,6 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 		//m_floating_pawn_movement_->Velocity.Y = m_floating_pawn_movement_->Velocity.Y * (1.f / m_floating_pawn_movement_->Velocity.Y) * (-1.f);
 	}
 	*/
-
-	
 }
 
 void AChair::NextPhase()
@@ -369,6 +348,9 @@ void AChair::NextPhase()
 		m_forward_vec_ = Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector();
 		DeleteArrow();
 	}
+
+	//音再生（決定音）
+	m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_deside_sound_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
 }
 
 void AChair::PlayerMove(const float _deltatime)
@@ -449,24 +431,15 @@ void AChair::PlayerSpin(const float _deltatime)
 void AChair::PlayerSlip(const float _deltatime)
 {
 	// 曲がるボタンが押されていたら回転方向に向けて移動
-	if (m_slip_curve_)
+	//if (m_slip_curve_)
 	{
-		if (m_player_spin_cnt_ > 0)
+		if (m_player_spin_cnt_ != 0)
 		{
-			if (m_forward_vec_.X > 0.1f)
+			if (m_forward_vec_.Y + m_input_slip_curve_ * m_player_spin_cnt_ <= 1.f && m_forward_vec_.Y + m_input_slip_curve_ * m_player_spin_cnt_ >= -1.f)
 			{
-				m_forward_vec_.X -= m_input_slip_curve_ * m_player_spin_cnt_;
+				//m_forward_vec_.X -= m_input_slip_curve_ * m_player_spin_cnt_;
 				m_forward_vec_.Y += m_input_slip_curve_ * m_player_spin_cnt_;
 			}
-		}
-		else if (m_player_spin_cnt_ < 0)
-		{
-			if (m_forward_vec_.X > 0.1f)
-			{
-				m_forward_vec_.X += m_input_slip_curve_ * m_player_spin_cnt_;
-				m_forward_vec_.Y -= m_input_slip_curve_ * m_player_spin_cnt_;
-			}
-
 		}
 	}
 	// 前方向ベクトルに向かって移動
@@ -528,7 +501,7 @@ void AChair::SwitchSlipPower()
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Switch_Slip_Power_Lv1")));
 			}
-			m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed_ * 0.5f;
+			m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed_ * (1 - m_input_powerchange_scale_);
 		}
 		else if (m_power_level_ == 1)
 		{
@@ -544,7 +517,7 @@ void AChair::SwitchSlipPower()
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Switch_Slip_Power_Lv3")));
 			}
-			m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed_ * 1.5f;
+			m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed_ * (1 + m_input_powerchange_scale_);
 		}
 	}
 }
