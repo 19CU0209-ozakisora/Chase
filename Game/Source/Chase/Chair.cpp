@@ -36,16 +36,15 @@ AChair::AChair()
 	, m_forward_vec_(FVector::ZeroVector)
 	, m_input_value_(FVector2D::ZeroVector)
 	, m_phase_cnt_(1)
-	, m_def_maxspeed_(0.f)
 	, m_ishit_(false)
 	, m_debugmode_(false)
 	, m_is_movement_(false)
 	, m_phase_(EPhase::kStay)
 	, m_input_speed_scale_(0.f)
 	, m_input_rotation_scale_(0.f)
-	, m_input_powerchange_scale_(0.f)
+	, m_max_speed_(0.f)
+	, m_input_add_speed_val(0.f)
 	, m_input_spin_scale_(0.f)
-	, m_input_slip_scale_(0.f)
 	, m_hitstop_scale_(0.f)
 	, m_is_movement_scale_(0.f)
 	, m_name_("")
@@ -79,15 +78,12 @@ AChair::AChair()
 	{
 		m_deside_sound_ = find_sound_deside_.Object;
 	}
-
 	//椅子が転がる音
 	static ConstructorHelpers::FObjectFinder<USoundBase> find_sound_chair_(TEXT("/Game/Music/SE/caster"));
 	if (find_sound_chair_.Succeeded())
 	{
 		m_chair_roll_sound_ = find_sound_chair_.Object;
 	}
-
-	//--------------------------------------------------------
 };
 
 // Called when the game starts or when spawned
@@ -97,8 +93,10 @@ void AChair::BeginPlay()
 
 	// ヒット時の関数のバインド
 	m_pplayermesh_->OnComponentHit.AddDynamic(this, &AChair::ComponentHit);
+	m_pplayermesh_->OnComponentBeginOverlap.AddDynamic(this, &AChair::OverlapBegin);
+
 	// m_floating_pawn_movement_ の最大速度を格納
-	m_def_maxspeed_ = m_floating_pawn_movement_->GetMaxSpeed();
+	m_forward_vec_ = FVector::ForwardVector;
 }
 
 // Called every frame
@@ -113,16 +111,11 @@ void AChair::Tick(float DeltaTime)
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Move")));
 		PlayerMove(DeltaTime);
 	}
-	// 回転
-	else if (m_phase_ == EPhase::kRotation)
+	// 助走
+	else if (m_phase_ == EPhase::kEntrance)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Rotation")));
-		PlayerRotation(DeltaTime);
-	}
-	// 力の変更
-	else if (m_phase_ == EPhase::kPawerChange)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("PowerChange")));
+		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Entrance")));
+		PlayerEntrance(DeltaTime);
 	}
 	// 滑り
 	else if (m_phase_ == EPhase::kSlip && !m_is_movement_)
@@ -130,7 +123,7 @@ void AChair::Tick(float DeltaTime)
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Slip")));
 		PlayerSpin(DeltaTime);
 		PlayerSlip(DeltaTime);
-		m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
+		//m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 
 		//音楽再生（椅子が転がる音）
 				//初回再生
@@ -143,7 +136,6 @@ void AChair::Tick(float DeltaTime)
 		{
 			m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_chair_roll_sound_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
 		}
-
 	}
 	// 行動終了
 	else if (m_phase_ == EPhase::kEnd)
@@ -167,16 +159,7 @@ void AChair::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	InputComponent->BindAxis("Horizontal", this, &AChair::SetInputValue_X);
 	InputComponent->BindAxis("Vertical", this, &AChair::SetInputValue_Y);
 	InputComponent->BindAction("Decide", EInputEvent::IE_Pressed, this, &AChair::NextPhase);
-
-	// 力の強さの変更
-	InputComponent->BindAction("Switch_Slip_Power_Lv1", EInputEvent::IE_Pressed, this, &AChair::SwitchSlipPowerLv1);
-	InputComponent->BindAction("Switch_Slip_Power_Lv2", EInputEvent::IE_Pressed, this, &AChair::SwitchSlipPowerLv2);
-	InputComponent->BindAction("Switch_Slip_Power_Lv3", EInputEvent::IE_Pressed, this, &AChair::SwitchSlipPowerLv3);
-	InputComponent->BindAction("Switch_Slip_Power", EInputEvent::IE_Pressed, this, &AChair::SwitchSlipPower);
-
-	// 滑っているときに曲げるか否か
-	InputComponent->BindAction("Slip_Curve", EInputEvent::IE_Pressed, this, &AChair::SetSlipCurve);
-	InputComponent->BindAction("Slip_Curve", EInputEvent::IE_Released, this, &AChair::SetSlipCurve);
+	InputComponent->BindAction("Decide", EInputEvent::IE_Pressed, this, &AChair::PlayerhSlipPower);
 }
 
 void AChair::SetInputValue_X(const float _axisval)
@@ -332,18 +315,27 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 	*/
 }
 
+void AChair::OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	UE_LOG(LogTemp, Warning, TEXT("adwasdwdsdawdsdawdsdawdasdawdasdawdad"));
+	if (OtherActor->ActorHasTag("EntranceEnd"))
+	{
+		m_phase_ = EPhase::kSlip;
+	}
+}
+
 void AChair::NextPhase()
 {
-	if (m_phase_ == EPhase::kSlip || m_phase_ == EPhase::kEnd)
+	if (m_phase_ != EPhase::kMove)
 	{
 		return;
 	}
 
 	m_phase_cnt_++;
 	m_phase_ = EPhase(m_phase_cnt_);
+	is_entrance = true;
 
-	// 回転の時に決定キーを押したら
-	if (m_phase_ == EPhase::kSpin)
+	if (m_phase_ == EPhase::kEntrance)
 	{
 		m_forward_vec_ = Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector();
 		DeleteArrow();
@@ -369,8 +361,19 @@ void AChair::PlayerRotation(const float _deltatime)
 	SetActorRotation(FRotator(0.f, m_player_rotation_, 0.f));
 }
 
+void AChair::PlayerEntrance(const float _deltatime)
+{
+	// 前方向ベクトルに向かって移動
+	AddMovementInput(m_forward_vec_, 1.f);
+}
+
 void AChair::PlayerSpin(const float _deltatime)
 {
+	if (is_entrance)
+	{
+		return;
+	}
+
 	// 入力されたVector2を角度をに変換度、上入力が0度になるように補正後
 	// 上入力 -> 0, 右入力 -> 90, 下入力 -> 180, 左入力 -> 270
 	m_player_spin_angle_ = (atan2(-m_input_value_.Y, m_input_value_.X) * 180.f / PI) + m_angle_corection_;
@@ -430,8 +433,7 @@ void AChair::PlayerSpin(const float _deltatime)
 
 void AChair::PlayerSlip(const float _deltatime)
 {
-	// 曲がるボタンが押されていたら回転方向に向けて移動
-	//if (m_slip_curve_)
+	if (!is_entrance)
 	{
 		if (m_player_spin_cnt_ != 0)
 		{
@@ -443,86 +445,30 @@ void AChair::PlayerSlip(const float _deltatime)
 		}
 	}
 	// 前方向ベクトルに向かって移動
-	AddMovementInput(m_forward_vec_, m_input_slip_scale_);
+	AddMovementInput(m_forward_vec_, 1.f);
 
-	//if (m_debugmode_)
+	if (m_debugmode_)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "), m_forward_vec_.X, m_forward_vec_.Y, m_forward_vec_.Z);
 	}
 }
 
-void AChair::SwitchSlipPowerLv1()
+void AChair::PlayerhSlipPower()
 {
-	if (m_phase_ == EPhase::kPawerChange)
+	if (m_phase_ != EPhase::kEntrance)
 	{
-		if (m_debugmode_)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Switch_Slip_Power_Lv1")));
-		}
-		m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed_ * 0.5f;
+		return;
 	}
-}
 
-void AChair::SwitchSlipPowerLv2()
-{
-	if (m_phase_ == EPhase::kPawerChange)
+	m_floating_pawn_movement_->MaxSpeed += m_input_add_speed_val;
+
+	if (m_floating_pawn_movement_->MaxSpeed > m_max_speed_)
 	{
-		if (m_debugmode_)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Switch_Slip_Power_Lv2")));
-		}
-		m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed_;
+		m_floating_pawn_movement_->MaxSpeed = m_max_speed_;
 	}
-}
 
-void AChair::SwitchSlipPowerLv3()
-{
-	if (m_phase_ == EPhase::kPawerChange)
+	if (m_debugmode_)
 	{
-		if (m_debugmode_)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Switch_Slip_Power_Lv3")));
-		}
-		m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed_ * 1.5f;
+		UE_LOG(LogTemp, Warning, TEXT("MaxSpeed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
 	}
-}
-
-void AChair::SwitchSlipPower()
-{
-	if (m_phase_ == EPhase::kPawerChange)
-	{
-
-		++m_power_level_;
-		m_power_level_ %= 3;
-
-		if (m_power_level_ == 0)
-		{
-			if (m_debugmode_)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Switch_Slip_Power_Lv1")));
-			}
-			m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed_ * (1 - m_input_powerchange_scale_);
-		}
-		else if (m_power_level_ == 1)
-		{
-			if (m_debugmode_)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Switch_Slip_Power_Lv2")));
-			}
-			m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed_;
-		}
-		else
-		{
-			if (m_debugmode_)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Switch_Slip_Power_Lv3")));
-			}
-			m_floating_pawn_movement_->MaxSpeed = m_def_maxspeed_ * (1 + m_input_powerchange_scale_);
-		}
-	}
-}
-
-void AChair::SetSlipCurve()
-{
-	m_slip_curve_ = !m_slip_curve_;
 }

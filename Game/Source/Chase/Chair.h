@@ -21,11 +21,9 @@ enum class EPhase : uint8
 {
 	kStay UMETA(DisplayName = "Stay"),					// 待機状態
 	kMove UMETA(DisplayName = "Move"),					// 横移動状態
-	kRotation UMETA(DisplayName = "Rotation"),			// 投げる方向の変更状態
-	kSpin UMETA(DisplayName = "Spin"),					// スピン状態
-	kPawerChange UMETA(DisplayName = "PawerChange"),	// パワー変更
+	kEntrance UMETA(DisplayName = "kEntrance"),
 	kSlip UMETA(DisplayName = "Slip"),					// 滑り状態
-	kEnd UMETA(DisplayName = "End"),					// 行動終了
+	kEnd UMETA(DisplayName = "End"),
 };
 
 UCLASS()
@@ -46,7 +44,6 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-
 private:
 	bool m_first_player_spin_input_flag_;			// 初めてスティックを倒したか否かのフラグ用
 	bool m_slip_curve_;								//
@@ -64,13 +61,13 @@ private:
 	FVector m_forward_vec_;							// 前方向ベクトル
 	FVector2D m_input_value_;						// 入力値
 	int m_phase_cnt_;								// フェーズのカウント用変数
-	float m_def_maxspeed_;							// 初期状態の最高速度
 
 	UAudioComponent* m_audiocomponent_;				//音楽を入れるコンポーネント
 
 	void SetInputValue_X(const float _axisval);		// 入力された値_X
 	void SetInputValue_Y(const float _axisval);		// 入力された値_Y
 	void PlayerMove(const float _deltatime);		// プレイヤーの横移動
+	void PlayerEntrance(const float _deltatime);
 	void PlayerRotation(const float _deltatime);	// プレイヤーの投げる方向の変更
 	void PlayerSpin(const float _deltatime);		// プレイヤーの回転
 	void PlayerSlip(const float _deltatime);		// プレイヤーが滑る処理
@@ -79,21 +76,27 @@ private:
 	void SwitchSlipPowerLv1();
 	void SwitchSlipPowerLv2();
 	void SwitchSlipPowerLv3();
-	void SwitchSlipPower();
+	void PlayerhSlipPower();
 	void SetSlipCurve();
 
 	// カプセルコンポーネントを参照している為同じものをBPに追加
 	UFUNCTION()
 		void ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& HitResult);
 
+	UFUNCTION()
+		void OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 public:
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
 	USceneComponent* m_proot_;						// ルートコンポーネント用(メッシュの親)
 
 	UPROPERTY(EditAnywhere, Category = "Default Setting")	
-		bool m_debugmode_;												// デバッグモードをONにするかどうか
+		bool m_debugmode_;							// デバッグモードをONにするかどうか
 
-	bool m_ishit_;									// 椅子に衝突されたらtrueに
+	bool m_ishit_;														// 椅子に衝突されたらtrueに
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
+		bool is_entrance;												// 助走中か
 		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")	
 		bool m_is_movement_;											// 当たったかどうか
@@ -108,13 +111,13 @@ public:
 		float m_input_rotation_scale_;									// 角度を決めるときの入力倍率
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
-		float m_input_powerchange_scale_;								// 力の変更の倍率(どの位上げるか/下げるか)
+		float m_max_speed_;												// 椅子の最高速度
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		float m_input_add_speed_val;									// 力の変更の倍率(どの位上げるか)
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		float m_input_spin_scale_;										// スピンの倍率(スティック一回転辺り何度回転させるか)
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")	
-		float m_input_slip_scale_;										// 滑りの倍率
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		float m_input_slip_curve_;										// 滑っているときに曲がる量
