@@ -317,7 +317,6 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 
 void AChair::OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("adwasdwdsdawdsdawdsdawdasdawdasdawdad"));
 	if (OtherActor->ActorHasTag("EntranceEnd"))
 	{
 		m_phase_ = EPhase::kSlip;
@@ -369,11 +368,6 @@ void AChair::PlayerEntrance(const float _deltatime)
 
 void AChair::PlayerSpin(const float _deltatime)
 {
-	if (is_entrance)
-	{
-		return;
-	}
-
 	// 入力されたVector2を角度をに変換度、上入力が0度になるように補正後
 	// 上入力 -> 0, 右入力 -> 90, 下入力 -> 180, 左入力 -> 270
 	m_player_spin_angle_ = (atan2(-m_input_value_.Y, m_input_value_.X) * 180.f / PI) + m_angle_corection_;
@@ -433,15 +427,12 @@ void AChair::PlayerSpin(const float _deltatime)
 
 void AChair::PlayerSlip(const float _deltatime)
 {
-	if (!is_entrance)
+	if (m_player_spin_cnt_ != 0)
 	{
-		if (m_player_spin_cnt_ != 0)
+		if (m_forward_vec_.Y + m_input_slip_curve_ * m_player_spin_cnt_ <= 1.f && m_forward_vec_.Y + m_input_slip_curve_ * m_player_spin_cnt_ >= -1.f)
 		{
-			if (m_forward_vec_.Y + m_input_slip_curve_ * m_player_spin_cnt_ <= 1.f && m_forward_vec_.Y + m_input_slip_curve_ * m_player_spin_cnt_ >= -1.f)
-			{
-				//m_forward_vec_.X -= m_input_slip_curve_ * m_player_spin_cnt_;
-				m_forward_vec_.Y += m_input_slip_curve_ * m_player_spin_cnt_;
-			}
+			//m_forward_vec_.X -= m_input_slip_curve_ * m_player_spin_cnt_;
+			m_forward_vec_.Y += m_input_slip_curve_ * m_player_spin_cnt_;
 		}
 	}
 	// 前方向ベクトルに向かって移動
