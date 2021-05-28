@@ -21,7 +21,7 @@ enum class EPhase : uint8
 {
 	kStay UMETA(DisplayName = "Stay"),					// 待機状態
 	kMove UMETA(DisplayName = "Move"),					// 横移動状態
-	kEntrance UMETA(DisplayName = "kEntrance"),
+	kEntrance UMETA(DisplayName = "kEntrance"),			// 助走状態
 	kSlip UMETA(DisplayName = "Slip"),					// 滑り状態
 	kEnd UMETA(DisplayName = "End"),
 };
@@ -45,9 +45,12 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
+
+	bool m_is_input_add_slip_power_;				// 速度を増やすボタンが押されたかどうか
 	bool m_first_player_spin_input_flag_;			// 初めてスティックを倒したか否かのフラグ用
 	bool m_slip_curve_;								//
 	bool is_hit_wall_;
+	bool m_is_sweep_;
 	float m_wall_time;
 	float m_angle_corection_;						// スピン時の補正用の変数
 	float m_player_rotation_;						// 回転量
@@ -56,6 +59,7 @@ private:
 	float m_player_spin_angle_;						// スティックを回した角度
 	float m_preb_player_spin_input_;				// スピン時の前回の入力
 	float m_first_player_spin_input_angle_;			// 初めてスティックを倒した角度の保存用
+	float m_deltatime;								// 処理時間
 	int m_player_spin_cnt_;							// 何回転したか
 	int m_power_level_;								// パワーのレベルのカウント用
 	FVector m_forward_vec_;							// 前方向ベクトル
@@ -78,6 +82,9 @@ private:
 	void SwitchSlipPowerLv3();
 	void PlayerhSlipPower();
 	void SetSlipCurve();
+	void Deceleration(const float _deltatime);
+	void PlayerSweep(const float _deltatime);		// deltatime処理はしています
+	void SetPlayerSweepFlag() { m_is_sweep_ = true; }
 
 	// カプセルコンポーネントを参照している為同じものをBPに追加
 	UFUNCTION()
@@ -114,7 +121,19 @@ public:
 		float m_max_speed_;												// 椅子の最高速度
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
-		float m_input_add_speed_val;									// 力の変更の倍率(どの位上げるか)
+		float m_min_speed_;												// 椅子の最低速度
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		float m_input_add_speed_val_;									// 力の変更の倍率(どの位上げるか)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		float m_deceleration_val_;										// 減速量
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		float m_sweep_scale_;											// スウィープ時の減速の軽減具合
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		int m_pummeled_frame_;											// ボタンを押したとき何F判定を持続させるか
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		float m_input_spin_scale_;										// スピンの倍率(スティック一回転辺り何度回転させるか)

@@ -23,7 +23,8 @@
 
 // Sets default values
 AChair::AChair() 
-	: m_first_player_spin_input_flag_(true)
+	: m_is_input_add_slip_power_(false)
+	, m_first_player_spin_input_flag_(true)
 	, m_angle_corection_(90.f)
 	, m_player_rotation_(0.f)
 	, m_player_location_(0.f)
@@ -43,7 +44,9 @@ AChair::AChair()
 	, m_input_speed_scale_(0.f)
 	, m_input_rotation_scale_(0.f)
 	, m_max_speed_(0.f)
-	, m_input_add_speed_val(0.f)
+	, m_min_speed_(0.f)
+	, m_input_add_speed_val_(0.f)
+	, m_deceleration_val_(0.f)
 	, m_input_spin_scale_(0.f)
 	, m_hitstop_scale_(0.f)
 	, m_is_movement_scale_(0.f)
@@ -103,6 +106,7 @@ void AChair::BeginPlay()
 void AChair::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	m_deltatime = DeltaTime;
 	m_wall_time += DeltaTime;
 
 	// 移動
@@ -116,6 +120,7 @@ void AChair::Tick(float DeltaTime)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Entrance")));
 		PlayerEntrance(DeltaTime);
+		Deceleration(DeltaTime);
 	}
 	// 滑り
 	else if (m_phase_ == EPhase::kSlip && !m_is_movement_)
@@ -123,6 +128,14 @@ void AChair::Tick(float DeltaTime)
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Slip")));
 		PlayerSpin(DeltaTime);
 		PlayerSlip(DeltaTime);
+		if (!m_is_sweep_)
+		{
+			Deceleration(DeltaTime);
+		}
+		else
+		{
+			PlayerSweep(DeltaTime);
+		}
 		//m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 
 		//音楽再生（椅子が転がる音）
@@ -148,6 +161,9 @@ void AChair::Tick(float DeltaTime)
 			m_audiocomponent_->Stop();
 		}
 	}
+
+	m_is_input_add_slip_power_ = false;
+	m_is_sweep_ = false;
 }
 
 // Called to bind functionality to input
@@ -159,7 +175,8 @@ void AChair::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	InputComponent->BindAxis("Horizontal", this, &AChair::SetInputValue_X);
 	InputComponent->BindAxis("Vertical", this, &AChair::SetInputValue_Y);
 	InputComponent->BindAction("Decide", EInputEvent::IE_Pressed, this, &AChair::NextPhase);
-	InputComponent->BindAction("Decide", EInputEvent::IE_Pressed, this, &AChair::PlayerhSlipPower);
+	InputComponent->BindAction("Add_Slip_Power", EInputEvent::IE_Pressed, this, &AChair::PlayerhSlipPower); 
+	InputComponent->BindAction("Sweep", EInputEvent::IE_Pressed, this, &AChair::SetPlayerSweepFlag);
 }
 
 void AChair::SetInputValue_X(const float _axisval)
@@ -249,7 +266,7 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 				// 当たった椅子の速度
 				UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "), Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.X, Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.Y, Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.Z);
 				// 椅子の速度
-				UE_LOG(LogTemp, Warning, TEXT("this after hit speed = %f, %f, %f, "), m_floating_pawn_movement_->Velocity.X, m_floating_pawn_movement_->Velocity.Y, m_floating_pawn_movement_->Velocity.Z);
+				UE_LOG(LogTemp, Warning, TEXT("this after hit speed = %f, %f, %f,"), m_floating_pawn_movement_->Velocity.X, m_floating_pawn_movement_->Velocity.Y, m_floating_pawn_movement_->Velocity.Z);
 			}
 		}
 		else
@@ -451,7 +468,8 @@ void AChair::PlayerhSlipPower()
 		return;
 	}
 
-	m_floating_pawn_movement_->MaxSpeed += m_input_add_speed_val;
+	m_is_input_add_slip_power_ = true;
+	m_floating_pawn_movement_->MaxSpeed += m_input_add_speed_val_;
 
 	if (m_floating_pawn_movement_->MaxSpeed > m_max_speed_)
 	{
@@ -461,5 +479,43 @@ void AChair::PlayerhSlipPower()
 	if (m_debugmode_)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("MaxSpeed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
+	}
+}
+
+void AChair::Deceleration(const float _deltatime)
+{
+	if (!m_is_input_add_slip_power_)
+	{
+		m_floating_pawn_movement_->MaxSpeed -= m_deceleration_val_ * _deltatime;
+		if (m_floating_pawn_movement_->MaxSpeed < m_min_speed_ && m_phase_ == EPhase::kEntrance)
+		{
+			m_floating_pawn_movement_->MaxSpeed = m_min_speed_;
+		}
+		else if (m_floating_pawn_movement_->MaxSpeed < 0.f && m_phase_ == EPhase::kSlip)
+		{
+			m_phase_ = EPhase::kEnd;
+		}
+
+		if (m_debugmode_)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Deceleration/  MaxSpeed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
+		}
+	}
+}
+
+void AChair::PlayerSweep(const float _deltatime)
+{
+	m_is_sweep_ = true;
+
+	m_floating_pawn_movement_->MaxSpeed -= (m_deceleration_val_ / m_sweep_scale_) * m_deltatime;
+
+	if (m_floating_pawn_movement_->MaxSpeed < 0.f && m_phase_ == EPhase::kSlip)
+	{
+		m_phase_ = EPhase::kEnd;
+	}
+
+	if (m_debugmode_)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Sweep/  MaxSpeed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
 	}
 }

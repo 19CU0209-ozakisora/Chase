@@ -49,4 +49,7 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "MyF")
 		void GetOperate();
+
+	UFUNCTION(BlueprintCallable, Category = "MyF")
+		void SetChairTag();
 };

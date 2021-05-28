@@ -42,3 +42,19 @@ void APlayerchara::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 }
+
+void APlayerchara::SetChairTag()
+{
+	if (player_number_ == 1)
+	{
+		control_chair_->m_name_ = "Player1";
+	}
+	else if (player_number_ == 2)
+	{
+		control_chair_->m_name_ = "Player2";
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayerNumber is not default value"));
+	}
+}
