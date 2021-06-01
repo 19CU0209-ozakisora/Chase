@@ -109,24 +109,41 @@ void AChair::Tick(float DeltaTime)
 	m_deltatime = DeltaTime;
 	m_wall_time += DeltaTime;
 
+	/*
 	// 移動
 	if (m_phase_ == EPhase::kMove)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Move")));
 		PlayerMove(DeltaTime);
 	}
+	*/
+	if (m_phase_ == EPhase::kRotation)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Rotation")));
+		PlayerRotation(DeltaTime);
+	}
+	// パワー調整
+	else if (m_phase_ == EPhase::kPowerChange)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("PowerChange")));
+		PlayerPowerChange(DeltaTime);
+	}
 	// 助走
 	else if (m_phase_ == EPhase::kEntrance)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Entrance")));
 		PlayerEntrance(DeltaTime);
-		Deceleration(DeltaTime);
+	}
+	else if (m_phase_ == EPhase::kSpin)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("kSpin")));
+		PlayerSpin(DeltaTime);
+		AddMovementInput(m_forward_vec_, 1.f);
 	}
 	// 滑り
 	else if (m_phase_ == EPhase::kSlip && !m_is_movement_)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Slip")));
-		PlayerSpin(DeltaTime);
 		PlayerSlip(DeltaTime);
 		if (!m_is_sweep_)
 		{
@@ -136,7 +153,7 @@ void AChair::Tick(float DeltaTime)
 		{
 			PlayerSweep(DeltaTime);
 		}
-		//m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
+		m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 
 		//音楽再生（椅子が転がる音）
 				//初回再生
@@ -176,6 +193,8 @@ void AChair::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	InputComponent->BindAxis("Vertical", this, &AChair::SetInputValue_Y);
 	InputComponent->BindAction("Decide", EInputEvent::IE_Pressed, this, &AChair::NextPhase);
 	InputComponent->BindAction("Add_Slip_Power", EInputEvent::IE_Pressed, this, &AChair::PlayerhSlipPower); 
+	InputComponent->BindAction("Slip_Curve", EInputEvent::IE_Pressed, this, &AChair::SetSlipCurve);
+	InputComponent->BindAction("Slip_Curve", EInputEvent::IE_Released, this, &AChair::SetSlipCurve);
 	InputComponent->BindAction("Sweep", EInputEvent::IE_Pressed, this, &AChair::SetPlayerSweepFlag);
 }
 
@@ -334,19 +353,23 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 
 void AChair::OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor->ActorHasTag("EntranceEnd"))
+	if (OtherActor->ActorHasTag("ChangeSlip"))
 	{
 		m_phase_ = EPhase::kSlip;
 	}
+	else if (OtherActor->ActorHasTag("ChangeSpin"))
+	{
+		m_phase_ = EPhase::kSpin;
+	}
+	
 }
 
 void AChair::NextPhase()
 {
-	if (m_phase_ != EPhase::kMove)
+	if (m_phase_ >= EPhase(3))
 	{
 		return;
 	}
-
 	m_phase_cnt_++;
 	m_phase_ = EPhase(m_phase_cnt_);
 	is_entrance = true;
@@ -381,6 +404,18 @@ void AChair::PlayerEntrance(const float _deltatime)
 {
 	// 前方向ベクトルに向かって移動
 	AddMovementInput(m_forward_vec_, 1.f);
+
+	m_floating_pawn_movement_->MaxSpeed += m_input_add_speed_val_ * _deltatime;
+
+	if (m_floating_pawn_movement_->MaxSpeed > m_max_speed_)
+	{
+		m_floating_pawn_movement_->MaxSpeed = m_max_speed_;
+	}
+
+	if (m_debugmode_)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("MaxSpeed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
+	}
 }
 
 void AChair::PlayerSpin(const float _deltatime)
@@ -444,14 +479,18 @@ void AChair::PlayerSpin(const float _deltatime)
 
 void AChair::PlayerSlip(const float _deltatime)
 {
-	if (m_player_spin_cnt_ != 0)
+	if (m_slip_curve_)
 	{
-		if (m_forward_vec_.Y + m_input_slip_curve_ * m_player_spin_cnt_ <= 1.f && m_forward_vec_.Y + m_input_slip_curve_ * m_player_spin_cnt_ >= -1.f)
+		if (m_player_spin_cnt_ != 0)
 		{
-			//m_forward_vec_.X -= m_input_slip_curve_ * m_player_spin_cnt_;
-			m_forward_vec_.Y += m_input_slip_curve_ * m_player_spin_cnt_;
+			if (m_forward_vec_.Y + m_input_slip_curve_ * m_player_spin_cnt_ <= 1.f && m_forward_vec_.Y + m_input_slip_curve_ * m_player_spin_cnt_ >= -1.f)
+			{
+				//m_forward_vec_.X -= m_input_slip_curve_ * m_player_spin_cnt_;
+				m_forward_vec_.Y += m_input_slip_curve_ * m_player_spin_cnt_;
+			}
 		}
 	}
+
 	// 前方向ベクトルに向かって移動
 	AddMovementInput(m_forward_vec_, 1.f);
 
@@ -469,17 +508,11 @@ void AChair::PlayerhSlipPower()
 	}
 
 	m_is_input_add_slip_power_ = true;
-	m_floating_pawn_movement_->MaxSpeed += m_input_add_speed_val_;
+}
 
-	if (m_floating_pawn_movement_->MaxSpeed > m_max_speed_)
-	{
-		m_floating_pawn_movement_->MaxSpeed = m_max_speed_;
-	}
-
-	if (m_debugmode_)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("MaxSpeed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
-	}
+void AChair::SetSlipCurve()
+{
+	m_slip_curve_ = !m_slip_curve_;
 }
 
 void AChair::Deceleration(const float _deltatime)
@@ -518,4 +551,12 @@ void AChair::PlayerSweep(const float _deltatime)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Sweep/  MaxSpeed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
 	}
+}
+
+void AChair::PlayerPowerChange(const float _deltatime)
+{
+	FVector nowLocation = GetActorLocation();
+	m_player_location_ = (m_input_value_.Y * m_input_speed_scale_) * _deltatime;
+	nowLocation.X += m_player_location_;
+	SetActorLocation(FVector(nowLocation.X + m_player_location_, nowLocation.Y, nowLocation.Z));
 }
