@@ -20,8 +20,11 @@ UENUM(BlueprintType)
 enum class EPhase : uint8
 {
 	kStay UMETA(DisplayName = "Stay"),					// 待機状態
-	kMove UMETA(DisplayName = "Move"),					// 横移動状態
-	kEntrance UMETA(DisplayName = "kEntrance"),			// 助走状態
+	//kMove UMETA(DisplayName = "Move"),				// 横移動状態
+	kRotation UMETA(DisplayName = "Rotation"),			// 角度調整状態
+	kPowerChange UMETA(DisplayName = "PowerChange"),	// パワー調整状態
+	kEntrance UMETA(DisplayName = "Entrance"),			// 助走状態
+	kSpin UMETA(DisplayName = "Spin"),					// スピン状態
 	kSlip UMETA(DisplayName = "Slip"),					// 滑り状態
 	kEnd UMETA(DisplayName = "End"),
 };
@@ -77,14 +80,12 @@ private:
 	void PlayerSlip(const float _deltatime);		// プレイヤーが滑る処理
 	void DeleteArrow();								// ガイドを消す関数
 	void NextPhase();								// 次の状態に変更する関数
-	void SwitchSlipPowerLv1();
-	void SwitchSlipPowerLv2();
-	void SwitchSlipPowerLv3();
 	void PlayerhSlipPower();
 	void SetSlipCurve();
 	void Deceleration(const float _deltatime);
 	void PlayerSweep(const float _deltatime);		// deltatime処理はしています
-	void SetPlayerSweepFlag() { m_is_sweep_ = true; }
+	void SetPlayerSweepFlag() { m_is_sweep_ = true; }	//
+	void PlayerPowerChange(const float _deltatime);
 
 	// カプセルコンポーネントを参照している為同じものをBPに追加
 	UFUNCTION()
