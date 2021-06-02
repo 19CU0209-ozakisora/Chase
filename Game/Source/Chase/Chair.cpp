@@ -55,12 +55,22 @@ AChair::AChair()
 	, m_pplayermesh_(NULL)
 	, m_parrow_(NULL)
 	, m_target_point_mesh_(NULL)
+	, is_entrance(false)
+	, is_hit_wall_(false)
+	, m_audiocomponent_(NULL)
+	, m_chair_roll_sound_(NULL)
+	, m_deltatime(0.f)
+	, m_deside_sound_(NULL)
+	, m_input_slip_curve_(0.f)
+	, m_is_sweep_(false)
+	, m_pummeled_frame_(0.f)
+	, m_slip_curve_(0.f)
+	, m_sweep_scale_(0.f)
+	, m_wall_time(0.f)
 {
 
-	GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("const")));
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	SetActorLocation(FVector(100, 100, 100));
 
 	m_root_component_ = CreateDefaultSubobject<USceneComponent>(TEXT("m_root_component_"));
 	m_root_component_ = RootComponent;
