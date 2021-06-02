@@ -8,6 +8,7 @@
 // #include "Components/PrimitiveComponent.h"
 #include "Math/Vector.h"
 #include "GameFramework/FloatingPawnMovement.h"
+#include "Kismet/KismetMathLibrary.h"		// FindLookAtRotationを使うため
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Chair.generated.h"
@@ -95,8 +96,6 @@ private:
 		void OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 public:
-	UPROPERTY(EditAnywhere, Category = "Default Setting")
-	USceneComponent* m_proot_;						// ルートコンポーネント用(メッシュの親)
 
 	UPROPERTY(EditAnywhere, Category = "Default Setting")	
 		bool m_debugmode_;							// デバッグモードをONにするかどうか
@@ -158,6 +157,12 @@ public:
 	// BPで初期設定出来ない不具合あり -> 再度BPを作り直すことで解消
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		class UStaticMeshComponent* m_parrow_;							// ガイドのメッシュ
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		class UStaticMeshComponent* m_target_point_mesh_;					// 目標地点のメッシュ
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		class USceneComponent* m_root_component_;					// 目標地点のメッシュ
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		UFloatingPawnMovement* m_floating_pawn_movement_;				// FloatingPawnMovementコンポーネント

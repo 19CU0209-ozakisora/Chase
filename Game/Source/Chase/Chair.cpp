@@ -54,9 +54,16 @@ AChair::AChair()
 	, m_floating_pawn_movement_(NULL)
 	, m_pplayermesh_(NULL)
 	, m_parrow_(NULL)
+	, m_target_point_mesh_(NULL)
 {
+
+	GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("const")));
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	SetActorLocation(FVector(100, 100, 100));
+
+	m_root_component_ = CreateDefaultSubobject<USceneComponent>(TEXT("m_root_component_"));
+	m_root_component_ = RootComponent;
 
 	// 椅子のメッシュの設定
 	//m_pplayermesh_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("m_pplayermesh_"));
@@ -69,6 +76,9 @@ AChair::AChair()
 
 	// 移動関係のコンポーネントの追加
 	m_floating_pawn_movement_ = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("m_floating_pawn_movement_"));
+
+	m_target_point_mesh_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_target_point_mesh_"));
+	m_target_point_mesh_ ->SetupAttachment(m_pplayermesh_);
 
 	//m_wall_time = 5.f;
 
@@ -93,6 +103,7 @@ AChair::AChair()
 void AChair::BeginPlay()
 {
 	Super::BeginPlay();
+	GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("begin")));
 
 	// ヒット時の関数のバインド
 	m_pplayermesh_->OnComponentHit.AddDynamic(this, &AChair::ComponentHit);
@@ -373,8 +384,11 @@ void AChair::NextPhase()
 	m_phase_cnt_++;
 	m_phase_ = EPhase(m_phase_cnt_);
 	is_entrance = true;
-
-	if (m_phase_ == EPhase::kEntrance)
+	if (m_phase_ == EPhase::kPowerChange)
+	{
+		m_target_point_mesh_->SetConstraintMode(EDOFMode::XZPlane);
+	}
+	else if (m_phase_ == EPhase::kEntrance)
 	{
 		m_forward_vec_ = Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector();
 		DeleteArrow();
@@ -395,9 +409,16 @@ void AChair::PlayerMove(const float _deltatime)
 
 void AChair::PlayerRotation(const float _deltatime)
 {
+	// 現在の位置を取得し、入力値に補正をかけて計算後反映
+	FVector nowLocation = m_target_point_mesh_->GetComponentLocation();
+	m_player_location_ += (m_input_value_.X * m_input_speed_scale_) * _deltatime;
+	nowLocation.Y = m_player_location_;
+	m_target_point_mesh_->SetWorldLocation(nowLocation);
+	/*
 	// 入力値に補正をかけて角度を設定
 	m_player_rotation_ += (m_input_value_.X * m_input_rotation_scale_) * _deltatime;
 	SetActorRotation(FRotator(0.f, m_player_rotation_, 0.f));
+	*/
 }
 
 void AChair::PlayerEntrance(const float _deltatime)
@@ -559,4 +580,10 @@ void AChair::PlayerPowerChange(const float _deltatime)
 	m_player_location_ = (m_input_value_.Y * m_input_speed_scale_) * _deltatime;
 	nowLocation.X += m_player_location_;
 	SetActorLocation(FVector(nowLocation.X + m_player_location_, nowLocation.Y, nowLocation.Z));
+
+	FVector a = GetActorLocation();
+	a.Z = 0.f;
+	FVector b = m_target_point_mesh_->GetComponentLocation();
+	b.Z = 0.f;
+	SetActorRotation(UKismetMathLibrary::FindLookAtRotation(a, b));
 }
