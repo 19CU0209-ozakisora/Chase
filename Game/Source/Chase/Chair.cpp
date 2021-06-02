@@ -67,13 +67,11 @@ AChair::AChair()
 	, m_slip_curve_(0.f)
 	, m_sweep_scale_(0.f)
 	, m_wall_time(0.f)
+	, m_target_point_location_(0.f)
 {
 
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	m_root_component_ = CreateDefaultSubobject<USceneComponent>(TEXT("m_root_component_"));
-	m_root_component_ = RootComponent;
 
 	// ˆÖq‚ÌƒƒbƒVƒ…‚Ìİ’è
 	//m_pplayermesh_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("m_pplayermesh_"));

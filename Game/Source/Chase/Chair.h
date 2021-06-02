@@ -67,6 +67,7 @@ private:
 	int m_player_spin_cnt_;							// 何回転したか
 	int m_power_level_;								// パワーのレベルのカウント用
 	FVector m_forward_vec_;							// 前方向ベクトル
+	FVector m_target_point_location_;
 	FVector2D m_input_value_;						// 入力値
 	int m_phase_cnt_;								// フェーズのカウント用変数
 
@@ -160,9 +161,6 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		class UStaticMeshComponent* m_target_point_mesh_;					// 目標地点のメッシュ
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
-		class USceneComponent* m_root_component_;					// 目標地点のメッシュ
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		UFloatingPawnMovement* m_floating_pawn_movement_;				// FloatingPawnMovementコンポーネント
