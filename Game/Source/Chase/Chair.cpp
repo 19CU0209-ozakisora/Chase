@@ -12,6 +12,7 @@
 //			2021/05/12 尾崎蒼宙 構造体の追加
 //			2021/05/20 尾崎蒼宙 スピン処理の追加
 //			2021/05/24 野田八雲 サウンド追加（一部変数名修正）
+//			2021/06/03 野田八雲 サウンド追加（ぶつかる音追加）
 //--------------------------------------------------------------
 
 #include "Chair.h"
@@ -93,18 +94,25 @@ AChair::AChair()
 	//何の音を再生するかをパスで指定、見つかったらオブジェクトに入れる
 	//パスの書き方は、"/Game/Music/BGM or SE/サウンドの名前"（Contentは省略すること）
 	//決定音
-	static ConstructorHelpers::FObjectFinder<USoundBase> find_sound_deside_(TEXT("/Game/Music/SE/deside_8"));
+	static ConstructorHelpers::FObjectFinder<USoundBase> find_sound_deside_(TEXT("/Game/Music/SE/deside"));
 
 	if (find_sound_deside_.Succeeded())
 	{
 		m_deside_sound_ = find_sound_deside_.Object;
 	}
 	//椅子が転がる音
-	static ConstructorHelpers::FObjectFinder<USoundBase> find_sound_chair_(TEXT("/Game/Music/SE/caster"));
+	static ConstructorHelpers::FObjectFinder<USoundBase> find_sound_chair_(TEXT("/Game/Music/SE/Move"));
 	if (find_sound_chair_.Succeeded())
 	{
 		m_chair_roll_sound_ = find_sound_chair_.Object;
 	}
+	//ぶつかった時の音
+	static ConstructorHelpers::FObjectFinder<USoundBase> find_sound_chair_collide_(TEXT("/Game/Music/SE/Collide01_"));
+	if (find_sound_chair_collide_.Succeeded())
+	{
+		m_chair_collide_sound_ = find_sound_chair_collide_.Object;
+	}
+
 };
 
 // Called when the game starts or when spawned
@@ -264,6 +272,9 @@ void AChair::DeleteArrow()
 // カプセルコンポーネントを参照している為同じものをBPに追加 -> BPからC++に移植(2021/04/23 尾崎)
 void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	//椅子がぶつかった音を再生
+	m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_chair_collide_sound_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
+
 	// 椅子に当たった場合の処理
 	if (Cast<AChair>(OtherActor))
 	{

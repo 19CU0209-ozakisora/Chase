@@ -171,6 +171,9 @@ public:
 	UPROPERTY()
 		USoundBase* m_chair_roll_sound_;								//ˆÖŽq‚Ì“]‚ª‚é‰¹
 
+	UPROPERTY()
+		USoundBase* m_chair_collide_sound_;								//ˆÖŽq‚ª‚Ô‚Â‚©‚Á‚½Žž‚Ì‰¹
+
 	UFUNCTION(BlueprintImplementableEvent, Category = "MyF")
 		void Ragdoll();
 
