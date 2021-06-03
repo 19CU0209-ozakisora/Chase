@@ -394,7 +394,7 @@ void AChair::NextPhase()
 	is_entrance = true;
 	if (m_phase_ == EPhase::kPowerChange)
 	{
-		m_target_point_mesh_->SetConstraintMode(EDOFMode::XZPlane);
+		m_target_point_location_ = m_target_point_mesh_->GetComponentLocation();
 	}
 	else if (m_phase_ == EPhase::kEntrance)
 	{
@@ -589,9 +589,5 @@ void AChair::PlayerPowerChange(const float _deltatime)
 	nowLocation.X += m_player_location_;
 	SetActorLocation(FVector(nowLocation.X + m_player_location_, nowLocation.Y, nowLocation.Z));
 
-	FVector a = GetActorLocation();
-	a.Z = 0.f;
-	FVector b = m_target_point_mesh_->GetComponentLocation();
-	b.Z = 0.f;
-	SetActorRotation(UKismetMathLibrary::FindLookAtRotation(a, b));
+	SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), m_target_point_location_));
 }
