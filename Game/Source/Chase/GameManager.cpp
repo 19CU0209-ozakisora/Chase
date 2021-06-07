@@ -117,7 +117,7 @@ void AGameManager::Tick(float DeltaTime)
 		if (m_players_[0]->control_chair_ != NULL)
 		{
 			// 現在操作している椅子が椅子に当たる or 一定ラインまで行ってしまったら
-			if (m_players_[0]->control_chair_->m_phase_ == EPhase::kEnd)
+			if (m_players_[0]->control_chair_->GetPhase() == EPhase::kEnd)
 			{
 				// 一定秒数経過後、操作する椅子の変更
 				if (TimeCheck(DeltaTime))
@@ -161,7 +161,7 @@ void AGameManager::Tick(float DeltaTime)
 		if (m_players_[1]->control_chair_ != NULL)
 		{
 			// 現在操作している椅子が椅子に当たる or 一定ラインまで行ってしまったら
-			if (m_players_[1]->control_chair_->m_phase_ == EPhase::kEnd)
+			if (m_players_[1]->control_chair_->GetPhase() == EPhase::kEnd)
 			{
 				// 一定秒数経過後、操作する椅子の変更
 				if (TimeCheck(DeltaTime))
@@ -201,7 +201,7 @@ void AGameManager::Tick(float DeltaTime)
 	}
 
 	//ラウンドが10になったら
-	if (nowroundnum_ == 10 && m_players_[1]->control_chair_->m_phase_ == EPhase::kEnd)
+	if (nowroundnum_ == 10 && m_players_[1]->control_chair_->GetPhase() == EPhase::kEnd)
 	{
 		//椅子が10個止まった時の処理
 		StopChair();

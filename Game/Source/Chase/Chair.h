@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+
 
 #pragma once
 
@@ -52,10 +52,11 @@ private:
 
 	bool m_is_input_add_slip_power_;				// 速度を増やすボタンが押されたかどうか
 	bool m_first_player_spin_input_flag_;			// 初めてスティックを倒したか否かのフラグ用
-	bool m_slip_curve_;								//
-	bool is_hit_wall_;
-	bool m_is_sweep_;
-	float m_wall_time;
+	bool m_slip_curve_;								// 曲がるボタンを押されたかどうか
+	bool is_hit_wall_;								// 壁に当たったかどうか
+	bool m_is_sweep_;								// スウィープボタンを押したかどうか
+	EPhase m_phase_;												// 現在のフェーズ格納用
+	float m_wall_time;								// 壁に当たった時間
 	float m_angle_corection_;						// スピン時の補正用の変数
 	float m_player_rotation_;						// 回転量
 	float m_player_location_;						// 移動量
@@ -63,31 +64,28 @@ private:
 	float m_player_spin_angle_;						// スティックを回した角度
 	float m_preb_player_spin_input_;				// スピン時の前回の入力
 	float m_first_player_spin_input_angle_;			// 初めてスティックを倒した角度の保存用
-	float m_deltatime;								// 処理時間
 	int m_player_spin_cnt_;							// 何回転したか
-	int m_power_level_;								// パワーのレベルのカウント用
 	FVector m_forward_vec_;							// 前方向ベクトル
-	FVector m_target_point_location_;
+	FVector m_target_point_location_;				// 目標地点の座標
 	FVector2D m_input_value_;						// 入力値
-	int m_phase_cnt_;								// フェーズのカウント用変数
 
 	UAudioComponent* m_audiocomponent_;				//音楽を入れるコンポーネント
 
 	void SetInputValue_X(const float _axisval);		// 入力された値_X
 	void SetInputValue_Y(const float _axisval);		// 入力された値_Y
 	void PlayerMove(const float _deltatime);		// プレイヤーの横移動
-	void PlayerEntrance(const float _deltatime);
+	void PlayerEntrance(const float _deltatime);	// 助走の処理
 	void PlayerRotation(const float _deltatime);	// プレイヤーの投げる方向の変更
 	void PlayerSpin(const float _deltatime);		// プレイヤーの回転
 	void PlayerSlip(const float _deltatime);		// プレイヤーが滑る処理
 	void DeleteArrow();								// ガイドを消す関数
-	void NextPhase();								// 次の状態に変更する関数
-	void PlayerhSlipPower();
-	void SetSlipCurve();
-	void Deceleration(const float _deltatime);
+	void PlayerhSlipPower();						// 助走処理(過去の)
+	void SetSlipCurve() { m_slip_curve_ = !m_slip_curve_; }	// 曲がるボタンが押されたら/離されたら処理
+	void Deceleration(const float _deltatime);		// 減速処理
 	void PlayerSweep(const float _deltatime);		// deltatime処理はしています
-	void SetPlayerSweepFlag() { m_is_sweep_ = true; }	//
-	void PlayerPowerChange(const float _deltatime);
+	void SetPlayerSweepFlag() { m_is_sweep_ = !m_is_sweep_; }	// スウィープボタンが押されたら処理
+	void PlayerPowerChange(const float _deltatime);	// 助走自のパワー変更処理
+	void InputDecide();
 
 	// カプセルコンポーネントを参照している為同じものをBPに追加
 	UFUNCTION()
@@ -101,16 +99,11 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Default Setting")	
 		bool m_debugmode_;							// デバッグモードをONにするかどうか
 
-	bool m_ishit_;														// 椅子に衝突されたらtrueに
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
+		bool m_ishit_;														// 椅子に衝突されたらtrueに
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
-		bool is_entrance;												// 助走中か
-		
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")	
-		bool m_is_movement_;											// 当たったかどうか
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
-		EPhase m_phase_;												// 現在のフェーズ格納用
+		bool is_entrance_;												// 助走中か
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")	
 		float m_input_speed_scale_;										// 移動の倍率
@@ -148,6 +141,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		float m_is_movement_scale_;										// ヒット時の速度の倍率
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		float m_rotation_max_val;									// 横移動の最大量
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		float m_powerchange_max_move_val_;								// 前後の移動の最大量
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
 		FString m_name_;												// 椅子の名前を入れる変数(P1 or P2しか入れないけど)
 
@@ -179,4 +178,10 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "MyF")
 		void DestroyHuman();
+
+	UFUNCTION(BlueprintCallable, Category = "MyF")
+		void SetPhase(const EPhase _phase);								// 次の状態に変更する関数
+
+	UFUNCTION(BlueprintCallable, Category = "MyF")
+		EPhase GetPhase() { return m_phase_; }
 };

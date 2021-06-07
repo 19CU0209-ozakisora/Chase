@@ -12,6 +12,11 @@
 //			2021/05/12 尾崎蒼宙 構造体の追加
 //			2021/05/20 尾崎蒼宙 スピン処理の追加
 //			2021/05/24 野田八雲 サウンド追加（一部変数名修正）
+//			2021/05/24 尾崎蒼宙 反射処理の仮作成(現段階では未実装)
+//			2021/05/26 尾崎蒼宙 スピンの処理で条件式の変更・投げる力の処理の変更
+//			2021/05/28 尾崎蒼宙 助走機能の作成・スウィープ機能の作成
+//			2021/06/01 尾崎蒼宙 ゲームフローが変わった為一部組みなおし
+//			2021/06/03 尾崎蒼宙 仮の目標地点の追加
 //			2021/06/03 野田八雲 サウンド追加（ぶつかる音追加）
 //--------------------------------------------------------------
 
@@ -25,7 +30,12 @@
 // Sets default values
 AChair::AChair() 
 	: m_is_input_add_slip_power_(false)
-	, m_first_player_spin_input_flag_(true)
+	, m_first_player_spin_input_flag_(false)
+	, m_slip_curve_(false)
+	, is_hit_wall_(false)
+	, m_is_sweep_(false)
+	, m_phase_(EPhase::kStay)
+	, m_wall_time(0.f)
 	, m_angle_corection_(90.f)
 	, m_player_rotation_(0.f)
 	, m_player_location_(0.f)
@@ -34,41 +44,35 @@ AChair::AChair()
 	, m_preb_player_spin_input_(0.f)
 	, m_first_player_spin_input_angle_(0.f)
 	, m_player_spin_cnt_(0)
-	, m_power_level_(1)
 	, m_forward_vec_(FVector::ZeroVector)
+	, m_target_point_location_(FVector::ZeroVector)
 	, m_input_value_(FVector2D::ZeroVector)
-	, m_phase_cnt_(1)
-	, m_ishit_(false)
+	, m_audiocomponent_(NULL)
+
 	, m_debugmode_(false)
-	, m_is_movement_(false)
-	, m_phase_(EPhase::kStay)
+	, m_ishit_(false)
+	, is_entrance_(false)
+
 	, m_input_speed_scale_(0.f)
 	, m_input_rotation_scale_(0.f)
 	, m_max_speed_(0.f)
 	, m_min_speed_(0.f)
 	, m_input_add_speed_val_(0.f)
 	, m_deceleration_val_(0.f)
+	, m_sweep_scale_(0.f)
+	, m_pummeled_frame_(0.f)
 	, m_input_spin_scale_(0.f)
+	, m_input_slip_curve_(0.f)
 	, m_hitstop_scale_(0.f)
 	, m_is_movement_scale_(0.f)
 	, m_name_("")
-	, m_floating_pawn_movement_(NULL)
 	, m_pplayermesh_(NULL)
 	, m_parrow_(NULL)
 	, m_target_point_mesh_(NULL)
-	, is_entrance(false)
-	, is_hit_wall_(false)
-	, m_audiocomponent_(NULL)
-	, m_chair_roll_sound_(NULL)
-	, m_deltatime(0.f)
+	, m_floating_pawn_movement_(NULL)
 	, m_deside_sound_(NULL)
-	, m_input_slip_curve_(0.f)
-	, m_is_sweep_(false)
-	, m_pummeled_frame_(0.f)
-	, m_slip_curve_(0.f)
-	, m_sweep_scale_(0.f)
-	, m_wall_time(0.f)
-	, m_target_point_location_(0.f)
+	, m_chair_roll_sound_(NULL)
+	, m_chair_collide_sound_(NULL)
 {
 
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -119,7 +123,6 @@ AChair::AChair()
 void AChair::BeginPlay()
 {
 	Super::BeginPlay();
-	GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("begin")));
 
 	// ヒット時の関数のバインド
 	m_pplayermesh_->OnComponentHit.AddDynamic(this, &AChair::ComponentHit);
@@ -133,7 +136,6 @@ void AChair::BeginPlay()
 void AChair::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	m_deltatime = DeltaTime;
 	m_wall_time += DeltaTime;
 
 	/*
@@ -168,7 +170,7 @@ void AChair::Tick(float DeltaTime)
 		AddMovementInput(m_forward_vec_, 1.f);
 	}
 	// 滑り
-	else if (m_phase_ == EPhase::kSlip && !m_is_movement_)
+	else if (m_phase_ == EPhase::kSlip)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Slip")));
 		PlayerSlip(DeltaTime);
@@ -207,7 +209,6 @@ void AChair::Tick(float DeltaTime)
 	}
 
 	m_is_input_add_slip_power_ = false;
-	m_is_sweep_ = false;
 }
 
 // Called to bind functionality to input
@@ -218,11 +219,12 @@ void AChair::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	// 左右入力と決定キー
 	InputComponent->BindAxis("Horizontal", this, &AChair::SetInputValue_X);
 	InputComponent->BindAxis("Vertical", this, &AChair::SetInputValue_Y);
-	InputComponent->BindAction("Decide", EInputEvent::IE_Pressed, this, &AChair::NextPhase);
+	InputComponent->BindAction("Decide", EInputEvent::IE_Pressed, this, &AChair::InputDecide);
 	InputComponent->BindAction("Add_Slip_Power", EInputEvent::IE_Pressed, this, &AChair::PlayerhSlipPower); 
 	InputComponent->BindAction("Slip_Curve", EInputEvent::IE_Pressed, this, &AChair::SetSlipCurve);
 	InputComponent->BindAction("Slip_Curve", EInputEvent::IE_Released, this, &AChair::SetSlipCurve);
 	InputComponent->BindAction("Sweep", EInputEvent::IE_Pressed, this, &AChair::SetPlayerSweepFlag);
+	InputComponent->BindAction("Sweep", EInputEvent::IE_Released, this, &AChair::SetPlayerSweepFlag);
 }
 
 void AChair::SetInputValue_X(const float _axisval)
@@ -272,15 +274,23 @@ void AChair::DeleteArrow()
 // カプセルコンポーネントを参照している為同じものをBPに追加 -> BPからC++に移植(2021/04/23 尾崎)
 void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	//椅子がぶつかった音を再生
-	m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_chair_collide_sound_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
+	FVector a = m_audiocomponent_->GetComponentLocation();
+	if (m_chair_collide_sound_ != NULL)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%f, %f, %f"), a.X, a.Y, a.Z);
+		//椅子がぶつかった音を再生
+		m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_chair_collide_sound_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("NULLL"));
+	}
 
 	// 椅子に当たった場合の処理
 	if (Cast<AChair>(OtherActor))
 	{
 		if (Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity == FVector::ZeroVector)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("True"));
 			if (m_debugmode_)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("Chair Hit")));
@@ -293,9 +303,8 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 			// 物理の働く向きの設定
 			m_pplayermesh_->SetConstraintMode(EDOFMode::XYPlane);
 
-			// 椅子に当たった状態に変更
-			m_is_movement_ = true;
-			m_phase_ = EPhase::kEnd;
+			// 行動終了に
+			SetPhase(EPhase::kEnd);
 
 			// 椅子に当てられた為trueに
 			Cast<AChair>(OtherActor)->m_ishit_ = true;
@@ -385,32 +394,32 @@ void AChair::OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 {
 	if (OtherActor->ActorHasTag("ChangeSlip"))
 	{
-		m_phase_ = EPhase::kSlip;
+		SetPhase(EPhase::kSlip);
 	}
 	else if (OtherActor->ActorHasTag("ChangeSpin"))
 	{
-		m_phase_ = EPhase::kSpin;
+		SetPhase(EPhase::kSpin);
 	}
 	
 }
 
-void AChair::NextPhase()
+void AChair::SetPhase(const EPhase _phase)
 {
-	if (m_phase_ >= EPhase(3))
-	{
-		return;
-	}
-	m_phase_cnt_++;
-	m_phase_ = EPhase(m_phase_cnt_);
-	is_entrance = true;
+	m_phase_ = _phase;
 	if (m_phase_ == EPhase::kPowerChange)
 	{
 		m_target_point_location_ = m_target_point_mesh_->GetComponentLocation();
+		if (m_parrow_ != NULL)
+		{
+			Cast<USceneComponent>(m_target_point_mesh_)->DestroyComponent();
+		}
+		
 	}
 	else if (m_phase_ == EPhase::kEntrance)
 	{
 		m_forward_vec_ = Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector();
 		DeleteArrow();
+		is_entrance_ = true;
 	}
 
 	//音再生（決定音）
@@ -430,14 +439,8 @@ void AChair::PlayerRotation(const float _deltatime)
 {
 	// 現在の位置を取得し、入力値に補正をかけて計算後反映
 	FVector nowLocation = m_target_point_mesh_->GetComponentLocation();
-	m_player_location_ += (m_input_value_.X * m_input_speed_scale_) * _deltatime;
-	nowLocation.Y = m_player_location_;
-	m_target_point_mesh_->SetWorldLocation(nowLocation);
-	/*
-	// 入力値に補正をかけて角度を設定
-	m_player_rotation_ += (m_input_value_.X * m_input_rotation_scale_) * _deltatime;
-	SetActorRotation(FRotator(0.f, m_player_rotation_, 0.f));
-	*/
+	m_player_location_ = (m_input_value_.X * m_input_speed_scale_) * _deltatime;
+	m_target_point_mesh_->SetWorldLocation(FVector(nowLocation.X, nowLocation.Y + m_player_location_, nowLocation.Z));
 }
 
 void AChair::PlayerEntrance(const float _deltatime)
@@ -550,11 +553,6 @@ void AChair::PlayerhSlipPower()
 	m_is_input_add_slip_power_ = true;
 }
 
-void AChair::SetSlipCurve()
-{
-	m_slip_curve_ = !m_slip_curve_;
-}
-
 void AChair::Deceleration(const float _deltatime)
 {
 	if (!m_is_input_add_slip_power_)
@@ -566,7 +564,7 @@ void AChair::Deceleration(const float _deltatime)
 		}
 		else if (m_floating_pawn_movement_->MaxSpeed < 0.f && m_phase_ == EPhase::kSlip)
 		{
-			m_phase_ = EPhase::kEnd;
+			SetPhase(EPhase::kEnd);
 		}
 
 		if (m_debugmode_)
@@ -580,11 +578,11 @@ void AChair::PlayerSweep(const float _deltatime)
 {
 	m_is_sweep_ = true;
 
-	m_floating_pawn_movement_->MaxSpeed -= (m_deceleration_val_ / m_sweep_scale_) * m_deltatime;
+	m_floating_pawn_movement_->MaxSpeed -= (m_deceleration_val_ / m_sweep_scale_) * _deltatime;
 
 	if (m_floating_pawn_movement_->MaxSpeed < 0.f && m_phase_ == EPhase::kSlip)
 	{
-		m_phase_ = EPhase::kEnd;
+		SetPhase(EPhase::kEnd);
 	}
 
 	if (m_debugmode_)
@@ -598,7 +596,18 @@ void AChair::PlayerPowerChange(const float _deltatime)
 	FVector nowLocation = GetActorLocation();
 	m_player_location_ = (m_input_value_.Y * m_input_speed_scale_) * _deltatime;
 	nowLocation.X += m_player_location_;
-	SetActorLocation(FVector(nowLocation.X + m_player_location_, nowLocation.Y, nowLocation.Z));
+	SetActorLocation(FVector(nowLocation.X + m_player_location_, nowLocation.Y, nowLocation.Z), true);
 
 	SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), m_target_point_location_));
+}
+void AChair::InputDecide()
+{
+	if (m_phase_ >= EPhase(3))
+	{
+		return;
+	}
+	else
+	{
+		SetPhase(EPhase((int)m_phase_ + 1));
+	}
 }
