@@ -40,7 +40,6 @@ void APlayerchara::Tick(float DeltaTime)
 void APlayerchara::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
 }
 
 void APlayerchara::SetChairTag()

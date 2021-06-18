@@ -283,7 +283,7 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("NULLL"));
+		UE_LOG(LogTemp, Warning, TEXT("NULL"));
 	}
 
 	// 椅子に当たった場合の処理
@@ -304,6 +304,7 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 			m_pplayermesh_->SetConstraintMode(EDOFMode::XYPlane);
 
 			// 行動終了に
+			UE_LOG(LogTemp, Warning, TEXT("a"));
 			SetPhase(EPhase::kEnd);
 
 			// 椅子に当てられた為trueに
@@ -432,7 +433,7 @@ void AChair::PlayerMove(const float _deltatime)
 	FVector nowLocation = GetActorLocation();
 	m_player_location_ += (m_input_value_.X * m_input_speed_scale_) * _deltatime;
 	nowLocation.Y = m_player_location_;
-	SetActorLocation(nowLocation);
+	SetActorLocation(nowLocation, true);
 }
 
 void AChair::PlayerRotation(const float _deltatime)
@@ -440,7 +441,7 @@ void AChair::PlayerRotation(const float _deltatime)
 	// 現在の位置を取得し、入力値に補正をかけて計算後反映
 	FVector nowLocation = m_target_point_mesh_->GetComponentLocation();
 	m_player_location_ = (m_input_value_.X * m_input_speed_scale_) * _deltatime;
-	m_target_point_mesh_->SetWorldLocation(FVector(nowLocation.X, nowLocation.Y + m_player_location_, nowLocation.Z));
+	m_target_point_mesh_->SetWorldLocation(FVector(nowLocation.X, nowLocation.Y + m_player_location_, nowLocation.Z), true);
 }
 
 void AChair::PlayerEntrance(const float _deltatime)
@@ -595,8 +596,7 @@ void AChair::PlayerPowerChange(const float _deltatime)
 {
 	FVector nowLocation = GetActorLocation();
 	m_player_location_ = (m_input_value_.Y * m_input_speed_scale_) * _deltatime;
-	nowLocation.X += m_player_location_;
-	SetActorLocation(FVector(nowLocation.X + m_player_location_, nowLocation.Y, nowLocation.Z), true);
+	this->SetActorLocation(FVector(nowLocation.X + m_player_location_, nowLocation.Y, nowLocation.Z), true);
 
 	SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), m_target_point_location_));
 }

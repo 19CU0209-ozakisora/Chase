@@ -184,4 +184,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "MyF")
 		EPhase GetPhase() { return m_phase_; }
+
+	UFUNCTION(BlueprintCallable, Category = "MyF")
+		bool GetIsSweep() { return m_is_sweep_; }
 };
