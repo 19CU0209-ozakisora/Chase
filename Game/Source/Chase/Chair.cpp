@@ -414,6 +414,8 @@ void AChair::SetPhase(const EPhase _phase)
 		{
 			Cast<USceneComponent>(m_target_point_mesh_)->DestroyComponent();
 		}
+
+		EnableTargetCollision(false);
 		
 	}
 	else if (m_phase_ == EPhase::kEntrance)
@@ -609,5 +611,17 @@ void AChair::InputDecide()
 	else
 	{
 		SetPhase(EPhase((int)m_phase_ + 1));
+	}
+}
+
+void AChair::EnableTargetCollision(bool _flag)
+{
+	if (_flag)
+	{
+		m_target_point_mesh_->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+	else
+	{
+		m_target_point_mesh_->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 }

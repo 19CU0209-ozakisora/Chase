@@ -187,4 +187,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "MyF")
 		bool GetIsSweep() { return m_is_sweep_; }
+
+		void EnableTargetCollision(bool _flag);
 };
