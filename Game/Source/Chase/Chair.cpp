@@ -28,7 +28,7 @@
 #include "ActiveSound.h"
 
 // Sets default values
-AChair::AChair() 
+AChair::AChair()
 	: m_is_input_add_slip_power_(false)
 	, m_first_player_spin_input_flag_(false)
 	, m_slip_curve_(false)
@@ -73,6 +73,7 @@ AChair::AChair()
 	, m_deside_sound_(NULL)
 	, m_chair_roll_sound_(NULL)
 	, m_chair_collide_sound_(NULL)
+	, m_speed_percent_(0.f)
 {
 
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -91,7 +92,7 @@ AChair::AChair()
 	m_floating_pawn_movement_ = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("m_floating_pawn_movement_"));
 
 	m_target_point_mesh_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_target_point_mesh_"));
-	m_target_point_mesh_ ->SetupAttachment(m_pplayermesh_);
+	m_target_point_mesh_->SetupAttachment(m_pplayermesh_);
 
 	//m_wall_time = 5.f;
 
@@ -146,6 +147,7 @@ void AChair::Tick(float DeltaTime)
 		PlayerMove(DeltaTime);
 	}
 	*/
+	// 向きの変更
 	if (m_phase_ == EPhase::kRotation)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Rotation")));
@@ -163,10 +165,18 @@ void AChair::Tick(float DeltaTime)
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Entrance")));
 		PlayerEntrance(DeltaTime);
 	}
+	/*
 	else if (m_phase_ == EPhase::kSpin)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("kSpin")));
 		PlayerSpin(DeltaTime);
+		AddMovementInput(m_forward_vec_, 1.f);
+	}
+	*/  //(2021/06/23 コメント化
+
+	else if (m_phase_ == EPhase::kRide)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Ride")));
 		AddMovementInput(m_forward_vec_, 1.f);
 	}
 	// 滑り
@@ -220,7 +230,7 @@ void AChair::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	InputComponent->BindAxis("Horizontal", this, &AChair::SetInputValue_X);
 	InputComponent->BindAxis("Vertical", this, &AChair::SetInputValue_Y);
 	InputComponent->BindAction("Decide", EInputEvent::IE_Pressed, this, &AChair::InputDecide);
-	InputComponent->BindAction("Add_Slip_Power", EInputEvent::IE_Pressed, this, &AChair::PlayerhSlipPower); 
+	InputComponent->BindAction("Add_Slip_Power", EInputEvent::IE_Pressed, this, &AChair::PlayerhSlipPower);
 	InputComponent->BindAction("Slip_Curve", EInputEvent::IE_Pressed, this, &AChair::SetSlipCurve);
 	InputComponent->BindAction("Slip_Curve", EInputEvent::IE_Released, this, &AChair::SetSlipCurve);
 	InputComponent->BindAction("Sweep", EInputEvent::IE_Pressed, this, &AChair::SetPlayerSweepFlag);
@@ -272,7 +282,7 @@ void AChair::DeleteArrow()
 }
 
 // カプセルコンポーネントを参照している為同じものをBPに追加 -> BPからC++に移植(2021/04/23 尾崎)
-void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void AChair::ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	FVector a = m_audiocomponent_->GetComponentLocation();
 	if (m_chair_collide_sound_ != NULL)
@@ -380,10 +390,10 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 			m_wall_time = 0.f;
 			UE_LOG(LogTemp, Warning, TEXT("otherVec = %f :: %f :: %f"), OtherActorForwadVecter.X, OtherActorForwadVecter.Y, OtherActorForwadVecter.Z);
 			UE_LOG(LogTemp, Warning, TEXT("hansya = %f :: %f :: %f"), RefrectionVecter.X, RefrectionVecter.Y, RefrectionVecter.Z);
-			
-			
+
+
 		}
-		
+
 
 		//m_floating_pawn_movement_->Velocity.X = m_floating_pawn_movement_->Velocity.X * (1.f / m_floating_pawn_movement_->Velocity.X) * (-1.f);
 		//m_floating_pawn_movement_->Velocity.Y = m_floating_pawn_movement_->Velocity.Y * (1.f / m_floating_pawn_movement_->Velocity.Y) * (-1.f);
@@ -393,7 +403,13 @@ void AChair::ComponentHit( UPrimitiveComponent* HitComponent, AActor* OtherActor
 
 void AChair::OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor->ActorHasTag("ChangeSlip"))
+
+	if (OtherActor->ActorHasTag("ChangeRide"))
+	{
+		SetPhase(EPhase::kRide);
+	}
+	/*
+		if (OtherActor->ActorHasTag("ChangeSlip"))
 	{
 		SetPhase(EPhase::kSlip);
 	}
@@ -401,7 +417,7 @@ void AChair::OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 	{
 		SetPhase(EPhase::kSpin);
 	}
-	
+	*/ // (2021/06/23 コメント化)
 }
 
 void AChair::SetPhase(const EPhase _phase)
@@ -416,13 +432,31 @@ void AChair::SetPhase(const EPhase _phase)
 		}
 
 		EnableTargetCollision(false);
-		
+
 	}
 	else if (m_phase_ == EPhase::kEntrance)
 	{
 		m_forward_vec_ = Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector();
+		m_forward_vec_.Z = 0.f; // 上に行ってしまう問題があるため0.fで初期化
 		DeleteArrow();
 		is_entrance_ = true;
+	}
+	else if (m_phase_ == EPhase::kSlip)
+	{
+		if (m_debugmode_)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("m_floating b = %f"), m_floating_pawn_movement_->GetMaxSpeed());
+		}
+
+		m_floating_pawn_movement_->MaxSpeed *= m_speed_percent_;
+
+		if (m_debugmode_)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("m_floating a = %f"), m_speed_percent_);
+			UE_LOG(LogTemp, Warning, TEXT("m_floating a = %f"), m_floating_pawn_movement_->GetMaxSpeed());
+		}
+
+		m_is_input_ride_ = true;
 	}
 
 	//音再生（決定音）
@@ -477,7 +511,7 @@ void AChair::PlayerSpin(const float _deltatime)
 	}
 
 	// 入力がされていない状態ならば入力角度は0°に
-	if (m_input_value_.X == 0.f &&  m_input_value_.Y == 0.f)
+	if (m_input_value_.X == 0.f && m_input_value_.Y == 0.f)
 	{
 		m_player_spin_angle_ = 0.f;
 		m_first_player_spin_input_angle_ = 0.f;
@@ -487,7 +521,7 @@ void AChair::PlayerSpin(const float _deltatime)
 	else
 	{
 		if (m_first_player_spin_input_flag_)
-		{	
+		{
 			// 入力を止めるまでは変数に値を入れないように
 			m_first_player_spin_input_flag_ = false;
 			m_first_player_spin_input_angle_ = m_player_spin_angle_;
@@ -502,7 +536,7 @@ void AChair::PlayerSpin(const float _deltatime)
 	{
 		++m_player_spin_cnt_;
 	}
-	else if (m_preb_player_spin_input_ - m_player_spin_angle_ < -270.f + (360 * m_player_spin_cnt_ ))
+	else if (m_preb_player_spin_input_ - m_player_spin_angle_ < -270.f + (360 * m_player_spin_cnt_))
 	{
 		--m_player_spin_cnt_;
 	}
@@ -602,15 +636,26 @@ void AChair::PlayerPowerChange(const float _deltatime)
 
 	SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), m_target_point_location_));
 }
+
 void AChair::InputDecide()
 {
-	if (m_phase_ >= EPhase(3))
+	if (m_in_ride_flag_)
 	{
-		return;
+		if (m_phase_ == EPhase::kRide)
+		{
+			SetPhase(EPhase((int)m_phase_ + 1));
+		}
 	}
 	else
 	{
-		SetPhase(EPhase((int)m_phase_ + 1));
+		if (m_phase_ >= EPhase(3))
+		{
+			return;
+		}
+		else
+		{
+			SetPhase(EPhase((int)m_phase_ + 1));
+		}
 	}
 }
 

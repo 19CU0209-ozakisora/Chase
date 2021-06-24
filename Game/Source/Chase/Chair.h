@@ -20,13 +20,14 @@ class UAudioComponent;
 UENUM(BlueprintType)
 enum class EPhase : uint8
 {
-	kStay UMETA(DisplayName = "Stay"),					// 待機状態
-	//kMove UMETA(DisplayName = "Move"),				// 横移動状態
-	kRotation UMETA(DisplayName = "Rotation"),			// 角度調整状態
-	kPowerChange UMETA(DisplayName = "PowerChange"),	// パワー調整状態
-	kEntrance UMETA(DisplayName = "Entrance"),			// 助走状態
-	kSpin UMETA(DisplayName = "Spin"),					// スピン状態
-	kSlip UMETA(DisplayName = "Slip"),					// 滑り状態
+	kStay UMETA(DisplayName = "Stay"),					// 待機状態										
+	//kMove UMETA(DisplayName = "Move"),				// 横移動状態									
+	kRotation UMETA(DisplayName = "Rotation"),			// 角度調整状態								
+	kPowerChange UMETA(DisplayName = "PowerChange"),	// パワー調整状態								
+	kEntrance UMETA(DisplayName = "Entrance"),			// 助走状態										
+	kRide UMETA(DisplayName = "Ride"),					// 乗り状態		(2021/06/23 追加)				
+	//kSpin UMETA(DisplayName = "Spin"),				// スピン状態	(2021/06/23 コメント化)
+	kSlip UMETA(DisplayName = "Slip"),					// 滑り状態										
 	kEnd UMETA(DisplayName = "End"),
 };
 
@@ -43,7 +44,7 @@ protected:
 	// 生成時に呼ばれる
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -55,7 +56,7 @@ private:
 	bool m_slip_curve_;								// 曲がるボタンを押されたかどうか
 	bool is_hit_wall_;								// 壁に当たったかどうか
 	bool m_is_sweep_;								// スウィープボタンを押したかどうか
-	EPhase m_phase_;												// 現在のフェーズ格納用
+	EPhase m_phase_;								// 現在のフェーズ格納用
 	float m_wall_time;								// 壁に当たった時間
 	float m_angle_corection_;						// スピン時の補正用の変数
 	float m_player_rotation_;						// 回転量
@@ -96,7 +97,7 @@ private:
 
 public:
 
-	UPROPERTY(EditAnywhere, Category = "Default Setting")	
+	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		bool m_debugmode_;							// デバッグモードをONにするかどうか
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
@@ -105,7 +106,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
 		bool is_entrance_;												// 助走中か
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		float m_input_speed_scale_;										// 移動の倍率
 
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
@@ -134,8 +135,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		float m_input_slip_curve_;										// 滑っているときに曲がる量
-		
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		float m_hitstop_scale_;											// ヒット時の減速の倍率
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
@@ -188,5 +189,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "MyF")
 		bool GetIsSweep() { return m_is_sweep_; }
 
-		void EnableTargetCollision(bool _flag);
+	void EnableTargetCollision(bool _flag);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
+		float m_speed_percent_;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
+		bool m_in_ride_flag_;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
+		bool m_is_input_ride_;	// ride状態の時に決定キーを押してslip状態に変更されたかどうか
 };
