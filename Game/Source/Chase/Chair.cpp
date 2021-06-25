@@ -18,6 +18,7 @@
 //			2021/06/01 尾崎蒼宙 ゲームフローが変わった為一部組みなおし
 //			2021/06/03 尾崎蒼宙 仮の目標地点の追加
 //			2021/06/03 野田八雲 サウンド追加（ぶつかる音追加）
+//			2021/06/28 尾崎蒼宙 乗る仕様の追加・いらなくなったStateのコメント化
 //--------------------------------------------------------------
 
 #include "Chair.h"
@@ -448,6 +449,16 @@ void AChair::SetPhase(const EPhase _phase)
 			UE_LOG(LogTemp, Warning, TEXT("m_floating b = %f"), m_floating_pawn_movement_->GetMaxSpeed());
 		}
 
+		// 一定パーセント未満なら一律のパーセントに
+		if (m_speed_percent_ < m_min_ride_percent_)
+		{
+			m_speed_percent_ = m_min_ride_percent_;
+		}
+		// 一定パーセント以上なら一律のパーセントに
+		else if (m_speed_percent_ >= m_max_ride_percent_)
+		{
+			m_speed_percent_ = 1.f;
+		}
 		m_floating_pawn_movement_->MaxSpeed *= m_speed_percent_;
 
 		if (m_debugmode_)

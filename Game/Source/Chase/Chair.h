@@ -197,4 +197,8 @@ public:
 		bool m_in_ride_flag_;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
 		bool m_is_input_ride_;	// rideó‘Ô‚Ì‚ÉŒˆ’èƒL[‚ğ‰Ÿ‚µ‚Äslipó‘Ô‚É•ÏX‚³‚ê‚½‚©‚Ç‚¤‚©
+	UPROPERTY(EditAnywhere, Category = "Default Setting")
+		float m_min_ride_percent_;		// æ‚éó‘Ô‚ÌÅ¬%
+	UPROPERTY(EditAnywhere, Category = "Default Setting")
+		float m_max_ride_percent_;		// æ‚éó‘Ô‚ÌÅ‘å% (m_max_ride_percent_ ˆÈã‚È‚ç100%‚Æ‚·‚é)
 };
