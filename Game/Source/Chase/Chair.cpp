@@ -231,7 +231,6 @@ void AChair::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	InputComponent->BindAxis("Horizontal", this, &AChair::SetInputValue_X);
 	InputComponent->BindAxis("Vertical", this, &AChair::SetInputValue_Y);
 	InputComponent->BindAction("Decide", EInputEvent::IE_Pressed, this, &AChair::InputDecide);
-	InputComponent->BindAction("Add_Slip_Power", EInputEvent::IE_Pressed, this, &AChair::PlayerhSlipPower);
 	InputComponent->BindAction("Slip_Curve", EInputEvent::IE_Pressed, this, &AChair::SetSlipCurve);
 	InputComponent->BindAction("Slip_Curve", EInputEvent::IE_Released, this, &AChair::SetSlipCurve);
 	InputComponent->BindAction("Sweep", EInputEvent::IE_Pressed, this, &AChair::SetPlayerSweepFlag);
@@ -424,6 +423,7 @@ void AChair::OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 void AChair::SetPhase(const EPhase _phase)
 {
 	m_phase_ = _phase;
+	// 各Phaseに変更した際の初期設定
 	if (m_phase_ == EPhase::kPowerChange)
 	{
 		m_target_point_location_ = m_target_point_mesh_->GetComponentLocation();
@@ -434,6 +434,7 @@ void AChair::SetPhase(const EPhase _phase)
 
 		EnableTargetCollision(false);
 
+		def_player_posX_ = this->GetActorLocation().X;
 	}
 	else if (m_phase_ == EPhase::kEntrance)
 	{
@@ -441,12 +442,14 @@ void AChair::SetPhase(const EPhase _phase)
 		m_forward_vec_.Z = 0.f; // 上に行ってしまう問題があるため0.fで初期化
 		DeleteArrow();
 		is_entrance_ = true;
+		float difference = def_player_posX_ - GetActorLocation().X;
+		m_floating_pawn_movement_->MaxSpeed += difference * m_powerchange_velocity_val_ * -1.f;
 	}
 	else if (m_phase_ == EPhase::kSlip)
 	{
 		if (m_debugmode_)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("m_floating b = %f"), m_floating_pawn_movement_->GetMaxSpeed());
+			UE_LOG(LogTemp, Warning, TEXT("m_floating component before speed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
 		}
 
 		// 一定パーセント未満なら一律のパーセントに
@@ -463,8 +466,8 @@ void AChair::SetPhase(const EPhase _phase)
 
 		if (m_debugmode_)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("m_floating a = %f"), m_speed_percent_);
-			UE_LOG(LogTemp, Warning, TEXT("m_floating a = %f"), m_floating_pawn_movement_->GetMaxSpeed());
+			UE_LOG(LogTemp, Warning, TEXT("percent = %f"), m_speed_percent_);
+			UE_LOG(LogTemp, Warning, TEXT("m_floating component after speed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
 		}
 
 		m_is_input_ride_ = true;
@@ -589,16 +592,6 @@ void AChair::PlayerSlip(const float _deltatime)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "), m_forward_vec_.X, m_forward_vec_.Y, m_forward_vec_.Z);
 	}
-}
-
-void AChair::PlayerhSlipPower()
-{
-	if (m_phase_ != EPhase::kEntrance)
-	{
-		return;
-	}
-
-	m_is_input_add_slip_power_ = true;
 }
 
 void AChair::Deceleration(const float _deltatime)
