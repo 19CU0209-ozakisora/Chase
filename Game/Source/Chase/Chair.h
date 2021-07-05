@@ -175,10 +175,10 @@ public:
 		USoundBase* m_chair_collide_sound_;								//椅子がぶつかった時の音
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "MyF")
-		void Ragdoll();
+		void Ragdoll();													// ラグドール化させる関数
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "MyF")
-		void DestroyHuman();
+		void DestroyHuman();											// Humanメッシュを削除する関数
 
 	UFUNCTION(BlueprintCallable, Category = "MyF")
 		void SetPhase(const EPhase _phase);								// 次の状態に変更する関数
@@ -192,13 +192,23 @@ public:
 	void EnableTargetCollision(bool _flag);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
-		float m_speed_percent_;
+		float m_speed_percent_;						// 椅子に乗るときの押したタイミングの割合を保有する変数
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
-		bool m_in_ride_flag_;
+		bool m_in_ride_flag_;						// BP_Ride内に入ったかどうかの変数
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
 		bool m_is_input_ride_;	// ride状態の時に決定キーを押してslip状態に変更されたかどうか
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		float m_min_ride_percent_;		// 乗る状態の最小%
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		float m_max_ride_percent_;		// 乗る状態の最大% (m_max_ride_percent_ 以上なら100%とする)
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		float m_powerchange_movement_max_val_;												// パワー変更時の移動できる量
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		float m_powerchange_velocity_val_;													// パワー変更時にどれだけ速度の変更をかけるか(座標が1ずれると m_powerchange_velocity_val_ 分変更)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		float def_player_posX_;																// デフォルトの座標(X軸のみ)
 };
