@@ -210,5 +210,7 @@ public:
 		float m_powerchange_velocity_val_;													// パワー変更時にどれだけ速度の変更をかけるか(座標が1ずれると m_powerchange_velocity_val_ 分変更)
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
-		float def_player_posX_;																// デフォルトの座標(X軸のみ)
+		float m_def_player_posX_;																// デフォルトの座標(X軸のみ)
+
+	float m_def_speed_;
 };

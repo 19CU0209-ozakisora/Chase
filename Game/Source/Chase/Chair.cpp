@@ -132,6 +132,9 @@ void AChair::BeginPlay()
 
 	// m_floating_pawn_movement_ ‚ÌÅ‘å‘¬“x‚ðŠi”[
 	m_forward_vec_ = FVector::ForwardVector;
+
+	m_def_speed_ = m_floating_pawn_movement_->GetMaxSpeed();
+	m_max_speed_ = m_floating_pawn_movement_->GetMaxSpeed() + m_powerchange_movement_max_val_ * m_powerchange_velocity_val_;
 }
 
 // Called every frame
@@ -434,7 +437,7 @@ void AChair::SetPhase(const EPhase _phase)
 
 		EnableTargetCollision(false);
 
-		def_player_posX_ = this->GetActorLocation().X;
+		m_def_player_posX_ = this->GetActorLocation().X;
 	}
 	else if (m_phase_ == EPhase::kEntrance)
 	{
@@ -442,7 +445,7 @@ void AChair::SetPhase(const EPhase _phase)
 		m_forward_vec_.Z = 0.f; // ã‚És‚Á‚Ä‚µ‚Ü‚¤–â‘è‚ª‚ ‚é‚½‚ß0.f‚Å‰Šú‰»
 		DeleteArrow();
 		is_entrance_ = true;
-		float difference = def_player_posX_ - GetActorLocation().X;
+		float difference = m_def_player_posX_ - GetActorLocation().X;
 		m_floating_pawn_movement_->MaxSpeed += difference * m_powerchange_velocity_val_ * -1.f;
 	}
 	else if (m_phase_ == EPhase::kSlip)
@@ -634,11 +637,20 @@ void AChair::PlayerSweep(const float _deltatime)
 
 void AChair::PlayerPowerChange(const float _deltatime)
 {
-	FVector nowLocation = GetActorLocation();
-	m_player_location_ = (m_input_value_.Y * m_input_speed_scale_) * _deltatime;
-	this->SetActorLocation(FVector(nowLocation.X + m_player_location_, nowLocation.Y, nowLocation.Z), true);
 
-	SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), m_target_point_location_));
+	if (m_input_value_.Y != 0.f)
+	{
+		FVector nowLocation = GetActorLocation();
+		m_player_location_ = (m_input_value_.Y * m_input_speed_scale_) * _deltatime;
+		if (nowLocation.X + m_player_location_ <= m_def_player_posX_ && nowLocation.X + m_player_location_ > m_def_player_posX_ - m_powerchange_movement_max_val_)
+		{
+			this->SetActorLocation(FVector(nowLocation.X + m_player_location_, nowLocation.Y, nowLocation.Z), true);
+
+			SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), m_target_point_location_));
+		}
+
+		m_floating_pawn_movement_->MaxSpeed = m_def_speed_ + (m_def_player_posX_ - GetActorLocation().X) * m_powerchange_velocity_val_;
+	}
 }
 
 void AChair::InputDecide()
