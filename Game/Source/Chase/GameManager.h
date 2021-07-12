@@ -40,9 +40,8 @@ public:
 private:
 
 	bool TimeCheck(float _deltatime);
-	float time_cnt_;
 
-	
+	float time_cnt_;
 
 public:	
 
