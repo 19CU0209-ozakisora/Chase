@@ -43,6 +43,8 @@ private:
 
 	float time_cnt_;
 
+	void AddScore();
+
 public:	
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
@@ -83,15 +85,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "My Functions")
 		int GetPoint2P()const { return m_teamPoint2P; }
 
-private:
-
 	//チームポイント（1P用）
-	//UPROPERTY(BlueprintReadOnly)
-	int m_teamPoint1P;
+	UPROPERTY(EditAnyWhere, BlueprintReadOnly)
+		int m_teamPoint1P;
 
 	//チームポイント（2P用）]
-	//UPROPERTY(BlueprintReadOnly)
-	int m_teamPoint2P;
+	UPROPERTY(EditAnyWhere, BlueprintReadOnly)
+		int m_teamPoint2P;
+
+private:
+
+
 
 	//自分自身の座標
 	FVector m_thisLocation;

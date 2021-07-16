@@ -1,14 +1,14 @@
 
-
 #pragma once
 
 #include "Engine/StaticMesh.h"		// 矢印の代用(2021/04/13 Playerの代わりに使用)
 #include "Engine/SkeletalMesh.h"	// Playerメッシュ
 #include "Engine/Engine.h"			// スクリーンログ出力用
-// #include "Components/PrimitiveComponent.h"
 #include "Math/Vector.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "Kismet/KismetMathLibrary.h"		// FindLookAtRotationを使うため
+#include "Components/BoxComponent.h"
+#include "AddScoreTrigger.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Chair.generated.h"
@@ -106,6 +106,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
 		bool is_entrance_;												// 助走中か
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
+		bool m_in_ride_flag_;						// BP_Ride内に入ったかどうかの変数
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
+		bool m_is_input_ride_;	// ride状態の時に決定キーを押してslip状態に変更されたかどうか
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		float m_input_speed_scale_;										// 移動の倍率
 
@@ -128,9 +134,6 @@ public:
 		float m_sweep_scale_;											// スウィープ時の減速の軽減具合
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
-		int m_pummeled_frame_;											// ボタンを押したとき何F判定を持続させるか
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		float m_input_spin_scale_;										// スピンの倍率(スティック一回転辺り何度回転させるか)
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
@@ -149,7 +152,28 @@ public:
 		float m_powerchange_max_move_val_;								// 前後の移動の最大量
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
+		float m_speed_percent_;						// 椅子に乗るときの押したタイミングの割合を保有する変数
+
+	UPROPERTY(EditAnywhere, Category = "Default Setting")
+		float m_min_ride_percent_;		// 乗る状態の最小%
+
+	UPROPERTY(EditAnywhere, Category = "Default Setting")
+		float m_max_ride_percent_;		// 乗る状態の最大% (m_max_ride_percent_ 以上なら100%とする)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		float m_powerchange_movement_max_val_;												// パワー変更時の移動できる量
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		float m_powerchange_velocity_val_;													// パワー変更時にどれだけ速度の変更をかけるか(座標が1ずれると m_powerchange_velocity_val_ 分変更)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		float m_def_player_posX_;															// デフォルトの座標(X軸のみ)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
 		FString m_name_;												// 椅子の名前を入れる変数(P1 or P2しか入れないけど)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		int m_pummeled_frame_;											// ボタンを押したとき何F判定を持続させるか
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		// USkeletalMeshComponent* m_pplayermesh_;
@@ -191,26 +215,8 @@ public:
 
 	void EnableTargetCollision(bool _flag);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
-		float m_speed_percent_;						// 椅子に乗るときの押したタイミングの割合を保有する変数
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
-		bool m_in_ride_flag_;						// BP_Ride内に入ったかどうかの変数
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
-		bool m_is_input_ride_;	// ride状態の時に決定キーを押してslip状態に変更されたかどうか
-	UPROPERTY(EditAnywhere, Category = "Default Setting")
-		float m_min_ride_percent_;		// 乗る状態の最小%
-	UPROPERTY(EditAnywhere, Category = "Default Setting")
-		float m_max_ride_percent_;		// 乗る状態の最大% (m_max_ride_percent_ 以上なら100%とする)
-
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
-		float m_powerchange_movement_max_val_;												// パワー変更時の移動できる量
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
-		float m_powerchange_velocity_val_;													// パワー変更時にどれだけ速度の変更をかけるか(座標が1ずれると m_powerchange_velocity_val_ 分変更)
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
-		float m_def_player_posX_;																// デフォルトの座標(X軸のみ)
-
 	float m_def_speed_;
+
+	UPROPERTY(EditAnywhere)
+		AAddScoreTrigger* m_pscore_obj_[2];
 };
