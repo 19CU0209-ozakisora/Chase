@@ -27,7 +27,6 @@ AGameManager::AGameManager()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
 }
 
 //ゲームスタート時、または生成時に呼ばれる処理
@@ -40,7 +39,6 @@ void AGameManager::BeginPlay()
 	TArray<AActor*> AHouseCentertemp;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AHouseCenterfindClass, AHouseCentertemp);
 	
-
 	for (int i = 0; i < AHouseCentertemp.Num(); ++i)
 	{
 		//ハウスの中心座標を格納
@@ -204,9 +202,9 @@ void AGameManager::Tick(float DeltaTime)
 	if (nowroundnum_ == 10 && m_players_[1]->control_chair_->GetPhase() == EPhase::kEnd)
 	{
 		//椅子が10個止まった時の処理
-		StopChair();
+		//StopChair();
+		AddScore();
 	}
-
 }
 
 bool AGameManager::TimeCheck(float _deltatime)
@@ -329,5 +327,68 @@ void AGameManager::SetPoint()
 	UE_LOG(LogTemp, Warning, TEXT("P2Point %d"), m_teamPoint2P);
 
 	//得点計算後、Tick()を無効にする
+	PrimaryActorTick.SetTickFunctionEnable(false);
+}
+
+void AGameManager::AddScore()
+{
+	// 椅子の数だけ繰り返す
+	for (int i = 0; i < m_chairs_.Num() - 1; ++i)
+	{
+		// NULLチェック
+		if (m_chairs_[i] != NULL)
+		{
+			// 椅子とそれぞれのスコアコリジョンの距離を格納するための変数
+			float Scoreobj1_Distance = 0.f;
+			float Scoreobj2_Distance = 0.f;
+
+			// 参照している椅子にスコアコリジョンが格納されているか確認してから距離を計算
+			if (m_chairs_[i]->m_pscore_obj_[0] != NULL)
+			{
+				Scoreobj1_Distance = FMath::Abs(m_chairs_[i]->GetActorLocation().X - m_chairs_[i]->m_pscore_obj_[0]->GetActorLocation().X);
+			}
+			if (m_chairs_[i]->m_pscore_obj_[1] != NULL)
+			{
+				Scoreobj2_Distance = FMath::Abs(m_chairs_[i]->GetActorLocation().X - m_chairs_[i]->m_pscore_obj_[1]->GetActorLocation().X);
+			}
+
+			// Scoreobj1_Distanceの方が小さい場合はm_pscore_obj_[0]側に椅子が寄っている為m_pscore_obj_[0]のスコアを加算
+			if (Scoreobj1_Distance < Scoreobj2_Distance)
+			{
+				if (m_chairs_[i]->m_pscore_obj_[0] != NULL)
+				{
+					// Player1か2か判別したのちに得点加算
+					if (m_chairs_[i]->m_name_ == "Player1")
+					{
+						m_teamPoint1P += m_chairs_[i]->m_pscore_obj_[0]->m_score_;
+					}
+					else
+					{
+						m_teamPoint2P += m_chairs_[i]->m_pscore_obj_[0]->m_score_;
+					}
+				}
+			}
+			else
+			{
+				if (m_chairs_[i]->m_pscore_obj_[1] != NULL)
+				{
+					if (m_chairs_[i]->m_name_ == "Player1")
+					{
+						m_teamPoint1P += m_chairs_[i]->m_pscore_obj_[1]->m_score_;
+					}
+					else
+					{
+						m_teamPoint2P += m_chairs_[i]->m_pscore_obj_[1]->m_score_;
+					}
+				}
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("chair[%f] is NULL"), i);
+		}
+	}
+
+		//得点計算後、Tick()を無効にする
 	PrimaryActorTick.SetTickFunctionEnable(false);
 }

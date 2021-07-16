@@ -75,6 +75,7 @@ AChair::AChair()
 	, m_chair_roll_sound_(NULL)
 	, m_chair_collide_sound_(NULL)
 	, m_speed_percent_(0.f)
+	, m_pscore_obj_()
 {
 
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -411,6 +412,11 @@ void AChair::OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* Othe
 	{
 		SetPhase(EPhase::kRide);
 	}
+	else if (OtherActor->ActorHasTag("ScoreTrigger"))
+	{
+		m_pscore_obj_[1] = m_pscore_obj_[0];
+		m_pscore_obj_[0] = Cast<AAddScoreTrigger>(OtherActor);
+	}
 	/*
 		if (OtherActor->ActorHasTag("ChangeSlip"))
 	{
@@ -446,7 +452,8 @@ void AChair::SetPhase(const EPhase _phase)
 		DeleteArrow();
 		is_entrance_ = true;
 		float difference = m_def_player_posX_ - GetActorLocation().X;
-		m_floating_pawn_movement_->MaxSpeed += difference * m_powerchange_velocity_val_ * -1.f;
+		//m_floating_pawn_movement_->MaxSpeed += difference * m_powerchange_velocity_val_ * -1.f;
+
 	}
 	else if (m_phase_ == EPhase::kSlip)
 	{
@@ -454,6 +461,7 @@ void AChair::SetPhase(const EPhase _phase)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("m_floating component before speed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
 		}
+		m_floating_pawn_movement_->MaxSpeed *= m_speed_percent_;
 
 		// 一定パーセント未満なら一律のパーセントに
 		if (m_speed_percent_ < m_min_ride_percent_)
@@ -465,7 +473,6 @@ void AChair::SetPhase(const EPhase _phase)
 		{
 			m_speed_percent_ = 1.f;
 		}
-		m_floating_pawn_movement_->MaxSpeed *= m_speed_percent_;
 
 		if (m_debugmode_)
 		{
@@ -502,13 +509,14 @@ void AChair::PlayerEntrance(const float _deltatime)
 	// 前方向ベクトルに向かって移動
 	AddMovementInput(m_forward_vec_, 1.f);
 
+	/*
 	m_floating_pawn_movement_->MaxSpeed += m_input_add_speed_val_ * _deltatime;
 
 	if (m_floating_pawn_movement_->MaxSpeed > m_max_speed_)
 	{
 		m_floating_pawn_movement_->MaxSpeed = m_max_speed_;
 	}
-
+	*/
 	if (m_debugmode_)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("MaxSpeed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
@@ -650,6 +658,12 @@ void AChair::PlayerPowerChange(const float _deltatime)
 		}
 
 		m_floating_pawn_movement_->MaxSpeed = m_def_speed_ + (m_def_player_posX_ - GetActorLocation().X) * m_powerchange_velocity_val_;
+
+		if (m_debugmode_)
+		{
+			FString SpeedLog = FString::SanitizeFloat(m_floating_pawn_movement_->MaxSpeed);
+			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, SpeedLog);
+		}
 	}
 }
 
