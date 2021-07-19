@@ -18,13 +18,25 @@ ASplineCamera::ASplineCamera()
 void ASplineCamera::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	m_prebphase_ = EPhase::kEnd;
 }
 
 // Called every frame
 void ASplineCamera::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (m_prebphase_ != m_pgamemanager_->m_chairs_[m_pgamemanager_->nowroundnum_ - 1]->GetPhase())
+	{
+		m_prebphase_ = m_pgamemanager_->m_chairs_[m_pgamemanager_->nowroundnum_ - 1]->GetPhase();
+		for (int i = 0; i < m_change_direction_.Num(); ++i)
+		{
+			if (m_pgamemanager_->m_chairs_[m_pgamemanager_->nowroundnum_ - 1]->GetPhase() == m_change_direction_[i].phase_)
+			{
+				m_edirection_ = m_change_direction_[i].change_direction_;
+			}
+		}
+	}
 
 	if (m_edirection_ != m_preb_edirection_)
 	{
@@ -39,16 +51,13 @@ void ASplineCamera::Tick(float DeltaTime)
 	m_goal_location_ = SetGoalLocation();
 	//m_now_location_ = SetLeapAlpha();
 
-	FString text = m_goal_location_.ToString();
-	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, text);
-
-
+	//FString text = m_goal_location_.ToString();
+	//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, text);
 
 	SetActorLocation(SetCameraLocaiton());
 	SetActorRotation(SetCameraRotator());
 
 	m_preb_edirection_ = m_edirection_;
-
 }
 
 FVector ASplineCamera::SetGoalLocation()

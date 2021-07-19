@@ -8,6 +8,7 @@
 #include "GameManager.h"
 #include "Engine/Engine.h"			// スクリーンログ出力用
 #include "Kismet/KismetMathLibrary.h"
+#include "GameManager.h"
 #include "Chair.h"
 #include "SplineCamera.generated.h"
 
@@ -25,6 +26,17 @@ enum class EDirection : uint8
 	kfrontleft UMETA(DisplayName = "FrontLeft"),			// 左前(X+, Y-, 0)
 	ktop UMETA(DisplayName = "Top"),						// 上(Z+)
 	kunder UMETA(DisplayName = "Under"),					// 下(Z-)
+};
+
+USTRUCT(BlueprintType)
+struct FChangeDirection
+{
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(EditAnywhere)
+		EPhase phase_;
+	UPROPERTY(EditAnywhere)
+		EDirection change_direction_;
 };
 
 UCLASS()
@@ -46,11 +58,11 @@ public:
 
 private:
 	EDirection m_preb_edirection_;
-
-
+	// EPhase m_prebphase_;
 
 public:
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "camera")
+		EPhase m_prebphase_;
 	UPROPERTY(EditAnywhere, Category = "camera")
 		UCameraComponent* m_pcamera_;
 
@@ -63,13 +75,13 @@ public:
 	UPROPERTY(EditAnywhere, Category = "rad")
 		float radius_;
 
-	UPROPERTY(EditAnywhere, Category = "Enum")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite,  Category = "Enum")
 		FVector m_before_change_camera_location_;
 
 	UPROPERTY(EditAnywhere, Category = "Enum")
 		FVector m_goal_location_;
 
-	UPROPERTY(EditAnywhere, Category = "Enum")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enum")
 		float m_leap_alpha_;
 
 	UPROPERTY(EditAnywhere, Category = "Enum")
@@ -86,4 +98,7 @@ public:
 	FVector SetCameraLocaiton();
 	FRotator SetCameraRotator();
 	void ResetLeap();
+
+	UPROPERTY(EditAnywhere, Category = "camera")
+		TArray<FChangeDirection> m_change_direction_;
 };
