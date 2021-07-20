@@ -68,7 +68,7 @@ private:
 	int m_player_spin_cnt_;							// 何回転したか
 	FVector m_forward_vec_;							// 前方向ベクトル
 	FVector m_target_point_location_;				// 目標地点の座標
-	FVector2D m_input_value_;						// 入力値
+	
 
 	UAudioComponent* m_audiocomponent_;				//音楽を入れるコンポーネント
 
@@ -84,7 +84,7 @@ private:
 	void SetSlipCurve() { m_slip_curve_ = !m_slip_curve_; }	// 曲がるボタンが押されたら/離されたら処理
 	void Deceleration(const float _deltatime);		// 減速処理
 	void PlayerSweep(const float _deltatime);		// deltatime処理はしています
-	void SetPlayerSweepFlag() { m_is_sweep_ = !m_is_sweep_; }	// スウィープボタンが押されたら処理
+	void SetPlayerSweepFlag();	// スウィープボタンが押されたら処理
 	void PlayerPowerChange(const float _deltatime);	// 助走自のパワー変更処理
 	void InputDecide();
 
@@ -99,6 +99,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		bool m_debugmode_;							// デバッグモードをONにするかどうか
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		bool m_is_jumpanimation_end_;				// ジャンプアニメーションが終わったかどうか(ジャンプアニメーションが終わるまではスウィープ処理を行わせない)
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
 		bool m_ishit_;														// 椅子に衝突されたらtrueに
@@ -168,6 +171,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		float m_def_player_posX_;															// デフォルトの座標(X軸のみ)
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
+		FVector2D m_input_value_;						// 入力値
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
 		FString m_name_;												// 椅子の名前を入れる変数(P1 or P2しか入れないけど)
