@@ -76,6 +76,7 @@ AChair::AChair()
 	, m_chair_collide_sound_(NULL)
 	, m_speed_percent_(0.f)
 	, m_pscore_obj_()
+	, m_in_ride_flag_(false)
 {
 
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -193,7 +194,7 @@ void AChair::Tick(float DeltaTime)
 		{
 			Deceleration(DeltaTime);
 		}
-		else
+		else if(m_is_sweep_ == true && m_is_jumpanimation_end_ == true)
 		{
 			PlayerSweep(DeltaTime);
 		}
@@ -698,5 +699,13 @@ void AChair::EnableTargetCollision(bool _flag)
 	else
 	{
 		m_target_point_mesh_->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+}
+
+void AChair::SetPlayerSweepFlag()
+{
+	if (m_is_jumpanimation_end_)
+	{
+		m_is_sweep_ = !m_is_sweep_;
 	}
 }
