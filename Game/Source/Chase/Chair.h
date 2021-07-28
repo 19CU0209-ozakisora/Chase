@@ -9,6 +9,7 @@
 #include "Kismet/KismetMathLibrary.h"		// FindLookAtRotationを使うため
 #include "Components/BoxComponent.h"
 #include "AddScoreTrigger.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Chair.generated.h"
@@ -52,7 +53,6 @@ public:
 private:
 
 	bool m_is_input_add_slip_power_;				// 速度を増やすボタンが押されたかどうか
-	bool m_first_player_spin_input_flag_;			// 初めてスティックを倒したか否かのフラグ用
 	bool m_slip_curve_;								// 曲がるボタンを押されたかどうか
 	bool is_hit_wall_;								// 壁に当たったかどうか
 	bool m_is_sweep_;								// スウィープボタンを押したかどうか
@@ -61,14 +61,13 @@ private:
 	float m_angle_corection_;						// スピン時の補正用の変数
 	float m_player_rotation_;						// 回転量
 	float m_player_location_;						// 移動量
-	float m_player_spin_value_;						// スピン量
-	float m_player_spin_angle_;						// スティックを回した角度
+	float m_player_spin_value_;						// 現在何度分の回転量が入っているか
 	float m_preb_player_spin_input_;				// スピン時の前回の入力
 	float m_first_player_spin_input_angle_;			// 初めてスティックを倒した角度の保存用
 	int m_player_spin_cnt_;							// 何回転したか
 	FVector m_forward_vec_;							// 前方向ベクトル
 	FVector m_target_point_location_;				// 目標地点の座標
-	
+	float temp;
 
 	UAudioComponent* m_audiocomponent_;				//音楽を入れるコンポーネント
 
@@ -135,9 +134,6 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		float m_sweep_scale_;											// スウィープ時の減速の軽減具合
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
-		float m_input_spin_scale_;										// スピンの倍率(スティック一回転辺り何度回転させるか)
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		float m_input_slip_curve_;										// 滑っているときに曲がる量
@@ -225,4 +221,10 @@ public:
 
 	UPROPERTY(EditAnywhere)
 		AAddScoreTrigger* m_pscore_obj_[2];
+
+	float m_before_slip_rotation_;
+	UPROPERTY(EditAnywhere, Category = "Default Setting")
+		float m_max_spin_add_rotation_value_;		// 毎フレーム加算する角度の上限
+	UPROPERTY(EditAnywhere, Category = "Default Setting")
+		float input_spin_scale_;
 };

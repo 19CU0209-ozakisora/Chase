@@ -31,7 +31,6 @@
 // Sets default values
 AChair::AChair()
 	: m_is_input_add_slip_power_(false)
-	, m_first_player_spin_input_flag_(false)
 	, m_slip_curve_(false)
 	, is_hit_wall_(false)
 	, m_is_sweep_(false)
@@ -41,8 +40,6 @@ AChair::AChair()
 	, m_player_rotation_(0.f)
 	, m_player_location_(0.f)
 	, m_player_spin_value_(0.f)
-	, m_player_spin_angle_(0.f)
-	, m_preb_player_spin_input_(0.f)
 	, m_first_player_spin_input_angle_(0.f)
 	, m_player_spin_cnt_(0)
 	, m_forward_vec_(FVector::ZeroVector)
@@ -62,7 +59,6 @@ AChair::AChair()
 	, m_deceleration_val_(0.f)
 	, m_sweep_scale_(0.f)
 	, m_pummeled_frame_(0.f)
-	, m_input_spin_scale_(0.f)
 	, m_input_slip_curve_(0.f)
 	, m_hitstop_scale_(0.f)
 	, m_is_movement_scale_(0.f)
@@ -144,6 +140,8 @@ void AChair::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	m_wall_time += DeltaTime;
+	UE_LOG(LogTemp, Warning, TEXT("fv = %f :: %f :: %f"), m_forward_vec_.X, m_forward_vec_.Y, m_forward_vec_.Z);
+	UKismetSystemLibrary::DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FVector(m_forward_vec_.X, m_forward_vec_.Y, 0.f) * 500.f, FLinearColor(255, 0, 0, 100), 0, 20);
 
 	/*
 	// 移動
@@ -178,8 +176,7 @@ void AChair::Tick(float DeltaTime)
 		PlayerSpin(DeltaTime);
 		AddMovementInput(m_forward_vec_, 1.f);
 	}
-	*/  //(2021/06/23 コメント化
-
+	*/
 	else if (m_phase_ == EPhase::kRide)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Ride")));
@@ -189,6 +186,7 @@ void AChair::Tick(float DeltaTime)
 	else if (m_phase_ == EPhase::kSlip)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Slip")));
+		PlayerSpin(DeltaTime);
 		PlayerSlip(DeltaTime);
 		if (!m_is_sweep_)
 		{
@@ -198,7 +196,7 @@ void AChair::Tick(float DeltaTime)
 		{
 			PlayerSweep(DeltaTime);
 		}
-		m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
+		//m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 
 		//音楽再生（椅子が転がる音）
 				//初回再生
@@ -216,6 +214,15 @@ void AChair::Tick(float DeltaTime)
 	else if (m_phase_ == EPhase::kEnd)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("End")));
+
+		if (m_player_spin_value_ > 0.f)
+		{
+			m_player_spin_value_ -= input_spin_scale_;
+		}
+		else
+		{
+
+		}
 
 		//ぶつかっても転がる音が再生終了するまでSEが消えないのでここで転がる音を終了
 		if (m_audiocomponent_->IsPlaying())
@@ -443,7 +450,8 @@ void AChair::SetPhase(const EPhase _phase)
 		}
 
 		EnableTargetCollision(false);
-
+	
+		UE_LOG(LogTemp, Warning, TEXT("rot = %f"), m_target_point_location_.X);
 		m_def_player_posX_ = this->GetActorLocation().X;
 	}
 	else if (m_phase_ == EPhase::kEntrance)
@@ -482,6 +490,7 @@ void AChair::SetPhase(const EPhase _phase)
 		}
 
 		m_is_input_ride_ = true;
+		m_before_slip_rotation_ = FMath::Atan2(m_target_point_location_.Y - GetActorLocation().Y, m_target_point_location_.X - GetActorLocation().X);// +90.f;
 	}
 
 	//音再生（決定音）
@@ -526,77 +535,54 @@ void AChair::PlayerEntrance(const float _deltatime)
 
 void AChair::PlayerSpin(const float _deltatime)
 {
-	// 入力されたVector2を角度をに変換度、上入力が0度になるように補正後
-	// 上入力 -> 0, 右入力 -> 90, 下入力 -> 180, 左入力 -> 270
-	m_player_spin_angle_ = (atan2(-m_input_value_.Y, m_input_value_.X) * 180.f / PI) + m_angle_corection_;
-
-	// -180°~ 180°の範囲になっている為、0° ~ 360°に補正するためにマイナス値が入った場合360を加算
-	if (m_player_spin_angle_ < 0.f)
+	// 左右入力が入っていたら
+	if (FMath::Abs(m_input_value_.X) > 0.001f)
 	{
-		m_player_spin_angle_ += 360;
+		// このフレーム間で回転させる値の取得
+		m_player_spin_value_ += m_input_value_.X * _deltatime * input_spin_scale_;
+		float test1 = FMath::DegreesToRadians(m_before_slip_rotation_ + m_player_spin_value_);
+
+		// 角度の計算			 現在の前方向ベクトル + 回転量
+		float rot_x = FMath::Sin(test1);
+		float rot_y = FMath::Cos(test1);
+
+		// 代入
+		//FVector test = FVector(rot_x, rot_y, 0.f);
+		FVector test = FVector(rot_y, rot_x, 0.f);
+
+		UE_LOG(LogTemp, Warning, TEXT("rot x = %f"), rot_x);
+		UE_LOG(LogTemp, Warning, TEXT("rot y = %f"), rot_y);
+
+
+		m_forward_vec_ = test;
 	}
 
-	// 入力がされていない状態ならば入力角度は0°に
-	if (m_input_value_.X == 0.f && m_input_value_.Y == 0.f)
+	if (FMath::Abs(m_player_spin_value_) > m_max_spin_add_rotation_value_)
 	{
-		m_player_spin_angle_ = 0.f;
-		m_first_player_spin_input_angle_ = 0.f;
-		m_first_player_spin_input_flag_ = true;
-	}
-	// 入力されていない状態から入力が入った時、初めて入力された時のみ値を格納する
-	else
-	{
-		if (m_first_player_spin_input_flag_)
+		if (m_player_spin_value_ > 0.f)
 		{
-			// 入力を止めるまでは変数に値を入れないように
-			m_first_player_spin_input_flag_ = false;
-			m_first_player_spin_input_angle_ = m_player_spin_angle_;
+			m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_max_spin_add_rotation_value_, 0.f));
+		}
+		else
+		{
+			m_pplayermesh_->AddRelativeRotation(FRotator(0.f, -m_max_spin_add_rotation_value_, 0.f));
 		}
 	}
-
-	// 初めて入力された角度を引いて、初めて入力された角度が0°(始点)になるように修正
-	m_player_spin_angle_ -= m_first_player_spin_input_angle_;
-
-	// 右回りに入力されたか左回りに入力されたかを検知
-	if (m_preb_player_spin_input_ - m_player_spin_angle_ > 270.f + (360 * m_player_spin_cnt_))
+	else
 	{
-		++m_player_spin_cnt_;
+		m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 	}
-	else if (m_preb_player_spin_input_ - m_player_spin_angle_ < -270.f + (360 * m_player_spin_cnt_))
-	{
-		--m_player_spin_cnt_;
-	}
-
-	// 合計何度入力が入っているのか確認する用
-	m_player_spin_angle_ += 360 * m_player_spin_cnt_;
-
-	m_player_spin_value_ = m_input_spin_scale_ * m_player_spin_cnt_ * _deltatime;
-	m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 
 	if (m_debugmode_)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("player_spin_cnt = %d"), m_player_spin_cnt_);
-		UE_LOG(LogTemp, Warning, TEXT("player_spin_angle = %f"), m_player_spin_angle_);
 		UE_LOG(LogTemp, Warning, TEXT("m_player_spin_value_ = %f"), m_player_spin_value_);
 	}
-	m_preb_player_spin_input_ = m_player_spin_angle_;
 
 }
 
 void AChair::PlayerSlip(const float _deltatime)
 {
-	if (m_slip_curve_)
-	{
-		if (m_player_spin_cnt_ != 0)
-		{
-			if (m_forward_vec_.Y + m_input_slip_curve_ * m_player_spin_cnt_ <= 1.f && m_forward_vec_.Y + m_input_slip_curve_ * m_player_spin_cnt_ >= -1.f)
-			{
-				//m_forward_vec_.X -= m_input_slip_curve_ * m_player_spin_cnt_;
-				m_forward_vec_.Y += m_input_slip_curve_ * m_player_spin_cnt_;
-			}
-		}
-	}
-
 	// 前方向ベクトルに向かって移動
 	AddMovementInput(m_forward_vec_, 1.f);
 
@@ -646,7 +632,6 @@ void AChair::PlayerSweep(const float _deltatime)
 
 void AChair::PlayerPowerChange(const float _deltatime)
 {
-
 	if (m_input_value_.Y != 0.f)
 	{
 		FVector nowLocation = GetActorLocation();
