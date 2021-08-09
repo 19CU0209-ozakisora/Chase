@@ -53,8 +53,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
 		TArray<AChair*> m_chairs_;				// Chair管理用(得点計算処理があるので構造体の方が良いかも)
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
+		bool m_is_event_;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
+		int m_event_cnt_;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
 	int nowroundnum_;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
+		TArray<int> m_event_round_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
 		int m_maxroundnum_;					// 椅子を投げる最大の数
@@ -64,6 +73,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
 		float m_switch_level_time;			// レベル遷移の時間
+
+	UFUNCTION(BluePrintCallable)
+		void NextRound();
 
 //---------------------------------------------------------
 //2021/05/06:　野田　変数、関数追加
@@ -94,8 +106,6 @@ public:
 		int m_teamPoint2P;
 
 private:
-
-
 
 	//自分自身の座標
 	FVector m_thisLocation;

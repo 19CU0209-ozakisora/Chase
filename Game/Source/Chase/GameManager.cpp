@@ -21,6 +21,7 @@
 //コンストラクタ
 AGameManager::AGameManager()
 	: m_maxroundnum_(10)
+	, m_event_round_()
 	,m_teamPoint1P(0)
 	,m_teamPoint2P(0)
 	,m_thisLocation(FVector::ZeroVector)
@@ -65,17 +66,16 @@ void AGameManager::BeginPlay()
 		}
 	}
 
-
 	// ゲームの最大ラウンド数 / 2 (for分の中でPlayer1とPlayer2の椅子の生成を同時に行うため、m_maxroundnum_ / 2にしています)
-	for (int n = 0; n < m_maxroundnum_ / 2; ++n)
+	for (int i = 0; i < m_maxroundnum_ / 2; ++i)
 	{
 		// 椅子の生成及び位置の指定、管理するために配列に格納
 		m_players_[0]->CreateChair();
-		m_players_[0]->control_chair_->SetActorLocation(FVector(m_players_[0]->chair_stack_->GetComponentLocation().X, m_players_[0]->chair_stack_->GetComponentLocation().Y + n * 250, m_players_[0]->chair_stack_->GetComponentLocation().Z), false, nullptr, ETeleportType::TeleportPhysics);
+		m_players_[0]->control_chair_->SetActorLocation(FVector(m_players_[0]->chair_stack_->GetComponentLocation().X, m_players_[0]->chair_stack_->GetComponentLocation().Y + i * 250, m_players_[0]->chair_stack_->GetComponentLocation().Z), false, nullptr, ETeleportType::TeleportPhysics);
 		m_chairs_.Add(m_players_[0]->control_chair_);
 
 		m_players_[1]->CreateChair();
-		m_players_[1]->control_chair_->SetActorLocation(FVector(m_players_[1]->chair_stack_->GetComponentLocation().X, m_players_[1]->chair_stack_->GetComponentLocation().Y + n * 250, m_players_[1]->chair_stack_->GetComponentLocation().Z), false, nullptr, ETeleportType::TeleportPhysics);
+		m_players_[1]->control_chair_->SetActorLocation(FVector(m_players_[1]->chair_stack_->GetComponentLocation().X, m_players_[1]->chair_stack_->GetComponentLocation().Y + i * 250, m_players_[1]->chair_stack_->GetComponentLocation().Z), false, nullptr, ETeleportType::TeleportPhysics);
 		m_chairs_.Add(m_players_[1]->control_chair_);
 	}
 
@@ -120,33 +120,7 @@ void AGameManager::Tick(float DeltaTime)
 				// 一定秒数経過後、操作する椅子の変更
 				if (TimeCheck(DeltaTime))
 				{
-					// 配列の要素数外の参照をしないかどうか
-					if (nowroundnum_ <= m_chairs_.Num() - 1)
-					{
-						if (m_chairs_[nowroundnum_] != NULL)
-						{
-							m_players_[1]->control_chair_ = m_chairs_[nowroundnum_];
-							m_players_[1]->GetOperate();
-
-							// 椅子の配列の個数分だけ椅子のSpawnDefaultController()関数を呼ぶ
-							// 本来は操作する椅子の変更後、前まで操作していた椅子だけSpawnDefaultController()関数
-							// を使用すれば良い予定だが、処理は通ったものの上手く機能しないためfor文で無理やり行っています。かなりよろしくない
-							for (int i = 0; i < m_chairs_.Num(); ++i)
-							{
-								m_chairs_[i]->SpawnDefaultController();
-								if (m_chairs_[i]->m_ishit_)
-								{
-									// NULLチェックは関数内で行います
-									m_chairs_[i]->DestroyHuman();
-								}
-							}
-
-							if (nowroundnum_ < m_maxroundnum_)
-							{
-								++nowroundnum_;
-							}
-						}
-					}
+					//NextRound();
 				}
 			}
 		}
@@ -164,35 +138,7 @@ void AGameManager::Tick(float DeltaTime)
 				// 一定秒数経過後、操作する椅子の変更
 				if (TimeCheck(DeltaTime))
 				{
-					// 配列の要素数外の参照をしないかどうか
-					if (nowroundnum_ <= m_chairs_.Num() - 1)
-					{
-						if (m_chairs_[nowroundnum_] != NULL)
-						{
-							// 上と同じ(長いので割愛)
-							m_players_[0]->control_chair_ = m_chairs_[nowroundnum_];
-							m_players_[0]->GetOperate();
-						}
-						else
-						{
-							GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("C")));
-						}
-
-						for (int i = 0; i < m_chairs_.Num(); ++i)
-						{
-							m_chairs_[i]->SpawnDefaultController();
-							if (m_chairs_[i]->m_ishit_)
-							{
-								// NULLチェックは関数内で行います
-								m_chairs_[i]->DestroyHuman();
-							}
-						}
-
-						if (nowroundnum_ < m_maxroundnum_)
-						{
-							++nowroundnum_;
-						}
-					}
+					//NextRound();
 				}
 			}
 		}
@@ -391,4 +337,44 @@ void AGameManager::AddScore()
 
 		//得点計算後、Tick()を無効にする
 	PrimaryActorTick.SetTickFunctionEnable(false);
+}
+
+void AGameManager::NextRound()
+{
+	// 配列の要素数外の参照をしないかどうか
+	if (nowroundnum_ <= m_chairs_.Num() - 1)
+	{
+		if (m_chairs_[nowroundnum_] != NULL)
+		{
+			if (nowroundnum_ % 2 == 1)
+			{
+				m_players_[1]->control_chair_ = m_chairs_[nowroundnum_];
+				m_players_[1]->GetOperate();
+			}
+			else
+			{
+				m_players_[0]->control_chair_ = m_chairs_[nowroundnum_];
+				m_players_[0]->GetOperate();
+			}
+
+
+			// 椅子の配列の個数分だけ椅子のSpawnDefaultController()関数を呼ぶ
+			// 本来は操作する椅子の変更後、前まで操作していた椅子だけSpawnDefaultController()関数
+			// を使用すれば良い予定だが、処理は通ったものの上手く機能しないためfor文で無理やり行っています。
+			for (int i = 0; i < m_chairs_.Num(); ++i)
+			{
+				m_chairs_[i]->SpawnDefaultController();
+				if (m_chairs_[i]->m_ishit_)
+				{
+					// NULLチェックは関数内で行います
+					m_chairs_[i]->DestroyHuman();
+				}
+			}
+
+			if (nowroundnum_ < m_maxroundnum_)
+			{
+				++nowroundnum_;
+			}
+		}
+	}
 }
