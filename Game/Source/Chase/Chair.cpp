@@ -73,6 +73,7 @@ AChair::AChair()
 	, m_speed_percent_(0.f)
 	, m_pscore_obj_()
 	, m_in_ride_flag_(false)
+	, m_can_input_(true)
 {
 
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -251,38 +252,53 @@ void AChair::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void AChair::SetInputValue_X(const float _axisval)
 {
-	if (m_debugmode_)
+	if (m_can_input_)
 	{
-		if (_axisval == 0.f)
+		if (m_debugmode_)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("not input Horizontal")));
+			if (_axisval == 0.f)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("not input Horizontal")));
+			}
+			else
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Horizontal")));
+			}
 		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Horizontal")));
-		}
-	}
 
-	// “ü—Í‚³‚ê‚½’l‚ðŠi”[
-	m_input_value_.X = _axisval;
+		// “ü—Í‚³‚ê‚½’l‚ðŠi”[
+		m_input_value_.X = _axisval;
+	}
+	else
+	{
+		m_input_value_.X = 0.f;
+	}
 }
 
 void AChair::SetInputValue_Y(const float _axisval)
 {
-	if (m_debugmode_)
+	if (m_can_input_)
 	{
-		if (_axisval == 0.f)
+		if (m_debugmode_)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("not input Vertical")));
+			if (_axisval == 0.f)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("not input Vertical")));
+			}
+			else
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Vertical")));
+			}
 		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Vertical")));
-		}
-	}
 
-	// “ü—Í‚³‚ê‚½’l‚ðŠi”[
-	m_input_value_.Y = _axisval;
+		// “ü—Í‚³‚ê‚½’l‚ðŠi”[
+		m_input_value_.Y = _axisval;
+	}
+	else
+	{
+		m_input_value_.Y = 0.f;
+	}
+	
 }
 
 void AChair::DeleteArrow()

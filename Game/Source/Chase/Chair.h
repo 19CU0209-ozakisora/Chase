@@ -210,6 +210,9 @@ public:
 		void SetPhase(const EPhase _phase);								// 次の状態に変更する関数
 
 	UFUNCTION(BlueprintCallable, Category = "MyF")
+		void SetForwardVec(const FVector _vec) { m_forward_vec_ = _vec; };								// 次の状態に変更する関数
+
+	UFUNCTION(BlueprintCallable, Category = "MyF")
 		EPhase GetPhase() { return m_phase_; }
 
 	UFUNCTION(BlueprintCallable, Category = "MyF")
@@ -227,4 +230,7 @@ public:
 		float m_max_spin_add_rotation_value_;		// 毎フレーム加算する角度の上限
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		float input_spin_scale_;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
+		bool m_can_input_;
 };
