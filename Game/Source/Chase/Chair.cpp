@@ -19,6 +19,11 @@
 //			2021/06/03 尾崎蒼宙 仮の目標地点の追加
 //			2021/06/03 野田八雲 サウンド追加（ぶつかる音追加）
 //			2021/06/28 尾崎蒼宙 乗る仕様の追加・いらなくなったStateのコメント化
+//			2021/07/02 尾崎蒼宙 力の仕様変更(UIに対応)の為の処理変更
+//			2021/07/16 尾崎蒼宙 得点の仕様変更によりoverrapに処理の追加
+//			2021/07/20 尾崎蒼宙 アニメーションの実装の為にSetPlayerSweepFlag関数の追加
+//			2021/07/28 尾崎蒼宙 スピンの再作成(一度仕様から消えたため)
+//			2021/08/11 尾崎蒼宙 入力可能フラグの追加
 //--------------------------------------------------------------
 
 #include "Chair.h"
@@ -30,6 +35,7 @@
 
 // Sets default values
 AChair::AChair()
+	// private
 	: m_is_input_add_slip_power_(false)
 	, m_slip_curve_(false)
 	, is_hit_wall_(false)
@@ -41,16 +47,20 @@ AChair::AChair()
 	, m_player_location_(0.f)
 	, m_player_spin_value_(0.f)
 	, m_first_player_spin_input_angle_(0.f)
-	, m_player_spin_cnt_(0)
+	, m_before_slip_rotation_(0.f)
+	, m_def_speed_(0.f)
 	, m_forward_vec_(FVector::ZeroVector)
 	, m_target_point_location_(FVector::ZeroVector)
-	, m_input_value_(FVector2D::ZeroVector)
 	, m_audiocomponent_(NULL)
-
+	// public
+	, m_pscore_obj_()
 	, m_debugmode_(false)
+	, m_is_jumpanimation_end_(false)
 	, m_ishit_(false)
 	, is_entrance_(false)
-
+	, m_in_ride_flag_(false)
+	, m_is_input_ride_(false)
+	, m_can_input_(true)
 	, m_input_speed_scale_(0.f)
 	, m_input_rotation_scale_(0.f)
 	, m_max_speed_(0.f)
@@ -58,10 +68,20 @@ AChair::AChair()
 	, m_input_add_speed_val_(0.f)
 	, m_deceleration_val_(0.f)
 	, m_sweep_scale_(0.f)
-	, m_pummeled_frame_(0.f)
 	, m_input_slip_curve_(0.f)
 	, m_hitstop_scale_(0.f)
 	, m_is_movement_scale_(0.f)
+	, m_rotation_max_val(0.f)
+	, m_powerchange_max_move_val_(0.f)
+	, m_speed_percent_(0.f)
+	, m_min_ride_percent_(0.f)
+	, m_max_ride_percent_(0.f)
+	, m_powerchange_movement_max_val_(0.f)
+	, m_powerchange_velocity_val_(0.f)
+	, m_def_player_posX_(0.f)
+	, m_max_spin_add_rotation_value_(0.f)
+	, input_spin_scale_(0.f)
+	, m_input_value_(FVector2D::ZeroVector)
 	, m_name_("")
 	, m_pplayermesh_(NULL)
 	, m_parrow_(NULL)
@@ -70,10 +90,6 @@ AChair::AChair()
 	, m_deside_sound_(NULL)
 	, m_chair_roll_sound_(NULL)
 	, m_chair_collide_sound_(NULL)
-	, m_speed_percent_(0.f)
-	, m_pscore_obj_()
-	, m_in_ride_flag_(false)
-	, m_can_input_(true)
 {
 
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -591,7 +607,6 @@ void AChair::PlayerSpin(const float _deltatime)
 
 	if (m_debugmode_)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("player_spin_cnt = %d"), m_player_spin_cnt_);
 		UE_LOG(LogTemp, Warning, TEXT("m_player_spin_value_ = %f"), m_player_spin_value_);
 	}
 

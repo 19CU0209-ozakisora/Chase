@@ -20,7 +20,18 @@
 
 //コンストラクタ
 AGameManager::AGameManager()
-	: m_maxroundnum_(10)
+	// 尾崎
+	// private
+	: time_cnt_(0.f)
+	// public
+	, m_players_()
+	, m_chairs_()
+	, m_is_event_(false)
+	, m_chair_create_time_(0.f)
+	, m_switch_level_time(0.f)
+	, m_event_cnt_(0)
+	, m_nowroundnum_(0)
+	, m_maxroundnum_(10)
 	, m_event_round_()
 	,m_teamPoint1P(0)
 	,m_teamPoint2P(0)
@@ -100,7 +111,7 @@ void AGameManager::BeginPlay()
 	//Player[0]が管理している椅子の視点に変更
 	m_players_[0]->control_chair_ = m_chairs_[0];
 	m_players_[0]->GetOperate();
-	++nowroundnum_;
+	++m_nowroundnum_;
 }
 
 //毎フレーム更新処理
@@ -109,7 +120,7 @@ void AGameManager::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	// 奇数ターンの時(Player1の番)
-	if (nowroundnum_ % 2 == 1)
+	if (m_nowroundnum_ % 2 == 1)
 	{
 		// NULLチェック
 		if (m_players_[0]->control_chair_ != NULL)
@@ -127,7 +138,7 @@ void AGameManager::Tick(float DeltaTime)
 
 	}
 	// 奇数ターンの時(Player2の番)
-	else if (nowroundnum_ % 2 == 0)
+	else if (m_nowroundnum_ % 2 == 0)
 	{
 		// NULLチェック
 		if (m_players_[1]->control_chair_ != NULL)
@@ -145,7 +156,7 @@ void AGameManager::Tick(float DeltaTime)
 	}
 
 	//ラウンドが10になったら
-	if (nowroundnum_ == 10 && m_players_[1]->control_chair_->GetPhase() == EPhase::kEnd)
+	if (m_nowroundnum_ == 10 && m_players_[1]->control_chair_->GetPhase() == EPhase::kEnd)
 	{
 		//椅子が10個止まった時の処理
 		//StopChair();
@@ -342,18 +353,18 @@ void AGameManager::AddScore()
 void AGameManager::NextRound()
 {
 	// 配列の要素数外の参照をしないかどうか
-	if (nowroundnum_ <= m_chairs_.Num() - 1)
+	if (m_nowroundnum_ <= m_chairs_.Num() - 1)
 	{
-		if (m_chairs_[nowroundnum_] != NULL)
+		if (m_chairs_[m_nowroundnum_] != NULL)
 		{
-			if (nowroundnum_ % 2 == 1)
+			if (m_nowroundnum_ % 2 == 1)
 			{
-				m_players_[1]->control_chair_ = m_chairs_[nowroundnum_];
+				m_players_[1]->control_chair_ = m_chairs_[m_nowroundnum_];
 				m_players_[1]->GetOperate();
 			}
 			else
 			{
-				m_players_[0]->control_chair_ = m_chairs_[nowroundnum_];
+				m_players_[0]->control_chair_ = m_chairs_[m_nowroundnum_];
 				m_players_[0]->GetOperate();
 			}
 
@@ -371,9 +382,9 @@ void AGameManager::NextRound()
 				}
 			}
 
-			if (nowroundnum_ < m_maxroundnum_)
+			if (m_nowroundnum_ < m_maxroundnum_)
 			{
-				++nowroundnum_;
+				++m_nowroundnum_;
 			}
 		}
 	}

@@ -62,12 +62,11 @@ private:
 	float m_player_rotation_;						// 回転量
 	float m_player_location_;						// 移動量
 	float m_player_spin_value_;						// 現在何度分の回転量が入っているか
-	float m_preb_player_spin_input_;				// スピン時の前回の入力
 	float m_first_player_spin_input_angle_;			// 初めてスティックを倒した角度の保存用
-	int m_player_spin_cnt_;							// 何回転したか
+	float m_before_slip_rotation_;					// 前フレームの角度
+	float m_def_speed_;
 	FVector m_forward_vec_;							// 前方向ベクトル
 	FVector m_target_point_location_;				// 目標地点の座標
-	float temp;
 
 	UAudioComponent* m_audiocomponent_;				//音楽を入れるコンポーネント
 
@@ -95,6 +94,8 @@ private:
 		void OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 public:
+	UPROPERTY(EditAnywhere)
+		AAddScoreTrigger* m_pscore_obj_[2];			// スコアトリガーを入れる用
 
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		bool m_debugmode_;							// デバッグモードをONにするかどうか
@@ -113,6 +114,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
 		bool m_is_input_ride_;	// ride状態の時に決定キーを押してslip状態に変更されたかどうか
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
+		bool m_can_input_;		// 入力可能かどうか
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		float m_input_speed_scale_;										// 移動の倍率
@@ -168,14 +172,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		float m_def_player_posX_;															// デフォルトの座標(X軸のみ)
 
+	UPROPERTY(EditAnywhere, Category = "Default Setting")
+		float m_max_spin_add_rotation_value_;		// 毎フレーム加算する角度の上限
+
+	UPROPERTY(EditAnywhere, Category = "Default Setting")
+		float input_spin_scale_;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
 		FVector2D m_input_value_;						// 入力値
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
 		FString m_name_;												// 椅子の名前を入れる変数(P1 or P2しか入れないけど)
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
-		int m_pummeled_frame_;											// ボタンを押したとき何F判定を持続させるか
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		// USkeletalMeshComponent* m_pplayermesh_;
@@ -219,18 +226,4 @@ public:
 		bool GetIsSweep() { return m_is_sweep_; }
 
 	void EnableTargetCollision(bool _flag);
-
-	float m_def_speed_;
-
-	UPROPERTY(EditAnywhere)
-		AAddScoreTrigger* m_pscore_obj_[2];
-
-	float m_before_slip_rotation_;
-	UPROPERTY(EditAnywhere, Category = "Default Setting")
-		float m_max_spin_add_rotation_value_;		// 毎フレーム加算する角度の上限
-	UPROPERTY(EditAnywhere, Category = "Default Setting")
-		float input_spin_scale_;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
-		bool m_can_input_;
 };

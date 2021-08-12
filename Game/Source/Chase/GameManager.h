@@ -56,23 +56,23 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
 		bool m_is_event_;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
-		int m_event_cnt_;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
-	int nowroundnum_;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
-		TArray<int> m_event_round_;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
-		int m_maxroundnum_;					// ˆÖq‚ğ“Š‚°‚éÅ‘å‚Ì”
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
 		float m_chair_create_time_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
 		float m_switch_level_time;			// ƒŒƒxƒ‹‘JˆÚ‚ÌŠÔ
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
+		int m_event_cnt_;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
+		int m_nowroundnum_;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
+		int m_maxroundnum_;					// ˆÖq‚ğ“Š‚°‚éÅ‘å‚Ì”
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
+		TArray<int> m_event_round_;
 
 	UFUNCTION(BluePrintCallable)
 		void NextRound();

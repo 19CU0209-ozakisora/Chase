@@ -26,12 +26,12 @@ void ASplineCamera::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (m_prebphase_ != m_pgamemanager_->m_chairs_[m_pgamemanager_->nowroundnum_ - 1]->GetPhase())
+	if (m_prebphase_ != m_pgamemanager_->m_chairs_[m_pgamemanager_->m_nowroundnum_ - 1]->GetPhase())
 	{
-		m_prebphase_ = m_pgamemanager_->m_chairs_[m_pgamemanager_->nowroundnum_ - 1]->GetPhase();
+		m_prebphase_ = m_pgamemanager_->m_chairs_[m_pgamemanager_->m_nowroundnum_ - 1]->GetPhase();
 		for (int i = 0; i < m_change_direction_.Num(); ++i)
 		{
-			if (m_pgamemanager_->m_chairs_[m_pgamemanager_->nowroundnum_ - 1]->GetPhase() == m_change_direction_[i].phase_)
+			if (m_pgamemanager_->m_chairs_[m_pgamemanager_->m_nowroundnum_ - 1]->GetPhase() == m_change_direction_[i].phase_)
 			{
 				m_edirection_ = m_change_direction_[i].change_direction_;
 			}
@@ -67,7 +67,7 @@ FVector ASplineCamera::SetGoalLocation()
 		///float root = FMath::Sqrt(2);
 		float root = 1;
 		// Œ»Ý§Œä‚µ‚Ä‚¢‚éˆÖŽq‚ÌÀ•W‚ð•Ô‚·
-		FVector ChairLocation = (m_pgamemanager_->m_chairs_[m_pgamemanager_->nowroundnum_ - 1])->GetActorLocation();
+		FVector ChairLocation = (m_pgamemanager_->m_chairs_[m_pgamemanager_->m_nowroundnum_ - 1])->GetActorLocation();
 
 		switch (m_edirection_)
 		{
@@ -155,7 +155,7 @@ FVector ASplineCamera::SetCameraLocaiton()
 
 FRotator ASplineCamera::SetCameraRotator()
 {
-	return UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), (m_pgamemanager_->m_chairs_[m_pgamemanager_->nowroundnum_ - 1])->GetActorLocation());
+	return UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), (m_pgamemanager_->m_chairs_[m_pgamemanager_->m_nowroundnum_ - 1])->GetActorLocation());
 }
 
 float ASplineCamera::SetLeapAlpha(float _deltatime)
