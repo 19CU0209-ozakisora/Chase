@@ -32,7 +32,7 @@ AOutZone::AOutZone()
 	// コンポーネントのゲーム中非表示設定・モビリティやキャストシャドウの設定
 	SetActorHiddenInGame(true);
 	Root->SetMobility(EComponentMobility::Static);
-	Cube->bCastDynamicShadow = 0;
+	Cube->SetCastShadow(false);
 
 	// OUT時Widgetのデフォルト設定
 	ConstructorHelpers::FObjectFinder<UClass> tmpWidget(TEXT("/Game/Widget/OUT_Widget.OUT_Widget_C"));
