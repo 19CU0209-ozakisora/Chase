@@ -18,15 +18,23 @@ AOutZone::AOutZone()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	// RootComponentの設定
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	RootComponent = Root;
 
+	// StaticMeshComponent（Cube）の設定
 	Cube = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Cube"));
 	Cube->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
 	Cube->SetupAttachment(RootComponent);
 	Cube->bMultiBodyOverlap = true;
 	Cube->SetUseCCD(true);
 
+	// コンポーネントのゲーム中非表示設定・モビリティやキャストシャドウの設定
+	SetActorHiddenInGame(true);
+	Root->SetMobility(EComponentMobility::Static);
+	Cube->bCastDynamicShadow = 0;
+
+	// OUT時Widgetのデフォルト設定
 	ConstructorHelpers::FObjectFinder<UClass> tmpWidget(TEXT("/Game/Widget/OUT_Widget.OUT_Widget_C"));
 	outWidget = tmpWidget.Object;
 	
@@ -36,8 +44,6 @@ void AOutZone::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetActorHiddenInGame(true);
-
 	Cube->OnComponentBeginOverlap.AddDynamic(this, &AOutZone::OnOverlapBegin);
 	Cube->OnComponentEndOverlap.AddDynamic(this, &AOutZone::OnOverlapEnd);
 }
@@ -45,8 +51,11 @@ void AOutZone::BeginPlay()
 void AOutZone::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// コリジョン内に入っている全ActorのVelocityを調べる
 	for (AActor* Actor : deleteActor)
 	{
+		// 動いていなければ削除
 		if (Actor != nullptr && UKismetMathLibrary::EqualEqual_VectorVector(Actor->GetVelocity(), FVector::ZeroVector))
 		{
 			DeleteActor(Actor);			
@@ -57,18 +66,18 @@ void AOutZone::Tick(float DeltaTime)
 
 void AOutZone::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult)
 {
+	// 相手のActorが動いていて、削除するActorのタグがついていれば削除Actor配列に追加
 	if (bFromSweep && OtherActor->ActorHasTag(DeleteActorTag))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[OutZone] Overlap Begin"))
 		deleteActor.AddUnique(OtherActor);
 	}
 }
 
 void AOutZone::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+	// コリジョンから出た時に削除Actor配列から削除
 	if (deleteActor.Contains(OtherActor))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[OutZone] Overlap End"))
 		deleteActor.Remove(OtherActor);
 	}
 }
@@ -77,12 +86,14 @@ void AOutZone::DeleteActor(AActor* _actor)
 {
 	if (_actor != nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[OutZone] YEAH"));
+		// Actorのコリジョンを無効化し、見えなくする
 		_actor->SetActorEnableCollision(false);
 		_actor->GetRootComponent()->SetVisibility(false, true);
 
+		// 配列から削除
 		deleteActor.Remove(_actor);
 
+		// Widget表示
 		if (outWidget != nullptr)
 		{
 			TSubclassOf<class UUserWidget> Widget = TSoftClassPtr<UUserWidget>(FSoftObjectPath(*outWidget->GetPathName())).LoadSynchronous();
