@@ -4,6 +4,7 @@
 //作成日　：2021/08/05
 //作成者　：渡邊龍音
 //更新履歴：2021/08/10 渡邊龍音 BPから移行
+//		　：2021/08/18 渡邊龍音 UIの表示
 //--------------------------------------------------------------
 
 #include "OutZone.h"
@@ -13,6 +14,7 @@ AOutZone::AOutZone()
 	: Root(nullptr)
 	, Cube(nullptr)
 	, DeleteActorTag("Player")
+	, outWidget(nullptr)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -24,14 +26,20 @@ AOutZone::AOutZone()
 	Cube->SetupAttachment(RootComponent);
 	Cube->bMultiBodyOverlap = true;
 	Cube->SetUseCCD(true);
+
+	ConstructorHelpers::FObjectFinder<UClass> tmpWidget(TEXT("/Game/Widget/OUT_Widget.OUT_Widget_C"));
+	outWidget = tmpWidget.Object;
+	
 }
 
 void AOutZone::BeginPlay()
 {
 	Super::BeginPlay();
 
+	SetActorHiddenInGame(true);
+
 	Cube->OnComponentBeginOverlap.AddDynamic(this, &AOutZone::OnOverlapBegin);
-	Cube->OnComponentEndOverlap.AddDynamic(this, &AOutZone::OnOverlapEnd);	
+	Cube->OnComponentEndOverlap.AddDynamic(this, &AOutZone::OnOverlapEnd);
 }
 
 void AOutZone::Tick(float DeltaTime)
@@ -41,7 +49,7 @@ void AOutZone::Tick(float DeltaTime)
 	{
 		if (Actor != nullptr && UKismetMathLibrary::EqualEqual_VectorVector(Actor->GetVelocity(), FVector::ZeroVector))
 		{
-			DeleteActor(Actor);
+			DeleteActor(Actor);			
 		}
 	}
 
@@ -74,5 +82,17 @@ void AOutZone::DeleteActor(AActor* _actor)
 		_actor->GetRootComponent()->SetVisibility(false, true);
 
 		deleteActor.Remove(_actor);
+
+		if (outWidget != nullptr)
+		{
+			TSubclassOf<class UUserWidget> Widget = TSoftClassPtr<UUserWidget>(FSoftObjectPath(*outWidget->GetPathName())).LoadSynchronous();
+
+			UUserWidget* UserWidget = CreateWidget<UUserWidget>(GetWorld(), Widget);
+			
+			if (UserWidget != nullptr)
+			{
+				UserWidget->AddToViewport();
+			}
+		}
 	}
 }

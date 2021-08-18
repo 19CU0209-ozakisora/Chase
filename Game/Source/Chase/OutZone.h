@@ -4,12 +4,14 @@
 //作成日　：2021/08/05
 //作成者　：渡邊龍音
 //更新履歴：2021/08/10 渡邊龍音 BPから移行
+//		　：2021/08/18 渡邊龍音 UIの表示
 //--------------------------------------------------------------
 
 
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Blueprint/UserWidget.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/Actor.h"
 #include "OutZone.generated.h"
@@ -39,7 +41,7 @@ private:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
+	
 public:
 	UFUNCTION(BlueprintCallable)
 		void DeleteActor(AActor* _actor);
@@ -53,4 +55,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FName DeleteActorTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TSubclassOf<UUserWidget> outWidget;
 };
