@@ -36,6 +36,8 @@ AGameManager::AGameManager()
 	,m_teamPoint1P(0)
 	,m_teamPoint2P(0)
 	,m_thisLocation(FVector::ZeroVector)
+	, m_Player1Turn(0)
+	, m_Player2Turn(0)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -76,6 +78,23 @@ void AGameManager::BeginPlay()
 			m_players_[1] = PlayerTemp;
 		}
 	}
+
+	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
+	// 青木追加
+	// GameInstanceの実態を検索している関数の呼び出し
+	Instance = UInstance::GetInstance();
+
+	if (Instance)
+	{
+		//UE_LOG(LogTemp, Error, TEXT("%d"), NumberOfTurns->m_Turn);
+		// 別のレベルで設定したターン数を代入
+		m_maxroundnum_ = Instance->m_Turn;
+
+		// Player1,Player2のターン数の設定
+		m_Player1Turn = m_maxroundnum_ / 2;
+		m_Player2Turn = m_Player1Turn;
+	}
+	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 
 	// ゲームの最大ラウンド数 / 2 (for分の中でPlayer1とPlayer2の椅子の生成を同時に行うため、m_maxroundnum_ / 2にしています)
 	for (int i = 0; i < m_maxroundnum_ / 2; ++i)
@@ -133,6 +152,13 @@ void AGameManager::Tick(float DeltaTime)
 				{
 					//NextRound();
 				}
+				//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
+				// 青木追加::Player1のターン数を減らす
+				if (m_Player1Turn == m_Player2Turn)
+				{
+					m_Player1Turn--;
+				}
+				//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 			}
 		}
 
@@ -151,6 +177,13 @@ void AGameManager::Tick(float DeltaTime)
 				{
 					//NextRound();
 				}
+				//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
+				// 青木追加::Player2のターン数を減らす
+				if (m_Player1Turn < m_Player2Turn)
+				{
+					m_Player2Turn--;
+				}
+				//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 			}
 		}
 	}

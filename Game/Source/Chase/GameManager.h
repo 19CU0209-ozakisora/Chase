@@ -7,6 +7,7 @@
 #include "Chair.h"
 #include "Playerchara.h"
 #include "HouseCenter.h"
+#include "Instance.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameManager.generated.h"
 
@@ -122,4 +123,17 @@ private:
 
 	bool m_Check[10] = { false };
 
+//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
+// 青木追加
+	// GameInstance
+	UInstance* Instance;
+
+public:
+	// Player1のターン数
+	UPROPERTY(BlueprintReadOnly)
+		int m_Player1Turn;
+	// Player2のターン数
+	UPROPERTY(BlueprintReadOnly)
+		int m_Player2Turn;
+//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 };
