@@ -96,9 +96,7 @@ void AOutZone::DeleteActor(AActor* _actor)
 		// Widget•\Ž¦
 		if (outWidget != nullptr)
 		{
-			TSubclassOf<class UUserWidget> Widget = TSoftClassPtr<UUserWidget>(FSoftObjectPath(*outWidget->GetPathName())).LoadSynchronous();
-
-			UUserWidget* UserWidget = CreateWidget<UUserWidget>(GetWorld(), Widget);
+			UUserWidget* UserWidget = CreateWidget<UUserWidget>(GetWorld(), outWidget);
 			
 			if (UserWidget != nullptr)
 			{
