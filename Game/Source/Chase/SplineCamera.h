@@ -9,6 +9,7 @@
 #include "Engine/Engine.h"			// スクリーンログ出力用
 #include "Kismet/KismetMathLibrary.h"
 #include "GameManager.h"
+#include "GameFramework/SpringArmComponent.h"	// スプリングアーム
 #include "Chair.h"
 #include "SplineCamera.generated.h"
 
@@ -101,4 +102,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "camera")
 		TArray<FChangeDirection> m_change_direction_;
+
+	UPROPERTY(EditAnywhere, Category = "camera")
+		USpringArmComponent* m_pspring_arm_;
 };

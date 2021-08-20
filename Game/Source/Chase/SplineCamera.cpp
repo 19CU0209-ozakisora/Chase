@@ -6,19 +6,33 @@
 // Sets default values
 ASplineCamera::ASplineCamera()
 	: m_pcamera_(NULL)
+	, m_pspring_arm_(NULL)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	m_pcamera_ = CreateDefaultSubobject<UCameraComponent>(TEXT("m_pcamera_"));
-	m_pcamera_->SetupAttachment(RootComponent);
 
+	m_pspring_arm_ = CreateDefaultSubobject<USpringArmComponent>(TEXT("m_pspring_arm_"));
+	m_pspring_arm_->SetupAttachment(RootComponent);
+
+	m_pcamera_ = CreateDefaultSubobject<UCameraComponent>(TEXT("m_pcamera_"));
+	m_pcamera_->SetupAttachment(m_pspring_arm_);
 }
 
 // Called when the game starts or when spawned
 void ASplineCamera::BeginPlay()
 {
 	Super::BeginPlay();
+
 	m_prebphase_ = EPhase::kEnd;
+
+	if (m_pspring_arm_ != NULL)
+	{
+		m_pspring_arm_->bEnableCameraLag = true;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("m_pspring_arm_ is NULL"));
+	}
 }
 
 // Called every frame
@@ -26,6 +40,7 @@ void ASplineCamera::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// Œ»Ý‚ÌˆÖŽq‚Ìó‘Ô‚Æ’¼‘O‚ÌˆÖŽqó‘Ô‚ªˆá‚¤ê‡
 	if (m_prebphase_ != m_pgamemanager_->m_chairs_[m_pgamemanager_->m_nowroundnum_ - 1]->GetPhase())
 	{
 		m_prebphase_ = m_pgamemanager_->m_chairs_[m_pgamemanager_->m_nowroundnum_ - 1]->GetPhase();

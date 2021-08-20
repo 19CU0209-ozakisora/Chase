@@ -101,8 +101,8 @@ AChair::AChair()
 	m_pplayermesh_->SetupAttachment(RootComponent);
 
 	// ガイドメッシュの設定
-	m_parrow_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_parrow_"));
-	m_parrow_->SetupAttachment(m_pplayermesh_);
+	//m_parrow_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_parrow_"));
+	//m_parrow_->SetupAttachment(m_pplayermesh_);
 
 	// 移動関係のコンポーネントの追加
 	m_floating_pawn_movement_ = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("m_floating_pawn_movement_"));
@@ -158,7 +158,9 @@ void AChair::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	m_wall_time += DeltaTime;
 	UE_LOG(LogTemp, Warning, TEXT("fv = %f :: %f :: %f"), m_forward_vec_.X, m_forward_vec_.Y, m_forward_vec_.Z);
-	UKismetSystemLibrary::DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FVector(m_forward_vec_.X, m_forward_vec_.Y, 0.f) * 500.f, FLinearColor(255, 0, 0, 100), 0, 20);
+
+	//fvecのレイ
+	//UKismetSystemLibrary::DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FVector(m_forward_vec_.X, m_forward_vec_.Y, 0.f) * 500.f, FLinearColor(255, 0, 0, 100), 0, 20);
 
 	/*
 	// 移動
@@ -686,6 +688,12 @@ void AChair::PlayerPowerChange(const float _deltatime)
 
 void AChair::InputDecide()
 {
+	if (!m_can_input_)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("aaaaa false"));
+		return;
+	}
+
 	if (m_in_ride_flag_)
 	{
 		if (m_phase_ == EPhase::kRide)
