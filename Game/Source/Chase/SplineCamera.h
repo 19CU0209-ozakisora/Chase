@@ -105,4 +105,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "camera")
 		USpringArmComponent* m_pspring_arm_;
+
+	UPROPERTY(EditAnywhere, Category = "camera")
+		float outrenze;
 };

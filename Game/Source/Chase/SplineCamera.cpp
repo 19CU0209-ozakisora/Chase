@@ -64,6 +64,10 @@ void ASplineCamera::Tick(float DeltaTime)
 	}
 
 	m_goal_location_ = SetGoalLocation();
+	if (m_goal_location_.Y > outrenze)
+	{
+		m_goal_location_.Y = outrenze;
+	}
 	//m_now_location_ = SetLeapAlpha();
 
 	//FString text = m_goal_location_.ToString();
