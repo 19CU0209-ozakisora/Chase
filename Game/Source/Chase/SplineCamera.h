@@ -112,4 +112,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "camera")
 		float outrenze;
+
+	UFUNCTION(BlueprintCallable, Category = "MyF")
+		void Teleportation();
 };

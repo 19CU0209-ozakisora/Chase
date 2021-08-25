@@ -188,3 +188,8 @@ float ASplineCamera::SetLeapAlpha(float _deltatime)
 		return m_leap_alpha_ + _deltatime /  m_end_move_time_ ;
 	}
 }
+
+void ASplineCamera::Teleportation()
+{
+	m_leap_alpha_ = 1.0f;
+}
