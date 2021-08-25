@@ -68,10 +68,6 @@ void ASplineCamera::Tick(float DeltaTime)
 	{
 		m_goal_location_.Y = outrenze;
 	}
-	//m_now_location_ = SetLeapAlpha();
-
-	//FString text = m_goal_location_.ToString();
-	//GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, text);
 
 	SetActorLocation(SetCameraLocaiton());
 	SetActorRotation(SetCameraRotator());
@@ -79,6 +75,7 @@ void ASplineCamera::Tick(float DeltaTime)
 	m_preb_edirection_ = m_edirection_;
 }
 
+// ˆÚ“®æ‚ÌÝ’è
 FVector ASplineCamera::SetGoalLocation()
 {
 	if (m_pgamemanager_ != NULL)
@@ -92,61 +89,61 @@ FVector ASplineCamera::SetGoalLocation()
 		{
 			case EDirection::kfront:
 				ChairLocation += FVector(radius_, 0.f, 0.f);
-				ChairLocation.Z += m_offset_location_z;
+				ChairLocation.Z += m_offset_location_z + m_offset_player_height_;
 				return ChairLocation;
 				break;
 			
 			case EDirection::kfrontright:
 				ChairLocation += FVector(radius_ * root, radius_ * root, 0.f);
-				ChairLocation.Z += m_offset_location_z;
+				ChairLocation.Z += m_offset_location_z + m_offset_player_height_;
 				return ChairLocation;
 				break;
 				 
 			case EDirection::kright:
 				ChairLocation += FVector(0.f, radius_, 0.f);
-				ChairLocation.Z += m_offset_location_z;
+				ChairLocation.Z += m_offset_location_z + m_offset_player_height_;
 				return ChairLocation;
 				break;
 
 			case EDirection::kbackright:
 				ChairLocation += FVector(-radius_ * root, radius_ * root, 0.f);
-				ChairLocation.Z += m_offset_location_z;
+				ChairLocation.Z += m_offset_location_z + m_offset_player_height_;
 				return ChairLocation;
 				break;
 
 			case EDirection::kback:
 				ChairLocation += FVector(-radius_, 0.f, 0.f);
-				ChairLocation.Z += m_offset_location_z;
+				ChairLocation.Z += m_offset_location_z + m_offset_player_height_;
 				return ChairLocation;
 				break;
 
 			case EDirection::kbackleft:
 				ChairLocation += FVector(-radius_ * root, -radius_ * root, 0.f);
-				ChairLocation.Z += m_offset_location_z;
+				ChairLocation.Z += m_offset_location_z + m_offset_player_height_;
 				return ChairLocation;
 				break;
 			
 			case EDirection::kleft:
 				ChairLocation += FVector(0.f, -radius_, 0.f);
-				ChairLocation.Z += m_offset_location_z;
+				ChairLocation.Z += m_offset_location_z + m_offset_player_height_;
 				return ChairLocation;
 				break;
 
 			case EDirection::kfrontleft:
 				ChairLocation += FVector(radius_ * root, -radius_ * root, 0.f);
-				ChairLocation.Z += m_offset_location_z;
+				ChairLocation.Z += m_offset_location_z + m_offset_player_height_;
 				return ChairLocation;
 				break;
 
 			case EDirection::ktop:
 				ChairLocation += FVector(0.f, 0.f, radius_);
-				ChairLocation.Z += m_offset_location_z;
+				ChairLocation.Z += m_offset_location_z + m_offset_player_height_;
 				return ChairLocation;
 				break;
 
 			case EDirection::kunder:
 				ChairLocation += FVector(0.f, 0.f, -radius_);
-				ChairLocation.Z += m_offset_location_z;
+				ChairLocation.Z += m_offset_location_z + m_offset_player_height_;
 				return ChairLocation;
 				break;
 		}
@@ -174,7 +171,10 @@ FVector ASplineCamera::SetCameraLocaiton()
 
 FRotator ASplineCamera::SetCameraRotator()
 {
-	return UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), (m_pgamemanager_->m_chairs_[m_pgamemanager_->m_nowroundnum_ - 1])->GetActorLocation());
+	FVector tmp = m_pgamemanager_->m_chairs_[m_pgamemanager_->m_nowroundnum_ - 1]->GetActorLocation();
+	tmp.Z += m_offset_player_height_;
+	//UKismetSystemLibrary::DrawDebugLine(GetWorld(), GetActorLocation(), tmp, FLinearColor(255, 0, 0, 100), 0, 20);
+	return UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), tmp);
 }
 
 float ASplineCamera::SetLeapAlpha(float _deltatime)

@@ -10,6 +10,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "GameManager.h"
 #include "GameFramework/SpringArmComponent.h"	// スプリングアーム
+#include "Kismet/KismetSystemLibrary.h"	// レイ
 #include "Chair.h"
 #include "SplineCamera.generated.h"
 
@@ -93,6 +94,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "camera")
 		float m_offset_location_z;
+
+	UPROPERTY(EditAnywhere, Category = "camera")
+		float m_offset_player_height_;
 
 	FVector SetGoalLocation();
 	float SetLeapAlpha(float _deltatime);

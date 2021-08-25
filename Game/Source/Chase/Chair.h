@@ -9,7 +9,7 @@
 #include "Kismet/KismetMathLibrary.h"		// FindLookAtRotation‚ðŽg‚¤‚½‚ß
 #include "Components/BoxComponent.h"
 #include "AddScoreTrigger.h"
-#include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"	// ƒŒƒC
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Chair.generated.h"
