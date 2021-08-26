@@ -669,14 +669,23 @@ void AChair::PlayerPowerChange(const float _deltatime)
 	{
 		FVector nowLocation = GetActorLocation();
 		m_player_location_ = (m_input_value_.Y * m_input_speed_scale_) * _deltatime;
-		if (nowLocation.X + m_player_location_ <= m_def_player_posX_ && nowLocation.X + m_player_location_ > m_def_player_posX_ - m_powerchange_movement_max_val_)
+		float OneFrameMovement = -m_input_speed_scale_ * _deltatime;
+		if (nowLocation.X + m_player_location_ <= m_def_player_posX_ && nowLocation.X + m_player_location_ > m_def_player_posX_ - m_powerchange_movement_max_val_ + OneFrameMovement)
 		{
 			this->SetActorLocation(FVector(nowLocation.X + m_player_location_, nowLocation.Y, nowLocation.Z), true);
 
 			SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), m_target_point_location_));
 		}
-
+		 
 		m_floating_pawn_movement_->MaxSpeed = m_def_speed_ + (m_def_player_posX_ - GetActorLocation().X) * m_powerchange_velocity_val_;
+		if (m_floating_pawn_movement_->MaxSpeed > m_max_speed_)
+		{
+			m_floating_pawn_movement_->MaxSpeed = m_max_speed_;
+		}
+		else if (m_floating_pawn_movement_->MaxSpeed > m_min_speed_)
+		{
+			m_floating_pawn_movement_->MaxSpeed = m_min_speed_;
+		}
 
 		if (m_debugmode_)
 		{
