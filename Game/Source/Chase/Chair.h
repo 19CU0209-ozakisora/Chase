@@ -21,13 +21,11 @@ class UAudioComponent;
 UENUM(BlueprintType)
 enum class EPhase : uint8
 {
-	kStay UMETA(DisplayName = "Stay"),					// 待機状態										
-	//kMove UMETA(DisplayName = "Move"),				// 横移動状態									
+	kStay UMETA(DisplayName = "Stay"),					// 待機状態																	
 	kRotation UMETA(DisplayName = "Rotation"),			// 角度調整状態								
 	kPowerChange UMETA(DisplayName = "PowerChange"),	// パワー調整状態								
 	kEntrance UMETA(DisplayName = "Entrance"),			// 助走状態										
 	kRide UMETA(DisplayName = "Ride"),					// 乗り状態		(2021/06/23 追加)				
-	//kSpin UMETA(DisplayName = "Spin"),				// スピン状態	(2021/06/23 コメント化)
 	kSlip UMETA(DisplayName = "Slip"),					// 滑り状態										
 	kEnd UMETA(DisplayName = "End"),
 };

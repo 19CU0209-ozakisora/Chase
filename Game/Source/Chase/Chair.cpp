@@ -96,21 +96,16 @@ AChair::AChair()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// 椅子のメッシュの設定
-	//m_pplayermesh_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("m_pplayermesh_"));
+
 	m_pplayermesh_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_pplayermesh_"));
 	m_pplayermesh_->SetupAttachment(RootComponent);
 
-	// ガイドメッシュの設定
-	//m_parrow_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_parrow_"));
-	//m_parrow_->SetupAttachment(m_pplayermesh_);
 
 	// 移動関係のコンポーネントの追加
 	m_floating_pawn_movement_ = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("m_floating_pawn_movement_"));
 
 	m_target_point_mesh_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_target_point_mesh_"));
 	m_target_point_mesh_->SetupAttachment(m_pplayermesh_);
-
-	//m_wall_time = 5.f;
 
 	//何の音を再生するかをパスで指定、見つかったらオブジェクトに入れる
 	//パスの書き方は、"/Game/Music/BGM or SE/サウンドの名前"（Contentは省略すること）
@@ -149,6 +144,7 @@ void AChair::BeginPlay()
 	m_forward_vec_ = FVector::ForwardVector;
 
 	m_def_speed_ = m_floating_pawn_movement_->GetMaxSpeed();
+	m_min_speed_ = m_def_speed_;
 	m_max_speed_ = m_floating_pawn_movement_->GetMaxSpeed() + m_powerchange_movement_max_val_ * m_powerchange_velocity_val_;
 }
 
@@ -394,57 +390,6 @@ void AChair::ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 		}
 
 	}
-	/*
-	else if(OtherActor->ActorHasTag("ReflectionWall"))
-	{
-		if (m_wall_time > 5.f)
-		{
-			FVector OtherActorForwadVecter;
-			OtherActorForwadVecter.X = OtherActor->GetActorRotation().Roll;
-			OtherActorForwadVecter.Y = OtherActor->GetActorRotation().Pitch;
-
-			OtherActorForwadVecter = OtherActorForwadVecter.GetSafeNormal();
-			OtherActorForwadVecter.Z = 0.f;
-
-			FVector scale;
-			scale = (m_forward_vec_ * OtherActorForwadVecter) * -1.f;
-
-			FVector RefrectionVecter;
-			RefrectionVecter = m_forward_vec_ + 2.f * scale * OtherActorForwadVecter;
-			RefrectionVecter = RefrectionVecter.GetSafeNormal();
-			m_forward_vec_ = RefrectionVecter;
-
-			m_wall_time = 0.f;
-			UE_LOG(LogTemp, Warning, TEXT("otherVec = %f :: %f :: %f"), OtherActorForwadVecter.X, OtherActorForwadVecter.Y, OtherActorForwadVecter.Z);
-			UE_LOG(LogTemp, Warning, TEXT("hansya = %f :: %f :: %f"), RefrectionVecter.X, RefrectionVecter.Y, RefrectionVecter.Z);
-
-			元
-						FVector OtherActorForwadVecter;
-			OtherActorForwadVecter.X = OtherActor->GetActorRotation().Roll;
-			OtherActorForwadVecter.Y = OtherActor->GetActorRotation().Pitch;
-
-			OtherActorForwadVecter = OtherActorForwadVecter.GetSafeNormal();
-			OtherActorForwadVecter.Z = 0.f;
-
-
-			FVector RefrectionVecter;
-			//RefrectionVecter = m_forward_vec_ + (2.f * (m_forward_vec_ * OtherActorForwadVecter) * OtherActorForwadVecter);
-			RefrectionVecter = m_forward_vec_ + OtherActorForwadVecter;
-			RefrectionVecter = RefrectionVecter.GetSafeNormal();
-			m_forward_vec_ = RefrectionVecter;
-
-			m_wall_time = 0.f;
-			UE_LOG(LogTemp, Warning, TEXT("otherVec = %f :: %f :: %f"), OtherActorForwadVecter.X, OtherActorForwadVecter.Y, OtherActorForwadVecter.Z);
-			UE_LOG(LogTemp, Warning, TEXT("hansya = %f :: %f :: %f"), RefrectionVecter.X, RefrectionVecter.Y, RefrectionVecter.Z);
-
-
-		}
-
-
-		//m_floating_pawn_movement_->Velocity.X = m_floating_pawn_movement_->Velocity.X * (1.f / m_floating_pawn_movement_->Velocity.X) * (-1.f);
-		//m_floating_pawn_movement_->Velocity.Y = m_floating_pawn_movement_->Velocity.Y * (1.f / m_floating_pawn_movement_->Velocity.Y) * (-1.f);
-	}
-	*/
 }
 
 void AChair::OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -667,10 +612,17 @@ void AChair::PlayerPowerChange(const float _deltatime)
 {
 	if (m_input_value_.Y != 0.f)
 	{
+		// 現在座標を取得
 		FVector nowLocation = GetActorLocation();
+
+		// 入力値からどのくらい動くか計算
 		m_player_location_ = (m_input_value_.Y * m_input_speed_scale_) * _deltatime;
-		float OneFrameMovement = -m_input_speed_scale_ * _deltatime;
-		if (nowLocation.X + m_player_location_ <= m_def_player_posX_ && nowLocation.X + m_player_location_ > m_def_player_posX_ - m_powerchange_movement_max_val_ + OneFrameMovement)
+
+		// 1フレームで動く最大値を計算(誤差の計算に使用)
+		float OneFrameMovement = m_input_speed_scale_ * _deltatime;
+
+		// デフォルトの座標より大きい値にならない かつ 
+		if (nowLocation.X + m_player_location_ <= m_def_player_posX_ + OneFrameMovement && nowLocation.X + m_player_location_ > m_def_player_posX_ - m_powerchange_movement_max_val_ - OneFrameMovement)
 		{
 			this->SetActorLocation(FVector(nowLocation.X + m_player_location_, nowLocation.Y, nowLocation.Z), true);
 
@@ -682,7 +634,7 @@ void AChair::PlayerPowerChange(const float _deltatime)
 		{
 			m_floating_pawn_movement_->MaxSpeed = m_max_speed_;
 		}
-		else if (m_floating_pawn_movement_->MaxSpeed > m_min_speed_)
+		else if (m_floating_pawn_movement_->MaxSpeed < m_min_speed_)
 		{
 			m_floating_pawn_movement_->MaxSpeed = m_min_speed_;
 		}
