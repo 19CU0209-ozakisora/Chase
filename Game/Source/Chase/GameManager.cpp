@@ -192,7 +192,7 @@ void AGameManager::Tick(float DeltaTime)
 	}
 
 	//ƒ‰ƒEƒ“ƒh‚ª10‚É‚È‚Á‚½‚ç
-	if (m_nowroundnum_ == 10 && m_players_[1]->control_chair_->GetPhase() == EPhase::kEnd)
+	if (m_nowroundnum_ == m_maxroundnum_ && m_players_[1]->control_chair_->GetPhase() == EPhase::kEnd)
 	{
 		//ˆÖq‚ª10ŒÂ~‚Ü‚Á‚½‚Ìˆ—
 		//StopChair();
