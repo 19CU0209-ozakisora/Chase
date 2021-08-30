@@ -1,4 +1,18 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+//--------------------------------------------------------------
+//クラス名：SplineCamera.h
+//概要	  ：プレイヤーの周囲を回るカメラを制御するクラス
+//作成日　：2021/07/12
+//作成者　：19CU0209 尾崎蒼宙
+//更新履歴：2021/07/19 尾崎蒼宙 GameManager.hをインクルード
+//								FChangeDirection構造体(どのphase時にどの向きにカメラを移動させるか)の追加
+//								m_change_direction_の追加
+//			2021/08/20 尾崎蒼宙 GameFramework/SpringArmComponent.hの追加
+//								m_pspring_arm_(スプリングアーム格納用)を追加
+// 			2021/08/21 尾崎蒼宙 m_out_range_(無効範囲)の追加
+//								↑スプリングアームコンポーネントをしようしてもこのCPPで壁の外まで移動させているので範囲を設定する必要あり
+//			2021/08/25 尾崎蒼宙 Kismet/KismetSystemLibrary.h(デバッグ用のレイ)のインクルード
+//								m_offset_player_height_(Playerの中心点とカメラの高さを同時に上げる)の追加
+//--------------------------------------------------------------
 
 #pragma once
 
@@ -26,8 +40,8 @@ enum class EDirection : uint8
 	kbackleft UMETA(DisplayName = "BackLeft"),				// 左後ろ(X-, Y-, 0)
 	kleft UMETA(DisplayName = "Left"),						// 左(0, Y-, 0)
 	kfrontleft UMETA(DisplayName = "FrontLeft"),			// 左前(X+, Y-, 0)
-	ktop UMETA(DisplayName = "Top"),						// 上(Z+)
-	kunder UMETA(DisplayName = "Under"),					// 下(Z-)
+	ktop UMETA(DisplayName = "Top"),						// 上(0, 0, Z+)
+	kunder UMETA(DisplayName = "Under"),					// 下(0, 0, Z-)
 };
 
 USTRUCT(BlueprintType)

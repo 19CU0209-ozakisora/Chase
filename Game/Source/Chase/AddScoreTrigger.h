@@ -1,4 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+//--------------------------------------------------------------
+//クラス名：Chair.cpp
+//概要	  ：椅子が止まっていた時にスコアを加算させる用クラス
+//作成日　：2021/07/16
+//作成者　：19CU0209 尾崎蒼宙
+//更新履歴：2021/07/16 尾崎蒼宙 作成
+//--------------------------------------------------------------
 
 #pragma once
 
@@ -23,7 +29,7 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)			// 追加する得点を設定する変数
 		int m_score_;
 
 };
