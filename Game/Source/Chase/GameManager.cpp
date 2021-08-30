@@ -84,6 +84,9 @@ void AGameManager::BeginPlay()
 	// GameInstanceの実態を検索している関数の呼び出し
 	Instance = UInstance::GetInstance();
 
+	Instance->m_teamPoint1P = 0;
+	Instance->m_teamPoint2P = 0;
+
 	if (Instance)
 	{
 		//UE_LOG(LogTemp, Error, TEXT("%d"), NumberOfTurns->m_Turn);
@@ -347,28 +350,34 @@ void AGameManager::AddScore()
 			{
 				if (m_chairs_[i]->m_pscore_obj_[0] != NULL)
 				{
-					// Player1か2か判別したのちに得点加算
-					if (m_chairs_[i]->m_name_ == "Player1")
+					if (Instance)
 					{
-						m_teamPoint1P += m_chairs_[i]->m_pscore_obj_[0]->m_score_;
-					}
-					else
-					{
-						m_teamPoint2P += m_chairs_[i]->m_pscore_obj_[0]->m_score_;
+						// Player1か2か判別したのちに得点加算
+						if (m_chairs_[i]->m_name_ == "Player1")
+						{
+							Instance->m_teamPoint1P += m_chairs_[i]->m_pscore_obj_[0]->m_score_;
+						}
+						else
+						{
+							Instance->m_teamPoint2P += m_chairs_[i]->m_pscore_obj_[0]->m_score_;
+						}
 					}
 				}
 			}
 			else
 			{
-				if (m_chairs_[i]->m_pscore_obj_[1] != NULL)
+				if (Instance)
 				{
-					if (m_chairs_[i]->m_name_ == "Player1")
+					if (m_chairs_[i]->m_pscore_obj_[1] != NULL)
 					{
-						m_teamPoint1P += m_chairs_[i]->m_pscore_obj_[1]->m_score_;
-					}
-					else
-					{
-						m_teamPoint2P += m_chairs_[i]->m_pscore_obj_[1]->m_score_;
+						if (m_chairs_[i]->m_name_ == "Player1")
+						{
+							Instance->m_teamPoint1P += m_chairs_[i]->m_pscore_obj_[1]->m_score_;
+						}
+						else
+						{
+							Instance->m_teamPoint2P += m_chairs_[i]->m_pscore_obj_[1]->m_score_;
+						}
 					}
 				}
 			}
@@ -378,7 +387,10 @@ void AGameManager::AddScore()
 			UE_LOG(LogTemp, Warning, TEXT("chair[%f] is NULL"), i);
 		}
 	}
-
+	UE_LOG(LogTemp, Warning, TEXT("Instance->m_teamPoint1P %d"), Instance->m_teamPoint1P);
+	UE_LOG(LogTemp, Warning, TEXT("Instance->m_teamPoint2P %d"), Instance->m_teamPoint2P);
+	GetPoint1P();
+	GetPoint2P();
 		//得点計算後、Tick()を無効にする
 	PrimaryActorTick.SetTickFunctionEnable(false);
 }

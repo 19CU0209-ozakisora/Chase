@@ -24,4 +24,11 @@ public:
 	// ターン数
 	UPROPERTY(BlueprintReadWrite)
 		int m_Turn = 6;
+
+	//各チームの得点を格納
+	UPROPERTY(BlueprintReadWrite)
+		int m_teamPoint1P = 0;
+
+	UPROPERTY(BlueprintReadWrite)
+		int m_teamPoint2P = 0;
 };

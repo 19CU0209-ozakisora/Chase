@@ -92,11 +92,11 @@ public:
 
 	//ウィジェット出力1P
 	UFUNCTION(BlueprintCallable, Category = "My Functions")
-		int GetPoint1P()const { return m_teamPoint1P; }
+		int GetPoint1P()const { return Instance->m_teamPoint1P; }
 
 	//ウィジェット出力2P
 	UFUNCTION(BlueprintCallable, Category = "My Functions")
-		int GetPoint2P()const { return m_teamPoint2P; }
+		int GetPoint2P()const { return Instance->m_teamPoint2P; }
 
 	//チームポイント（1P用）
 	UPROPERTY(EditAnyWhere, BlueprintReadOnly)
