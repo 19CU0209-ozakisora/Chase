@@ -163,7 +163,7 @@ void AChair::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	m_wall_time += DeltaTime;
-	UE_LOG(LogTemp, Warning, TEXT("fv = %f :: %f :: %f"), m_forward_vec_.X, m_forward_vec_.Y, m_forward_vec_.Z);
+	UE_LOG(LogTemp, Warning, TEXT("Tick"));
 
 	//fvec‚ÌƒŒƒC
 	//UKismetSystemLibrary::DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FVector(m_forward_vec_.X, m_forward_vec_.Y, 0.f) * 500.f, FLinearColor(255, 0, 0, 100), 0, 20);
@@ -239,14 +239,15 @@ void AChair::Tick(float DeltaTime)
 	else if (m_phase_ == EPhase::kEnd)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("End")));
+		UE_LOG(LogTemp, Warning, TEXT("EndPhase.m_player_spin_value_ = %f"), m_player_spin_value_);
 
-		if (m_player_spin_value_ > 0.f)
+		if (FMath::Abs(m_player_spin_value_) > 0.f)
 		{
-			m_player_spin_value_ -= input_spin_scale_;
+			m_player_spin_value_ -= input_spin_scale_ * DeltaTime;
 		}
 		else
 		{
-
+			UE_LOG(LogTemp, Warning, TEXT("EndPhase.m_player_spin_value_ = %f"), m_player_spin_value_);
 		}
 
 		//‚Ô‚Â‚©‚Á‚Ä‚à“]‚ª‚é‰¹‚ªÄ¶I—¹‚·‚é‚Ü‚ÅSE‚ªÁ‚¦‚È‚¢‚Ì‚Å‚±‚±‚Å“]‚ª‚é‰¹‚ğI—¹
