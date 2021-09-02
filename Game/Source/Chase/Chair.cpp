@@ -34,6 +34,8 @@
 // 			2021/08/20 尾崎蒼宙 m_parrow_の削除
 //			2021/08/27 尾崎蒼宙 速度が指定した速度まで到達しない不具合の修正
 //								不要な変数の削除
+//			2021/09/02 尾崎蒼宙 行動終了時に椅子の回転速度をだんだん下げる処理を追加
+//								m_player_spin_value_が+m_max_spin_add_rotation_value_より大きかったり-m_max_spin_add_rotation_value_未満だった場合に適切な値が代入されていなかった問題の修正
 //--------------------------------------------------------------
 
 #include "Chair.h"
@@ -163,7 +165,8 @@ void AChair::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	m_wall_time += DeltaTime;
-	UE_LOG(LogTemp, Warning, TEXT("Tick"));
+
+	UE_LOG(LogTemp, Warning, TEXT("m_player_spin_value_ = %f"), m_player_spin_value_);
 
 	//fvecのレイ
 	//UKismetSystemLibrary::DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FVector(m_forward_vec_.X, m_forward_vec_.Y, 0.f) * 500.f, FLinearColor(255, 0, 0, 100), 0, 20);
@@ -221,7 +224,6 @@ void AChair::Tick(float DeltaTime)
 		{
 			PlayerSweep(DeltaTime);
 		}
-		//m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 
 		//音楽再生（椅子が転がる音）
 				//初回再生
@@ -239,16 +241,27 @@ void AChair::Tick(float DeltaTime)
 	else if (m_phase_ == EPhase::kEnd)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("End")));
-		UE_LOG(LogTemp, Warning, TEXT("EndPhase.m_player_spin_value_ = %f"), m_player_spin_value_);
 
-		if (FMath::Abs(m_player_spin_value_) > 0.f)
+		if (m_player_spin_value_ > 0.0001f)
 		{
 			m_player_spin_value_ -= input_spin_scale_ * DeltaTime;
+
+			if (m_player_spin_value_ < 0.f)
+			{
+				m_player_spin_value_ = 0.f;
+			}
 		}
-		else
+		else if(m_player_spin_value_ < 0.0001f)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("EndPhase.m_player_spin_value_ = %f"), m_player_spin_value_);
+			m_player_spin_value_ += input_spin_scale_ * DeltaTime;
+
+			if (m_player_spin_value_ > 0.f)
+			{
+				m_player_spin_value_ = 0.f;
+			}
 		}
+
+		m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 
 		//ぶつかっても転がる音が再生終了するまでSEが消えないのでここで転がる音を終了
 		if (m_audiocomponent_->IsPlaying())
@@ -540,10 +553,6 @@ void AChair::PlayerSpin(const float _deltatime)
 		//FVector test = FVector(rot_x, rot_y, 0.f);
 		FVector test = FVector(rot_y, rot_x, 0.f);
 
-		UE_LOG(LogTemp, Warning, TEXT("rot x = %f"), rot_x);
-		UE_LOG(LogTemp, Warning, TEXT("rot y = %f"), rot_y);
-
-
 		m_forward_vec_ = test;
 	}
 
@@ -551,11 +560,13 @@ void AChair::PlayerSpin(const float _deltatime)
 	{
 		if (m_player_spin_value_ > 0.f)
 		{
-			m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_max_spin_add_rotation_value_, 0.f));
+			m_player_spin_value_ = m_max_spin_add_rotation_value_;
+			m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 		}
 		else
 		{
-			m_pplayermesh_->AddRelativeRotation(FRotator(0.f, -m_max_spin_add_rotation_value_, 0.f));
+			m_player_spin_value_ = m_max_spin_add_rotation_value_ * -1.f;
+			m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 		}
 	}
 	else
@@ -662,7 +673,6 @@ void AChair::InputDecide()
 {
 	if (!m_can_input_)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("aaaaa false"));
 		return;
 	}
 
