@@ -18,6 +18,7 @@
 //								NextRound関数(次のラウンドに移動させる関数)を追加
 //								↑GameManager.cpp内に酷似した処理があった為まとめました
 //			2021/08/30 野田八雲  GetPoint関数の戻り値をInsranceに変更
+//			2021/09/04 尾崎蒼宙 デバッグ用に+でラウンド数を増やすように
 //--------------------------------------------------------------
 
 #pragma once
@@ -86,7 +87,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
 		int m_event_cnt_;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		int m_nowroundnum_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
