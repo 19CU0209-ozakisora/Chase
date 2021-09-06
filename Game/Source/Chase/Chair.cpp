@@ -36,6 +36,7 @@
 //								不要な変数の削除
 //			2021/09/02 尾崎蒼宙 行動終了時に椅子の回転速度をだんだん下げる処理を追加
 //								m_player_spin_value_が+m_max_spin_add_rotation_value_より大きかったり-m_max_spin_add_rotation_value_未満だった場合に適切な値が代入されていなかった問題の修正
+//			2021/09/06 尾崎蒼宙 EPhaseのkRotationの削除
 //--------------------------------------------------------------
 
 #include "Chair.h"
@@ -171,22 +172,8 @@ void AChair::Tick(float DeltaTime)
 	//fvecのレイ
 	//UKismetSystemLibrary::DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FVector(m_forward_vec_.X, m_forward_vec_.Y, 0.f) * 500.f, FLinearColor(255, 0, 0, 100), 0, 20);
 
-	/*
-	// 移動
-	if (m_phase_ == EPhase::kMove)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Move")));
-		PlayerMove(DeltaTime);
-	}
-	*/
-	// 向きの変更
-	if (m_phase_ == EPhase::kRotation)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Rotation")));
-		PlayerRotation(DeltaTime);
-	}
 	// パワー調整
-	else if (m_phase_ == EPhase::kPowerChange)
+	if (m_phase_ == EPhase::kPowerChange)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("PowerChange")));
 		PlayerPowerChange(DeltaTime);
