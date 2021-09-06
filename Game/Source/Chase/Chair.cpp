@@ -36,6 +36,7 @@
 //								不要な変数の削除
 //			2021/09/02 尾崎蒼宙 行動終了時に椅子の回転速度をだんだん下げる処理を追加
 //								m_player_spin_value_が+m_max_spin_add_rotation_value_より大きかったり-m_max_spin_add_rotation_value_未満だった場合に適切な値が代入されていなかった問題の修正
+//			2021/09/03 渡邊龍音 壁（ComponentTagがWallのもの）にあたった時に反射するように処理の追加
 //--------------------------------------------------------------
 
 #include "Chair.h"
@@ -47,11 +48,12 @@
 
 // Sets default values
 AChair::AChair()
-	// private
+// private
 	: m_is_input_add_slip_power_(false)
 	, m_slip_curve_(false)
 	, is_hit_wall_(false)
 	, m_is_sweep_(false)
+	, m_HitWall(false)
 	, m_phase_(EPhase::kStay)
 	, m_wall_time(0.f)
 	, m_angle_corection_(90.f)
@@ -93,6 +95,7 @@ AChair::AChair()
 	, m_def_player_posX_(0.f)
 	, m_max_spin_add_rotation_value_(0.f)
 	, input_spin_scale_(0.f)
+	, m_HitWallReflectionPower(1.0f)
 	, m_input_value_(FVector2D::ZeroVector)
 	, m_name_("")
 	, m_pplayermesh_(NULL)
@@ -111,7 +114,6 @@ AChair::AChair()
 
 	m_pplayermesh_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_pplayermesh_"));
 	m_pplayermesh_->SetupAttachment(RootComponent);
-
 
 	// 移動関係のコンポーネントの追加
 	m_floating_pawn_movement_ = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("m_floating_pawn_movement_"));
@@ -164,7 +166,21 @@ void AChair::BeginPlay()
 void AChair::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	m_wall_time += DeltaTime;
+
+	// 壁にあたった場合タイマー加算
+	if (m_HitWall)
+	{
+		m_wall_time += DeltaTime;
+		UE_LOG(LogTemp, Warning, TEXT("[Chair] m_forward_vec_ = %s"), *m_forward_vec_.ToString());
+		
+		// 一定時間経過したら当たった判定を下ろす
+		if (m_wall_time >= 1.0f)
+		{
+			m_wall_time = 0.0f;
+			m_pplayermesh_->ComponentVelocity.Y = 0.0f;
+			m_HitWall = false;
+		}
+	}
 
 	UE_LOG(LogTemp, Warning, TEXT("m_player_spin_value_ = %f"), m_player_spin_value_);
 
@@ -214,13 +230,15 @@ void AChair::Tick(float DeltaTime)
 	else if (m_phase_ == EPhase::kSlip)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Slip")));
+
 		PlayerSpin(DeltaTime);
 		PlayerSlip(DeltaTime);
+
 		if (!m_is_sweep_)
 		{
 			Deceleration(DeltaTime);
 		}
-		else if(m_is_sweep_ == true && m_is_jumpanimation_end_ == true)
+		else if (m_is_sweep_ == true && m_is_jumpanimation_end_ == true)
 		{
 			PlayerSweep(DeltaTime);
 		}
@@ -251,7 +269,7 @@ void AChair::Tick(float DeltaTime)
 				m_player_spin_value_ = 0.f;
 			}
 		}
-		else if(m_player_spin_value_ < 0.0001f)
+		else if (m_player_spin_value_ < 0.0001f)
 		{
 			m_player_spin_value_ += input_spin_scale_ * DeltaTime;
 
@@ -336,7 +354,7 @@ void AChair::SetInputValue_Y(const float _axisval)
 	{
 		m_input_value_.Y = 0.f;
 	}
-	
+
 }
 
 void AChair::DeleteArrow()
@@ -414,6 +432,23 @@ void AChair::ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 		}
 
 	}
+
+	// 壁にあたった時
+	if (OtherComp->ComponentHasTag("Wall") && m_HitWall == false)
+	{
+		m_HitWall = true;
+
+		m_player_spin_value_ *= -1.0f;
+				
+		FVector reverseVec = m_forward_vec_;
+		reverseVec.Y *= -m_HitWallReflectionPower;
+		m_forward_vec_ = reverseVec;
+
+		/*
+		m_pplayermesh_->SetSimulatePhysics(true);
+		m_pplayermesh_->SetConstraintMode(EDOFMode::XYPlane);
+		*/
+	}
 }
 
 void AChair::OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -453,7 +488,7 @@ void AChair::SetPhase(const EPhase _phase)
 		}
 
 		EnableTargetCollision(false);
-	
+
 		UE_LOG(LogTemp, Warning, TEXT("rot = %f"), m_target_point_location_.X);
 		m_def_player_posX_ = this->GetActorLocation().X;
 	}
@@ -539,21 +574,31 @@ void AChair::PlayerEntrance(const float _deltatime)
 void AChair::PlayerSpin(const float _deltatime)
 {
 	// 左右入力が入っていたら
-	if (FMath::Abs(m_input_value_.X) > 0.001f)
+	if (FMath::Abs(m_input_value_.X) > 0.001f || m_HitWall)
 	{
+		float test1;
+		float rot_x;
+		float rot_y;
+
+		FVector test;
+
 		// このフレーム間で回転させる値の取得
 		m_player_spin_value_ += m_input_value_.X * _deltatime * input_spin_scale_;
-		float test1 = FMath::DegreesToRadians(m_before_slip_rotation_ + m_player_spin_value_);
+		test1 = FMath::DegreesToRadians(m_before_slip_rotation_ + m_player_spin_value_);
 
 		// 角度の計算			 現在の前方向ベクトル + 回転量
-		float rot_x = FMath::Sin(test1);
-		float rot_y = FMath::Cos(test1);
+		rot_x = FMath::Sin(test1);
+		rot_y = FMath::Cos(test1);
 
-		// 代入
-		//FVector test = FVector(rot_x, rot_y, 0.f);
-		FVector test = FVector(rot_y, rot_x, 0.f);
 
-		m_forward_vec_ = test;
+		if (!m_HitWall)
+		{
+			// 代入
+			//FVector test = FVector(rot_x, rot_y, 0.f);
+			test = FVector(rot_y, rot_x, 0.f);
+
+			m_forward_vec_ = test;
+		}
 	}
 
 	if (FMath::Abs(m_player_spin_value_) > m_max_spin_add_rotation_value_)
@@ -650,7 +695,7 @@ void AChair::PlayerPowerChange(const float _deltatime)
 
 			SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), m_target_point_location_));
 		}
-		 
+
 		m_floating_pawn_movement_->MaxSpeed = m_def_speed_ + (m_def_player_posX_ - GetActorLocation().X) * m_powerchange_velocity_val_;
 		if (m_floating_pawn_movement_->MaxSpeed > m_max_speed_)
 		{
