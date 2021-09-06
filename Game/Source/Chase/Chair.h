@@ -51,6 +51,7 @@
 //								SetForwardVec関数を追加
 //			2021/08/20 尾崎蒼宙 m_parrow_の削除
 //			2021/09/03 渡邊龍音 壁（ComponentTagがWallのもの）にあたった時に反射するように処理の追加
+// 			2021/09/06 尾崎蒼宙 EPhaseのkRotationの削除
 //--------------------------------------------------------------
 #pragma once
 
@@ -74,8 +75,7 @@ class UAudioComponent;
 UENUM(BlueprintType)
 enum class EPhase : uint8
 {
-	kStay UMETA(DisplayName = "Stay"),					// 待機状態																	
-	kRotation UMETA(DisplayName = "Rotation"),			// 角度調整状態								
+	kStay UMETA(DisplayName = "Stay"),					// 待機状態																						
 	kPowerChange UMETA(DisplayName = "PowerChange"),	// パワー調整状態								
 	kEntrance UMETA(DisplayName = "Entrance"),			// 助走状態										
 	kRide UMETA(DisplayName = "Ride"),					// 乗り状態		(2021/06/23 追加)				
