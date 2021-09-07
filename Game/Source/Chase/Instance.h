@@ -31,4 +31,29 @@ public:
 
 	UPROPERTY(BlueprintReadWrite)
 		int m_teamPoint2P = 0;
+
+	//各得点格納用
+	//ウィジェットが不可変配列非対応、TArray型だと型が合わないため、無理やりではあるが
+	//それぞれの得点配列を追加。直せれば直す。
+	UPROPERTY(BlueprintReadWrite)
+		int m_chairEachPoint1P_1 = 0;
+	UPROPERTY(BlueprintReadWrite)
+		int m_chairEachPoint1P_2 = 0;
+	UPROPERTY(BlueprintReadWrite)
+		int m_chairEachPoint1P_3 = 0;
+	UPROPERTY(BlueprintReadWrite)
+		int m_chairEachPoint1P_4 = 0;
+	UPROPERTY(BlueprintReadWrite)
+		int m_chairEachPoint1P_5 = 0;
+	UPROPERTY(BlueprintReadWrite)
+		int m_chairEachPoint2P_1 = 0;
+	UPROPERTY(BlueprintReadWrite)
+		int m_chairEachPoint2P_2 = 0;
+	UPROPERTY(BlueprintReadWrite)
+		int m_chairEachPoint2P_3 = 0;
+	UPROPERTY(BlueprintReadWrite)
+		int m_chairEachPoint2P_4 = 0;
+	UPROPERTY(BlueprintReadWrite)
+		int m_chairEachPoint2P_5 = 0;
+
 };

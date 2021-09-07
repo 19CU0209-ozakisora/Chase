@@ -127,6 +127,10 @@ public:
 	UPROPERTY(EditAnyWhere, BlueprintReadOnly)
 		int m_teamPoint2P;
 
+	//椅子結果カウント用変数
+	int m_countChair1P;
+	int m_countChair2P;
+
 private:
 
 	//自分自身の座標

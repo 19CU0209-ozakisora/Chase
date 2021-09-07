@@ -46,6 +46,8 @@ AGameManager::AGameManager()
 	, m_event_round_()
 	,m_teamPoint1P(0)
 	,m_teamPoint2P(0)
+	,m_countChair1P(0)
+	,m_countChair2P(0)
 	,m_thisLocation(FVector::ZeroVector)
 	, m_Player1Turn(0)
 	, m_Player2Turn(0)
@@ -97,6 +99,16 @@ void AGameManager::BeginPlay()
 
 	Instance->m_teamPoint1P = 0;
 	Instance->m_teamPoint2P = 0;
+	Instance->m_chairEachPoint1P_1 = 0;
+	Instance->m_chairEachPoint1P_2 = 0;
+	Instance->m_chairEachPoint1P_3 = 0;
+	Instance->m_chairEachPoint1P_4 = 0;
+	Instance->m_chairEachPoint1P_5 = 0;
+	Instance->m_chairEachPoint2P_1 = 0;
+	Instance->m_chairEachPoint2P_2 = 0;
+	Instance->m_chairEachPoint2P_3 = 0;
+	Instance->m_chairEachPoint2P_4 = 0;
+	Instance->m_chairEachPoint2P_5 = 0;
 
 	if (Instance)
 	{
@@ -337,7 +349,7 @@ void AGameManager::SetPoint()
 void AGameManager::AddScore()
 {
 	// 椅子の数だけ繰り返す
-	for (int i = 0; i < m_chairs_.Num() - 1; ++i)
+	for (int i = 0; i < m_chairs_.Num(); ++i)
 	{
 		// NULLチェック
 		if (m_chairs_[i] != NULL)
@@ -367,10 +379,52 @@ void AGameManager::AddScore()
 						if (m_chairs_[i]->m_name_ == "Player1")
 						{
 							Instance->m_teamPoint1P += m_chairs_[i]->m_pscore_obj_[0]->m_score_;
+
+							switch (m_countChair1P)
+							{
+							case 0:
+								Instance->m_chairEachPoint1P_1 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;								
+								break;
+							case 1:
+								Instance->m_chairEachPoint1P_2 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;							
+								break;
+							case 2:
+								Instance->m_chairEachPoint1P_3 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;
+								break;
+							case 3:
+								Instance->m_chairEachPoint1P_4 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;								
+								break;
+							case 4:
+								Instance->m_chairEachPoint1P_5 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;								
+								break;
+							default:
+								break;
+							}
 						}
 						else
 						{
 							Instance->m_teamPoint2P += m_chairs_[i]->m_pscore_obj_[0]->m_score_;
+
+							switch (m_countChair2P)
+							{
+							case 0:
+								Instance->m_chairEachPoint2P_1 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;								
+								break;
+							case 1:
+								Instance->m_chairEachPoint2P_2 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;								
+								break;
+							case 2:
+								Instance->m_chairEachPoint2P_3 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;								
+								break;
+							case 3:
+								Instance->m_chairEachPoint2P_4 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;								
+								break;
+							case 4:
+								Instance->m_chairEachPoint2P_5 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;								
+								break;
+							default:
+								break;
+							}
 						}
 					}
 				}
@@ -384,10 +438,51 @@ void AGameManager::AddScore()
 						if (m_chairs_[i]->m_name_ == "Player1")
 						{
 							Instance->m_teamPoint1P += m_chairs_[i]->m_pscore_obj_[1]->m_score_;
+
+							switch (m_countChair1P)
+							{
+							case 0:
+								Instance->m_chairEachPoint1P_1 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
+								break;
+							case 1:
+								Instance->m_chairEachPoint1P_2 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
+								break;
+							case 2:
+								Instance->m_chairEachPoint1P_3 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
+								break;
+							case 3:
+								Instance->m_chairEachPoint1P_4 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
+								break;
+							case 4:
+								Instance->m_chairEachPoint1P_5 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
+								break;
+							default:
+								break;
+							}
 						}
 						else
 						{
 							Instance->m_teamPoint2P += m_chairs_[i]->m_pscore_obj_[1]->m_score_;
+							switch (m_countChair2P)
+							{
+							case 0:
+								Instance->m_chairEachPoint2P_1 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
+								break;
+							case 1:
+								Instance->m_chairEachPoint2P_2 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
+								break;
+							case 2:
+								Instance->m_chairEachPoint2P_3 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
+								break;
+							case 3:
+								Instance->m_chairEachPoint2P_4 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
+								break;
+							case 4:
+								Instance->m_chairEachPoint2P_5 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
+								break;
+							default:
+								break;
+							}
 						}
 					}
 				}
@@ -397,9 +492,33 @@ void AGameManager::AddScore()
 		{
 			UE_LOG(LogTemp, Warning, TEXT("chair[%f] is NULL"), i);
 		}
+
+
+		if (i % 2 == 0)
+		{
+			m_countChair1P++;
+		}
+		else if (i % 2 == 1)
+		{
+			m_countChair2P++;
+		}
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Instance->m_teamPoint1P %d"), Instance->m_teamPoint1P);
-	UE_LOG(LogTemp, Warning, TEXT("Instance->m_teamPoint2P %d"), Instance->m_teamPoint2P);
+
+
+	UE_LOG(LogTemp, Warning, TEXT("Instance->m_countChair1P %d"), m_countChair1P);
+	UE_LOG(LogTemp, Warning, TEXT("Instance->m_countChair2P %d"), m_countChair2P);
+	/*UE_LOG(LogTemp, Warning, TEXT("Instance->1P_1 %d"), Instance->m_chairEachPoint1P_1);
+	UE_LOG(LogTemp, Warning, TEXT("Instance->1P_2 %d"), Instance->m_chairEachPoint1P_2);
+	UE_LOG(LogTemp, Warning, TEXT("Instance->1P_3 %d"), Instance->m_chairEachPoint1P_3);
+	UE_LOG(LogTemp, Warning, TEXT("Instance->1P_4 %d"), Instance->m_chairEachPoint1P_4);
+	UE_LOG(LogTemp, Warning, TEXT("Instance->1P_5 %d"), Instance->m_chairEachPoint1P_5);
+	UE_LOG(LogTemp, Warning, TEXT("Instance->2P_1 %d"), Instance->m_chairEachPoint2P_1);
+	UE_LOG(LogTemp, Warning, TEXT("Instance->2P_2 %d"), Instance->m_chairEachPoint2P_2);
+	UE_LOG(LogTemp, Warning, TEXT("Instance->2P_3 %d"), Instance->m_chairEachPoint2P_3);
+	UE_LOG(LogTemp, Warning, TEXT("Instance->2P_4 %d"), Instance->m_chairEachPoint2P_4);
+	UE_LOG(LogTemp, Warning, TEXT("Instance->2P_5 %d"), Instance->m_chairEachPoint2P_5);*/
+	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_teamPoint1P %d"), Instance->m_teamPoint1P);
+	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_teamPoint2P %d"), Instance->m_teamPoint2P);
 	GetPoint1P();
 	GetPoint2P();
 		//得点計算後、Tick()を無効にする
