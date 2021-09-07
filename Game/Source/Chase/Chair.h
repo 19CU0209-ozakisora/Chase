@@ -50,6 +50,13 @@
 //								水に触れた際にforward_vectorを変更しなければならない為
 //								SetForwardVec関数を追加
 //			2021/08/20 尾崎蒼宙 m_parrow_の削除
+//			2021/09/03 渡邊龍音 壁（ComponentTagがWallのもの）にあたった時に反射するように処理の追加
+// 			2021/09/06 尾崎蒼宙 EPhaseのkRotationの削除
+//			2021/09/07 尾崎蒼宙 破棄されたデータの復旧と結合
+//								Move関数をSetSlipPower関数とPlayerMove関数に処理を分け、PlayerMove関数を削除
+//								↑にあたり、SetSlipPower関数の追加
+//								使用用途の被っている変数のコメント化
+//								m_max_stick_slide_time / m_stick_slide_time_変数の追加(スティックを弾く時に使用)
 //--------------------------------------------------------------
 #pragma once
 
@@ -74,8 +81,7 @@ class UAudioComponent;
 UENUM(BlueprintType)
 enum class EPhase : uint8
 {
-	kStay UMETA(DisplayName = "Stay"),					// 待機状態																	
-	kRotation UMETA(DisplayName = "Rotation"),			// 角度調整状態								
+	kStay UMETA(DisplayName = "Stay"),					// 待機状態																							
 	kPowerChange UMETA(DisplayName = "PowerChange"),	// パワー調整状態								
 	kEntrance UMETA(DisplayName = "Entrance"),			// 助走状態										
 	kRide UMETA(DisplayName = "Ride"),					// 乗り状態		(2021/06/23 追加)				
@@ -105,7 +111,7 @@ private:
 
 	bool m_is_input_add_slip_power_;				// 速度を増やすボタンが押されたかどうか
 	bool m_slip_curve_;								// 曲がるボタンを押されたかどうか
-	bool is_hit_wall_;								// 壁に当たったかどうか
+	bool m_hit_wall_;								// 壁に当たったかどうか
 	bool m_is_sweep_;								// スウィープボタンを押したかどうか
 	EPhase m_phase_;								// 現在のフェーズ格納用
 	float m_wall_time;								// 壁に当たった時間
@@ -136,6 +142,7 @@ private:
 	void SetPlayerSweepFlag();	// スウィープボタンが押されたら処理
 	void PlayerPowerChange(const float _deltatime);	// 助走自のパワー変更処理
 	void InputDecide();
+	void SetSlipPower(const float _deltatime);
 
 	// カプセルコンポーネントを参照している為同じものをBPに追加
 	UFUNCTION()
@@ -229,6 +236,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		float input_spin_scale_;
 
+	UPROPERTY(EditAnywhere, Category = "Default Setting")
+		float m_hit_wall_reflection_power_;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
 		FVector2D m_input_value_;						// 入力値
 
@@ -279,11 +289,19 @@ public:
 	void EnableTargetCollision(bool _flag);
 
 //☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
+// 青木
 private:
-	FVector PlayerLocation;
+	// 尾崎 2021/09/07
+	// コメント化(変数の値が変わっていないためGetActorLocationで処理させる)
+	//FVector PlayerLocation;
 
-	float axisval;
-	float LocationX;
+	// 尾崎 2021/09/07
+	// コメント化(m_input_value_で同じことをしているため)
+	//float axisval;
+	
+	// 尾崎 2021/09/07
+	// コメント化(m_def_player_posX_で処理させる)
+	//float LocationX;
 	float LocationXPut;
 	float FrameCount;
 	float FramePut;
@@ -291,6 +309,14 @@ private:
 	bool MovePull;
 	bool FrameCountStart;
 
-	void Move(float _deltatime);
+	// 尾崎 2021/09/07
+	// PlayerMove関数に処理を移動(検索がかけにくい為)
+	//void Move(float _deltatime);
 //☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
+
+	UPROPERTY(EditAnywhere, Category = "Default Setting")
+		float m_max_stick_slide_time_;		// スティックを倒すまでにかかる時間の最大値
+
+	float m_stick_slide_time_;				// スティックを倒すのにかかった時間
+
 };
