@@ -50,8 +50,6 @@
 //								水に触れた際にforward_vectorを変更しなければならない為
 //								SetForwardVec関数を追加
 //			2021/08/20 尾崎蒼宙 m_parrow_の削除
-//			2021/09/03 渡邊龍音 壁（ComponentTagがWallのもの）にあたった時に反射するように処理の追加
-// 			2021/09/06 尾崎蒼宙 EPhaseのkRotationの削除
 //--------------------------------------------------------------
 #pragma once
 
@@ -71,11 +69,13 @@
 //前方宣言
 class UAudioComponent;
 
+
 // 椅子のフェーズの列挙型
 UENUM(BlueprintType)
 enum class EPhase : uint8
 {
-	kStay UMETA(DisplayName = "Stay"),					// 待機状態																						
+	kStay UMETA(DisplayName = "Stay"),					// 待機状態																	
+	kRotation UMETA(DisplayName = "Rotation"),			// 角度調整状態								
 	kPowerChange UMETA(DisplayName = "PowerChange"),	// パワー調整状態								
 	kEntrance UMETA(DisplayName = "Entrance"),			// 助走状態										
 	kRide UMETA(DisplayName = "Ride"),					// 乗り状態		(2021/06/23 追加)				
@@ -107,7 +107,6 @@ private:
 	bool m_slip_curve_;								// 曲がるボタンを押されたかどうか
 	bool is_hit_wall_;								// 壁に当たったかどうか
 	bool m_is_sweep_;								// スウィープボタンを押したかどうか
-	bool m_HitWall;									// 壁にあたったかどうか
 	EPhase m_phase_;								// 現在のフェーズ格納用
 	float m_wall_time;								// 壁に当たった時間
 	float m_angle_corection_;						// スピン時の補正用の変数
@@ -230,9 +229,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		float input_spin_scale_;
 
-	UPROPERTY(EditAnywhere, Category = "Default Setting")
-		float m_HitWallReflectionPower;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
 		FVector2D m_input_value_;						// 入力値
 
@@ -281,4 +277,20 @@ public:
 		bool GetIsSweep() { return m_is_sweep_; }
 
 	void EnableTargetCollision(bool _flag);
+
+//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
+private:
+	FVector PlayerLocation;
+
+	float axisval;
+	float LocationX;
+	float LocationXPut;
+	float FrameCount;
+	float FramePut;
+
+	bool MovePull;
+	bool FrameCountStart;
+
+	void Move(float _deltatime);
+//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 };

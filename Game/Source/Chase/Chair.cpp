@@ -36,8 +36,6 @@
 //								不要な変数の削除
 //			2021/09/02 尾崎蒼宙 行動終了時に椅子の回転速度をだんだん下げる処理を追加
 //								m_player_spin_value_が+m_max_spin_add_rotation_value_より大きかったり-m_max_spin_add_rotation_value_未満だった場合に適切な値が代入されていなかった問題の修正
-//			2021/09/03 渡邊龍音 壁（ComponentTagがWallのもの）にあたった時に反射するように処理の追加
-//			2021/09/06 尾崎蒼宙 EPhaseのkRotationの削除
 //--------------------------------------------------------------
 
 #include "Chair.h"
@@ -46,15 +44,13 @@
 #include "Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 #include "ActiveSound.h"
-
 // Sets default values
 AChair::AChair()
-// private
+	// private
 	: m_is_input_add_slip_power_(false)
 	, m_slip_curve_(false)
 	, is_hit_wall_(false)
 	, m_is_sweep_(false)
-	, m_HitWall(false)
 	, m_phase_(EPhase::kStay)
 	, m_wall_time(0.f)
 	, m_angle_corection_(90.f)
@@ -96,7 +92,6 @@ AChair::AChair()
 	, m_def_player_posX_(0.f)
 	, m_max_spin_add_rotation_value_(0.f)
 	, input_spin_scale_(0.f)
-	, m_HitWallReflectionPower(1.0f)
 	, m_input_value_(FVector2D::ZeroVector)
 	, m_name_("")
 	, m_pplayermesh_(NULL)
@@ -106,6 +101,18 @@ AChair::AChair()
 	, m_deside_sound_(NULL)
 	, m_chair_roll_sound_(NULL)
 	, m_chair_collide_sound_(NULL)
+	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
+	, PlayerLocation(FVector::ZeroVector)
+
+	, axisval(0.f)
+	, LocationX(0.f)
+	, LocationXPut(0.f)
+	, FrameCount(600.f)
+	, FramePut(0.f)
+
+	, MovePull(false)
+	, FrameCountStart(false)
+	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 {
 
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -115,6 +122,7 @@ AChair::AChair()
 
 	m_pplayermesh_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_pplayermesh_"));
 	m_pplayermesh_->SetupAttachment(RootComponent);
+
 
 	// 移動関係のコンポーネントの追加
 	m_floating_pawn_movement_ = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("m_floating_pawn_movement_"));
@@ -161,35 +169,45 @@ void AChair::BeginPlay()
 	m_def_speed_ = m_floating_pawn_movement_->GetMaxSpeed();
 	m_min_speed_ = m_def_speed_;
 	m_max_speed_ = m_floating_pawn_movement_->GetMaxSpeed() + m_powerchange_movement_max_val_ * m_powerchange_velocity_val_;
+
+	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
+	// m_pMeshの初期座標を保持
+	PlayerLocation = GetActorLocation();
+
+	// m_pMeshのX座標の保持
+	LocationX = PlayerLocation.X;
+	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 }
 
 // Called every frame
 void AChair::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	m_wall_time += DeltaTime;
 
-	// 壁にあたった場合タイマー加算
-	if (m_HitWall)
-	{
-		m_wall_time += DeltaTime;
-		UE_LOG(LogTemp, Warning, TEXT("[Chair] m_forward_vec_ = %s"), *m_forward_vec_.ToString());
-		
-		// 一定時間経過したら当たった判定を下ろす
-		if (m_wall_time >= 1.0f)
-		{
-			m_wall_time = 0.0f;
-			m_pplayermesh_->ComponentVelocity.Y = 0.0f;
-			m_HitWall = false;
-		}
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("m_player_spin_value_ = %f"), m_player_spin_value_);
+	// ☆
+	// UE_LOG(LogTemp, Warning, TEXT("m_player_spin_value_ = %f"), m_player_spin_value_);
+	// ☆
 
 	//fvecのレイ
 	//UKismetSystemLibrary::DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + FVector(m_forward_vec_.X, m_forward_vec_.Y, 0.f) * 500.f, FLinearColor(255, 0, 0, 100), 0, 20);
 
+	/*
+	// 移動
+	if (m_phase_ == EPhase::kMove)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Move")));
+		PlayerMove(DeltaTime);
+	}
+	*/
+	// 向きの変更
+	if (m_phase_ == EPhase::kRotation)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Rotation")));
+		PlayerRotation(DeltaTime);
+	}
 	// パワー調整
-	if (m_phase_ == EPhase::kPowerChange)
+	else if (m_phase_ == EPhase::kPowerChange)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("PowerChange")));
 		PlayerPowerChange(DeltaTime);
@@ -217,15 +235,13 @@ void AChair::Tick(float DeltaTime)
 	else if (m_phase_ == EPhase::kSlip)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Slip")));
-
 		PlayerSpin(DeltaTime);
 		PlayerSlip(DeltaTime);
-
 		if (!m_is_sweep_)
 		{
 			Deceleration(DeltaTime);
 		}
-		else if (m_is_sweep_ == true && m_is_jumpanimation_end_ == true)
+		else if(m_is_sweep_ == true && m_is_jumpanimation_end_ == true)
 		{
 			PlayerSweep(DeltaTime);
 		}
@@ -256,7 +272,7 @@ void AChair::Tick(float DeltaTime)
 				m_player_spin_value_ = 0.f;
 			}
 		}
-		else if (m_player_spin_value_ < 0.0001f)
+		else if(m_player_spin_value_ < 0.0001f)
 		{
 			m_player_spin_value_ += input_spin_scale_ * DeltaTime;
 
@@ -276,6 +292,12 @@ void AChair::Tick(float DeltaTime)
 	}
 
 	m_is_input_add_slip_power_ = false;
+
+	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
+	//	スティックの下方向（最小）じゃないとき
+	if (MovePull)
+		Move(DeltaTime);
+	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 }
 
 // Called to bind functionality to input
@@ -320,28 +342,33 @@ void AChair::SetInputValue_X(const float _axisval)
 
 void AChair::SetInputValue_Y(const float _axisval)
 {
-	if (m_can_input_)
-	{
-		if (m_debugmode_)
-		{
-			if (_axisval == 0.f)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("not input Vertical")));
-			}
-			else
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Vertical")));
-			}
-		}
+	//☆
+	//if (m_can_input_)
+	//{
+	//	if (m_debugmode_)
+	//	{
+	//		if (_axisval == 0.f)
+	//		{
+	//			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("not input Vertical")));
+	//		}
+	//		else
+	//		{
+	//			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Vertical")));
+	//		}
+	//	}
 
-		// 入力された値を格納
-		m_input_value_.Y = _axisval;
-	}
-	else
-	{
-		m_input_value_.Y = 0.f;
-	}
+	//	// 入力された値を格納
+	//	m_input_value_.Y = _axisval;
+	//}
+	//else
+	//{
+	//	m_input_value_.Y = 0.f;
+	//}
+	//☆
 
+	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
+	axisval = _axisval;
+	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 }
 
 void AChair::DeleteArrow()
@@ -419,23 +446,6 @@ void AChair::ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 		}
 
 	}
-
-	// 壁にあたった時
-	if (OtherComp->ComponentHasTag("Wall") && m_HitWall == false)
-	{
-		m_HitWall = true;
-
-		m_player_spin_value_ *= -1.0f;
-				
-		FVector reverseVec = m_forward_vec_;
-		reverseVec.Y *= -m_HitWallReflectionPower;
-		m_forward_vec_ = reverseVec;
-
-		/*
-		m_pplayermesh_->SetSimulatePhysics(true);
-		m_pplayermesh_->SetConstraintMode(EDOFMode::XYPlane);
-		*/
-	}
 }
 
 void AChair::OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -475,7 +485,7 @@ void AChair::SetPhase(const EPhase _phase)
 		}
 
 		EnableTargetCollision(false);
-
+	
 		UE_LOG(LogTemp, Warning, TEXT("rot = %f"), m_target_point_location_.X);
 		m_def_player_posX_ = this->GetActorLocation().X;
 	}
@@ -522,14 +532,14 @@ void AChair::SetPhase(const EPhase _phase)
 	m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_deside_sound_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
 }
 
-void AChair::PlayerMove(const float _deltatime)
-{
-	// 現在の位置を取得し、入力値に補正をかけて計算後反映
-	FVector nowLocation = GetActorLocation();
-	m_player_location_ += (m_input_value_.X * m_input_speed_scale_) * _deltatime;
-	nowLocation.Y = m_player_location_;
-	SetActorLocation(nowLocation, true);
-}
+//void AChair::PlayerMove(const float _deltatime)
+//{
+//	// 現在の位置を取得し、入力値に補正をかけて計算後反映
+//	FVector nowLocation = GetActorLocation();
+//	m_player_location_ += (m_input_value_.X * m_input_speed_scale_) * _deltatime;
+//	nowLocation.Y = m_player_location_;
+//	SetActorLocation(nowLocation, true);
+//}
 
 void AChair::PlayerRotation(const float _deltatime)
 {
@@ -541,8 +551,10 @@ void AChair::PlayerRotation(const float _deltatime)
 
 void AChair::PlayerEntrance(const float _deltatime)
 {
+	//☆
 	// 前方向ベクトルに向かって移動
-	AddMovementInput(m_forward_vec_, 1.f);
+	// AddMovementInput(m_forward_vec_, 1.f);
+	//☆
 
 	/*
 	m_floating_pawn_movement_->MaxSpeed += m_input_add_speed_val_ * _deltatime;
@@ -554,38 +566,30 @@ void AChair::PlayerEntrance(const float _deltatime)
 	*/
 	if (m_debugmode_)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("MaxSpeed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
+		// ☆
+		// UE_LOG(LogTemp, Warning, TEXT("MaxSpeed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
+		// ☆
 	}
 }
 
 void AChair::PlayerSpin(const float _deltatime)
 {
 	// 左右入力が入っていたら
-	if (FMath::Abs(m_input_value_.X) > 0.001f || m_HitWall)
+	if (FMath::Abs(m_input_value_.X) > 0.001f)
 	{
-		float test1;
-		float rot_x;
-		float rot_y;
-
-		FVector test;
-
 		// このフレーム間で回転させる値の取得
 		m_player_spin_value_ += m_input_value_.X * _deltatime * input_spin_scale_;
-		test1 = FMath::DegreesToRadians(m_before_slip_rotation_ + m_player_spin_value_);
+		float test1 = FMath::DegreesToRadians(m_before_slip_rotation_ + m_player_spin_value_);
 
 		// 角度の計算			 現在の前方向ベクトル + 回転量
-		rot_x = FMath::Sin(test1);
-		rot_y = FMath::Cos(test1);
+		float rot_x = FMath::Sin(test1);
+		float rot_y = FMath::Cos(test1);
 
+		// 代入
+		//FVector test = FVector(rot_x, rot_y, 0.f);
+		FVector test = FVector(rot_y, rot_x, 0.f);
 
-		if (!m_HitWall)
-		{
-			// 代入
-			//FVector test = FVector(rot_x, rot_y, 0.f);
-			test = FVector(rot_y, rot_x, 0.f);
-
-			m_forward_vec_ = test;
-		}
+		m_forward_vec_ = test;
 	}
 
 	if (FMath::Abs(m_player_spin_value_) > m_max_spin_add_rotation_value_)
@@ -664,45 +668,87 @@ void AChair::PlayerSweep(const float _deltatime)
 
 void AChair::PlayerPowerChange(const float _deltatime)
 {
-	if (m_input_value_.Y != 0.f)
+	//☆
+	//if (m_input_value_.Y != 0.f)
+	//{
+	//	// 現在座標を取得
+	//	FVector nowLocation = GetActorLocation();
+
+	//	// 入力値からどのくらい動くか計算
+	//	m_player_location_ = (m_input_value_.Y * m_input_speed_scale_) * _deltatime;
+
+	//	// 1フレームで動く最大値を計算(誤差の計算に使用)
+	//	float OneFrameMovement = m_input_speed_scale_ * _deltatime;
+
+	//	// デフォルトの座標より大きい値にならない かつ 
+	//	if (nowLocation.X + m_player_location_ <= m_def_player_posX_ + OneFrameMovement && nowLocation.X + m_player_location_ > m_def_player_posX_ - m_powerchange_movement_max_val_ - OneFrameMovement)
+	//	{
+	//		this->SetActorLocation(FVector(nowLocation.X + m_player_location_, nowLocation.Y, nowLocation.Z), true);
+
+	//		SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), m_target_point_location_));
+	//	}
+	//	 
+	//	m_floating_pawn_movement_->MaxSpeed = m_def_speed_ + (m_def_player_posX_ - GetActorLocation().X) * m_powerchange_velocity_val_;
+	//	if (m_floating_pawn_movement_->MaxSpeed > m_max_speed_)
+	//	{
+	//		m_floating_pawn_movement_->MaxSpeed = m_max_speed_;
+	//	}
+	//	else if (m_floating_pawn_movement_->MaxSpeed < m_min_speed_)
+	//	{
+	//		m_floating_pawn_movement_->MaxSpeed = m_min_speed_;
+	//	}
+
+	//	if (m_debugmode_)
+	//	{
+	//		FString SpeedLog = FString::SanitizeFloat(m_floating_pawn_movement_->MaxSpeed);
+	//		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, SpeedLog);
+	//	}
+	//}
+	//☆
+
+	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
+	 // スティックの下方向（最小）
+	if (axisval == -1.f)
 	{
-		// 現在座標を取得
-		FVector nowLocation = GetActorLocation();
-
-		// 入力値からどのくらい動くか計算
-		m_player_location_ = (m_input_value_.Y * m_input_speed_scale_) * _deltatime;
-
-		// 1フレームで動く最大値を計算(誤差の計算に使用)
-		float OneFrameMovement = m_input_speed_scale_ * _deltatime;
-
-		// デフォルトの座標より大きい値にならない かつ 
-		if (nowLocation.X + m_player_location_ <= m_def_player_posX_ + OneFrameMovement && nowLocation.X + m_player_location_ > m_def_player_posX_ - m_powerchange_movement_max_val_ - OneFrameMovement)
+		if (PlayerLocation.X - 1000.f < LocationX && !MovePull)
 		{
-			this->SetActorLocation(FVector(nowLocation.X + m_player_location_, nowLocation.Y, nowLocation.Z), true);
-
-			SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), m_target_point_location_));
+			LocationX -= 500 * _deltatime;
+			this->SetActorLocation(FVector(LocationX, PlayerLocation.Y, PlayerLocation.Z));
 		}
 
-		m_floating_pawn_movement_->MaxSpeed = m_def_speed_ + (m_def_player_posX_ - GetActorLocation().X) * m_powerchange_velocity_val_;
-		if (m_floating_pawn_movement_->MaxSpeed > m_max_speed_)
-		{
-			m_floating_pawn_movement_->MaxSpeed = m_max_speed_;
-		}
-		else if (m_floating_pawn_movement_->MaxSpeed < m_min_speed_)
-		{
-			m_floating_pawn_movement_->MaxSpeed = m_min_speed_;
-		}
-
-		if (m_debugmode_)
-		{
-			FString SpeedLog = FString::SanitizeFloat(m_floating_pawn_movement_->MaxSpeed);
-			GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, SpeedLog);
-		}
+		//a = true;
+		//b = false;
 	}
+	// スティックの上方向（最大）
+	else if (axisval == 1.f)
+	{
+		if (PlayerLocation.X >= LocationX && !MovePull)
+		{
+			LocationX += 500 * _deltatime;
+			this->SetActorLocation(FVector(LocationX, PlayerLocation.Y, PlayerLocation.Z));
+		}
+
+	//a = false;
+	//b = true;
+	}
+	//else if (axisval != -1.f && axisval != 1.f)
+	//{
+	//	a = false;
+	//	b = false;
+	//}
+	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 }
 
 void AChair::InputDecide()
 {
+	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
+	if (PlayerLocation.X != LocationX)
+	{
+		MovePull = true;
+		LocationXPut = -LocationX;
+	}
+	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
+
 	if (!m_can_input_)
 	{
 		return;
@@ -747,3 +793,59 @@ void AChair::SetPlayerSweepFlag()
 		m_is_sweep_ = !m_is_sweep_;
 	}
 }
+
+// ☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
+void AChair::Move(float _deltatime)
+{
+	// UE_LOG(LogTemp, Error, TEXT("%f"), axisval);
+	if (axisval == -1.f)
+	{
+		FrameCountStart = true;
+		FrameCount = 600.f;
+	}
+
+	//	スティックの下方向（最小）じゃないとき
+	if (FrameCountStart && axisval != -1.f && MovePull)
+	{
+		// デクリメント
+		FrameCount--;
+
+		// スティックの上方向（最大）の時またはフレームが0以下だった時
+		if (axisval == 1.f || FrameCount <= 0.f)
+		{
+			// UE_LOG(LogTemp, Error, TEXT("%f"), FrameCount);
+			FrameCountStart = false;
+
+			// フレームが0以上だった時
+			if (FrameCount >= 0.f)
+			{
+				FramePut = FrameCount;
+				/*Frame = FramePut;*/
+			}
+		}
+	}
+
+	// FramePutに値が入れられた時
+	if (FramePut != 0.f)
+	{
+		if (FramePut > 0.f && m_phase_==EPhase::kEntrance)
+		{
+			// 移動
+			LocationX += FramePut * 5.f * _deltatime;
+			this->SetActorLocation(FVector(LocationX, PlayerLocation.Y, PlayerLocation.Z));
+			/*move = LocationX;*/
+
+			// 移動を徐々に遅くする
+			FramePut--;
+			// UE_LOG(LogTemp, Error, TEXT("%f"), FramePut);
+
+			// 移動が止まったら
+			if (FramePut == 0.f)
+			{
+				MovePull = false;
+				/*MoveEnd = true;*/
+			}
+		}
+	}
+}
+// ☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
