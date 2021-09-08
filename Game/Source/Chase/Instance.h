@@ -4,6 +4,8 @@
 //作成日　：2021/08/10
 //作成者　：19CU0301 青木拓洋
 //更新履歴：2021/08/10 青木拓洋 作成
+//			2021/08/31 野田八雲 チームごとの合計得点を格納する変数追加（ウィジェット出力用）
+//			2021/09/07 野田八雲 各椅子がとった得点を計算する変数追加（ウィジェット出力用）
 //--------------------------------------------------------------
 
 #pragma once
@@ -25,16 +27,17 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 		int m_Turn = 6;
 
-	//各チームの得点を格納
+	//各チームの得点を格納（1P）
 	UPROPERTY(BlueprintReadWrite)
 		int m_teamPoint1P = 0;
 
+	//各チームの得点を格納（2P）
 	UPROPERTY(BlueprintReadWrite)
 		int m_teamPoint2P = 0;
 
 	//各得点格納用
-	//ウィジェットが不可変配列非対応、TArray型だと型が合わないため、無理やりではあるが
-	//それぞれの得点配列を追加。直せれば直す。
+	//ウィジェットが不可変配列非対応、TArray型だと取得した得点の型が合わないため、
+	//無理やりではあるがそれぞれの得点配列を追加。直せれば直す。
 	UPROPERTY(BlueprintReadWrite)
 		int m_chairEachPoint1P_1 = 0;
 	UPROPERTY(BlueprintReadWrite)

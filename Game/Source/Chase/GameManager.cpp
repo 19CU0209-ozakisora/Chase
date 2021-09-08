@@ -22,7 +22,8 @@
 //			2021/05/21 尾崎蒼宙 椅子の上の人間を消す処理の追加
 //			2021/05/21 尾崎蒼宙 消されたデータの復旧
 //			2021/07/16 尾崎蒼宙 プレイヤーが止まっているマスに近い側の点数を加算する処理を追加
-//			2021/08/30 野田八雲 m_teamPoint1P/2PをInstanceに変更 
+//			2021/08/30 野田八雲 m_teamPoint1P/2PをInstanceに変更
+//			2021/09/07 野田八雲 各椅子がとった得点を計算する変数追加（ウィジェット出力用）
 //--------------------------------------------------------------
 
 //インクルード
@@ -97,6 +98,7 @@ void AGameManager::BeginPlay()
 	// GameInstanceの実態を検索している関数の呼び出し
 	Instance = UInstance::GetInstance();
 
+	//インスタンスで宣言した変数の初期化
 	Instance->m_teamPoint1P = 0;
 	Instance->m_teamPoint2P = 0;
 	Instance->m_chairEachPoint1P_1 = 0;
@@ -378,8 +380,10 @@ void AGameManager::AddScore()
 						// Player1か2か判別したのちに得点加算
 						if (m_chairs_[i]->m_name_ == "Player1")
 						{
+							//チームの合計得点を加算
 							Instance->m_teamPoint1P += m_chairs_[i]->m_pscore_obj_[0]->m_score_;
 
+							//椅子カウント用変数の値を確認し、その値によって椅子のそれぞれの得点を格納
 							switch (m_countChair1P)
 							{
 							case 0:
@@ -403,8 +407,10 @@ void AGameManager::AddScore()
 						}
 						else
 						{
+							//チームの合計得点を加算
 							Instance->m_teamPoint2P += m_chairs_[i]->m_pscore_obj_[0]->m_score_;
 
+							//椅子カウント用変数の値を確認し、その値によって椅子のそれぞれの得点を格納
 							switch (m_countChair2P)
 							{
 							case 0:
@@ -437,8 +443,10 @@ void AGameManager::AddScore()
 					{
 						if (m_chairs_[i]->m_name_ == "Player1")
 						{
+							//チームの合計得点を加算
 							Instance->m_teamPoint1P += m_chairs_[i]->m_pscore_obj_[1]->m_score_;
 
+							//椅子カウント用変数の値を確認し、その値によって椅子のそれぞれの得点を格納
 							switch (m_countChair1P)
 							{
 							case 0:
@@ -462,7 +470,10 @@ void AGameManager::AddScore()
 						}
 						else
 						{
+							//チームの合計得点を加算
 							Instance->m_teamPoint2P += m_chairs_[i]->m_pscore_obj_[1]->m_score_;
+
+							//椅子カウント用変数の値を確認し、その値によって椅子のそれぞれの得点を格納
 							switch (m_countChair2P)
 							{
 							case 0:
@@ -493,7 +504,8 @@ void AGameManager::AddScore()
 			UE_LOG(LogTemp, Warning, TEXT("chair[%f] is NULL"), i);
 		}
 
-
+		//椅子が取った得点が0の場合、上の処理が通らないため、結果画面での何投目の椅子が何点
+		//取ったがが正しく表示されるように、ここで椅子のカウントを足す。
 		if (i % 2 == 0)
 		{
 			m_countChair1P++;
@@ -504,9 +516,10 @@ void AGameManager::AddScore()
 		}
 	}
 
+	//各椅子の得点、チーム合計得点のログ確認用（ここで出た得点がウィジェットに出力される）
 
-	UE_LOG(LogTemp, Warning, TEXT("Instance->m_countChair1P %d"), m_countChair1P);
-	UE_LOG(LogTemp, Warning, TEXT("Instance->m_countChair2P %d"), m_countChair2P);
+	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_countChair1P %d"), m_countChair1P);
+	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_countChair2P %d"), m_countChair2P);
 	/*UE_LOG(LogTemp, Warning, TEXT("Instance->1P_1 %d"), Instance->m_chairEachPoint1P_1);
 	UE_LOG(LogTemp, Warning, TEXT("Instance->1P_2 %d"), Instance->m_chairEachPoint1P_2);
 	UE_LOG(LogTemp, Warning, TEXT("Instance->1P_3 %d"), Instance->m_chairEachPoint1P_3);
@@ -519,9 +532,8 @@ void AGameManager::AddScore()
 	UE_LOG(LogTemp, Warning, TEXT("Instance->2P_5 %d"), Instance->m_chairEachPoint2P_5);*/
 	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_teamPoint1P %d"), Instance->m_teamPoint1P);
 	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_teamPoint2P %d"), Instance->m_teamPoint2P);
-	GetPoint1P();
-	GetPoint2P();
-		//得点計算後、Tick()を無効にする
+
+	//得点計算後、Tick()を無効にする
 	PrimaryActorTick.SetTickFunctionEnable(false);
 }
 
