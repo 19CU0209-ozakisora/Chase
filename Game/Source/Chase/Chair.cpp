@@ -95,6 +95,7 @@ AChair::AChair()
 	, m_chair_collide_sound_(NULL)
 	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 	, FrameCountStart(false)
+	, f7(false)
 	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 {
 
@@ -253,6 +254,8 @@ void AChair::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	InputComponent->BindAxis("Vertical", this, &AChair::SetInputValue_Y);
 	InputComponent->BindAction("Sweep", EInputEvent::IE_Pressed, this, &AChair::SetPlayerSweepFlag);
 	InputComponent->BindAction("Sweep", EInputEvent::IE_Released, this, &AChair::SetPlayerSweepFlag);
+
+	InputComponent->BindAction("F7", EInputEvent::IE_Released, this, &AChair::F7);
 }
 
 void AChair::SetInputValue_X(const float _axisval)
@@ -584,28 +587,70 @@ void AChair::SetPlayerSweepFlag()
 
 void AChair::SetSlipPower(const float _deltatime)
 {
-	// スティックが一番したまで引かれたら処理
-	if (m_input_value_.Y < 0.f)
+	if (!f7)
 	{
-		// カウントスタート
-		FrameCountStart = true;
-	}
-
-	//	カウントスタートしてからスティックがはじかれ中の時
-	if (m_input_value_.Y != -1.f && FrameCountStart)
-	{	
-		// 時間を加算
-		m_stick_slide_time_ += _deltatime;
-
-		// スティックの上方向（最大）の時
-		if (m_input_value_.Y == 1.f)
+		// スティックが一番したまで引かれたら処理
+		if (m_input_value_.Y < 0.f)
 		{
-			// かかった時間/最大の時間に 1.0f - を追加することで、弾いた時間が短い程早くなるように
-			float Alpha = 1.f - (m_stick_slide_time_ / m_max_stick_slide_time_);
-			// 割合を掛け算
-			m_floating_pawn_movement_->MaxSpeed *= Alpha;
-			SetPhase(EPhase::kSlip);
-			FrameCountStart = false;
+			// UE_LOG(LogTemp, Error, TEXT("%f"), m_input_value_.Y);
+			// カウントスタート
+			FrameCountStart = true;
+		}
+
+		//	カウントスタートしてからスティックがはじかれ中の時
+		if (m_input_value_.Y != -1.f && FrameCountStart)
+		{
+			// 時間を加算
+			m_stick_slide_time_ += _deltatime;
+
+			// スティックの上方向（最大）の時
+			if (m_input_value_.Y == 1.f)
+			{
+				// かかった時間/最大の時間に 1.0f - を追加することで、弾いた時間が短い程早くなるように
+				float Alpha = 1.f - (m_stick_slide_time_ / m_max_stick_slide_time_);
+				// 割合を掛け算
+				m_floating_pawn_movement_->MaxSpeed *= Alpha;
+				SetPhase(EPhase::kSlip);
+				FrameCountStart = false;
+			}
 		}
 	}
+
+	if (f7)
+	{
+		// スティックが一番したまで引かれたら処理
+		if (m_input_value_.Y < 0.f)
+		{
+			// UE_LOG(LogTemp, Error, TEXT("%f"), m_input_value_.Y);
+			// カウントスタート
+			FrameCountStart = true;
+		}
+
+		//	カウントスタートしてからスティックがはじかれ中の時
+		if (m_input_value_.Y != -1.f && FrameCountStart)
+		{
+			// 時間を加算
+			m_stick_slide_time_ += _deltatime;
+
+			// スティックの上方向（最大）の時
+			if (m_input_value_.Y >= 0.f)
+			{
+				// かかった時間/最大の時間に 1.0f - を追加することで、弾いた時間が短い程早くなるように
+				float Alpha = 1.f - (m_stick_slide_time_ / m_max_stick_slide_time_);
+				// 割合を掛け算
+				m_floating_pawn_movement_->MaxSpeed *= Alpha;
+				SetPhase(EPhase::kSlip);
+				FrameCountStart = false;
+			}
+		}
+	}
+}
+
+void AChair::F7()
+{
+	if (!FrameCountStart)
+		f7 = !f7;
+
+	if (f7) { UE_LOG(LogTemp, Error, TEXT("f7 = true")); }
+	else if (!f7) { UE_LOG(LogTemp, Error, TEXT("f7 = false")); }
 }

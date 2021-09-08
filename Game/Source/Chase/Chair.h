@@ -270,5 +270,9 @@ public:
 // Â–Ø
 private:
 	bool FrameCountStart;
+	bool f7;
+
+public:
+	void F7();
 //™™™™™™™™™™™™™™™™™™™™™™™™™™™™™™™™™™™™™™™™™™
 };
