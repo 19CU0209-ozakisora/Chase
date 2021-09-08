@@ -39,6 +39,13 @@
 //			2021/09/03 渡邊龍音 壁（ComponentTagがWallのもの）にあたった時に反射するように処理の追加
 // 			2021/09/06 尾崎蒼宙 EPhaseのkRotationの削除
 //			2021/09/07 尾崎蒼宙 破棄されたデータの復旧と結合
+//			2021/09/08 尾崎蒼宙 EPhaseのkEntranceとkSlipを削除した為該当処理の削除
+//								決定キーの削除
+//								要らない関数の削除
+//								：DeleteArrow()
+//								, PlayerEntrance(const float _deltatime)
+//								, PlayerRotation(const float _deltatime)
+//								, PlayerPowerChange(const float _deltatime)
 //--------------------------------------------------------------
 
 #include "Chair.h"
@@ -51,51 +58,32 @@
 AChair::AChair()
 // private
 	: m_is_input_add_slip_power_(false)
-	, m_slip_curve_(false)
 	, m_hit_wall_(false)
 	, m_is_sweep_(false)
 	, m_phase_(EPhase::kStay)
 	, m_wall_time(0.f)
-	, m_angle_corection_(90.f)
-	, m_player_rotation_(0.f)
-	, m_player_location_(0.f)
 	, m_player_spin_value_(0.f)
-	, m_first_player_spin_input_angle_(0.f)
 	, m_before_slip_rotation_(0.f)
-	, m_def_speed_(0.f)
+	, m_stick_slide_time_(0.f)
 	, m_forward_vec_(FVector::ZeroVector)
-	, m_target_point_location_(FVector::ZeroVector)
+	//, m_target_point_location_(FVector::ZeroVector)
 	, m_audiocomponent_(NULL)
 // public
 	, m_pscore_obj_()
 	, m_debugmode_(false)
 	, m_is_jumpanimation_end_(false)
 	, m_ishit_(false)
-	, is_entrance_(false)
-	, m_in_ride_flag_(false)
-	, m_is_input_ride_(false)
 	, m_can_input_(true)
-	, m_input_speed_scale_(0.f)
-	, m_input_rotation_scale_(0.f)
-	, m_max_speed_(0.f)
-	, m_min_speed_(0.f)
-	, m_input_add_speed_val_(0.f)
+	, m_default_speed_(0.f)
 	, m_deceleration_val_(0.f)
 	, m_sweep_scale_(0.f)
-	, m_input_slip_curve_(0.f)
 	, m_hitstop_scale_(0.f)
 	, m_is_movement_scale_(0.f)
-	, m_rotation_max_val(0.f)
-	, m_powerchange_max_move_val_(0.f)
-	, m_speed_percent_(0.f)
-	, m_min_ride_percent_(0.f)
-	, m_max_ride_percent_(0.f)
-	, m_powerchange_movement_max_val_(0.f)
-	, m_powerchange_velocity_val_(0.f)
 	, m_def_player_posX_(0.f)
 	, m_max_spin_add_rotation_value_(0.f)
 	, input_spin_scale_(0.f)
 	, m_hit_wall_reflection_power_(0.f)
+	, m_max_stick_slide_time_(0.f)
 	, m_input_value_(FVector2D::ZeroVector)
 	, m_name_("")
 	, m_pplayermesh_(NULL)
@@ -106,6 +94,15 @@ AChair::AChair()
 	, m_chair_roll_sound_(NULL)
 	, m_chair_collide_sound_(NULL)
 	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
+	//, PlayerLocation(FVector::ZeroVector)
+
+	//, axisval(0.f)
+	//, LocationX(0.f)
+	, LocationXPut(0.f)
+	, FrameCount(600.f)
+	, FramePut(0.f)
+
+	, MovePull(true)
 	, FrameCountStart(false)
 	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 {
@@ -161,9 +158,7 @@ void AChair::BeginPlay()
 	// m_floating_pawn_movement_ の最大速度を格納
 	m_forward_vec_ = FVector::ForwardVector;
 
-	m_def_speed_ = m_floating_pawn_movement_->GetMaxSpeed();
-	m_min_speed_ = m_def_speed_;
-	m_max_speed_ = m_floating_pawn_movement_->GetMaxSpeed() + m_powerchange_movement_max_val_ * m_powerchange_velocity_val_;
+	m_default_speed_ = m_floating_pawn_movement_->GetMaxSpeed();
 
 	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 	// m_pMeshの初期座標を保持
@@ -192,20 +187,6 @@ void AChair::Tick(float DeltaTime)
 	{
 		SetSlipPower(DeltaTime);
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("PowerChange")));
-		//PlayerPowerChange(DeltaTime);
-	}
-	/*
-	else if (m_phase_ == EPhase::kSpin)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("kSpin")));
-		PlayerSpin(DeltaTime);
-		AddMovementInput(m_forward_vec_, 1.f);
-	}
-	*/
-	else if (m_phase_ == EPhase::kRide)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Ride")));
-		//AddMovementInput(m_forward_vec_, 1.f);
 	}
 	// 滑り
 	else if (m_phase_ == EPhase::kSlip)
@@ -279,9 +260,6 @@ void AChair::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	// 左右入力と決定キー
 	InputComponent->BindAxis("Horizontal", this, &AChair::SetInputValue_X);
 	InputComponent->BindAxis("Vertical", this, &AChair::SetInputValue_Y);
-	InputComponent->BindAction("Decide", EInputEvent::IE_Pressed, this, &AChair::InputDecide);
-	InputComponent->BindAction("Slip_Curve", EInputEvent::IE_Pressed, this, &AChair::SetSlipCurve);
-	InputComponent->BindAction("Slip_Curve", EInputEvent::IE_Released, this, &AChair::SetSlipCurve);
 	InputComponent->BindAction("Sweep", EInputEvent::IE_Pressed, this, &AChair::SetPlayerSweepFlag);
 	InputComponent->BindAction("Sweep", EInputEvent::IE_Released, this, &AChair::SetPlayerSweepFlag);
 }
@@ -336,14 +314,6 @@ void AChair::SetInputValue_Y(const float _axisval)
 		m_input_value_.Y = 0.f;
 	}
 	
-}
-
-void AChair::DeleteArrow()
-{
-	if (m_parrow_ != NULL)
-	{
-		Cast<USceneComponent>(m_parrow_)->DestroyComponent();
-	}
 }
 
 // カプセルコンポーネントを参照している為同じものをBPに追加 -> BPからC++に移植(2021/04/23 尾崎)
@@ -434,12 +404,7 @@ void AChair::ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 
 void AChair::OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-
-	if (OtherActor->ActorHasTag("ChangeRide"))
-	{
-		SetPhase(EPhase::kRide);
-	}
-	else if (OtherActor->ActorHasTag("ScoreTrigger"))
+	if (OtherActor->ActorHasTag("ScoreTrigger"))
 	{
 		m_pscore_obj_[1] = m_pscore_obj_[0];
 		m_pscore_obj_[0] = Cast<AAddScoreTrigger>(OtherActor);
@@ -462,27 +427,16 @@ void AChair::SetPhase(const EPhase _phase)
 	// 各Phaseに変更した際の初期設定
 	if (m_phase_ == EPhase::kPowerChange)
 	{
-		m_target_point_location_ = m_target_point_mesh_->GetComponentLocation();
+		//m_target_point_location_ = m_target_point_mesh_->GetComponentLocation();
 		if (m_parrow_ != NULL)
 		{
 			Cast<USceneComponent>(m_target_point_mesh_)->DestroyComponent();
 		}
 
 		EnableTargetCollision(false);
-	
-		UE_LOG(LogTemp, Warning, TEXT("rot = %f"), m_target_point_location_.X);
 		m_def_player_posX_ = this->GetActorLocation().X;
 	}
-	else if (m_phase_ == EPhase::kEntrance)
-	{
-		m_forward_vec_ = Cast<USceneComponent>(m_pplayermesh_)->GetForwardVector();
-		m_forward_vec_.Z = 0.f; // 上に行ってしまう問題があるため0.fで初期化
-		DeleteArrow();
-		is_entrance_ = true;
-		float difference = m_def_player_posX_ - GetActorLocation().X;
-		//m_floating_pawn_movement_->MaxSpeed += difference * m_powerchange_velocity_val_ * -1.f;
-
-	}
+	/*
 	else if (m_phase_ == EPhase::kSlip)
 	{
 		if (m_debugmode_)
@@ -511,38 +465,10 @@ void AChair::SetPhase(const EPhase _phase)
 		m_is_input_ride_ = true;
 		m_before_slip_rotation_ = FMath::Atan2(m_target_point_location_.Y - GetActorLocation().Y, m_target_point_location_.X - GetActorLocation().X);// +90.f;
 	}
+	*/
 
 	//音再生（決定音）
 	m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_deside_sound_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
-}
-
-void AChair::PlayerRotation(const float _deltatime)
-{
-	// 現在の位置を取得し、入力値に補正をかけて計算後反映
-	FVector nowLocation = m_target_point_mesh_->GetComponentLocation();
-	m_player_location_ = (m_input_value_.X * m_input_speed_scale_) * _deltatime;
-	m_target_point_mesh_->SetWorldLocation(FVector(nowLocation.X, nowLocation.Y + m_player_location_, nowLocation.Z), true);
-}
-
-void AChair::PlayerEntrance(const float _deltatime)
-{
-	// 前方向ベクトルに向かって移動
-	 AddMovementInput(m_forward_vec_, 1.f);
-	
-	/*
-	m_floating_pawn_movement_->MaxSpeed += m_input_add_speed_val_ * _deltatime;
-
-	if (m_floating_pawn_movement_->MaxSpeed > m_max_speed_)
-	{
-		m_floating_pawn_movement_->MaxSpeed = m_max_speed_;
-	}
-	*/
-	if (m_debugmode_)
-	{
-		// ☆
-		// UE_LOG(LogTemp, Warning, TEXT("MaxSpeed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
-		// ☆
-	}
 }
 
 void AChair::PlayerSpin(const float _deltatime)
@@ -615,16 +541,8 @@ void AChair::Deceleration(const float _deltatime)
 {
 	if (!m_is_input_add_slip_power_)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("--------------------------------------------------------------------f"));
-		UE_LOG(LogTemp, Warning, TEXT("m_floating_pawn_movement_->MaxSpeed , %f"), m_floating_pawn_movement_->MaxSpeed);
-		UE_LOG(LogTemp, Warning, TEXT("m_deceleration_val_ , %f"), m_deceleration_val_);
-		UE_LOG(LogTemp, Warning, TEXT("--------------------------------------------------------------------f"));
 		m_floating_pawn_movement_->MaxSpeed -= m_deceleration_val_ * _deltatime;
-		if (m_floating_pawn_movement_->MaxSpeed < m_min_speed_ && m_phase_ == EPhase::kEntrance)
-		{
-			m_floating_pawn_movement_->MaxSpeed = m_min_speed_;
-		}
-		else if (m_floating_pawn_movement_->MaxSpeed < 0.f && m_phase_ == EPhase::kSlip)
+		if (m_floating_pawn_movement_->MaxSpeed < 0.f && m_phase_ == EPhase::kSlip)
 		{
 			SetPhase(EPhase::kEnd);
 		}
@@ -653,98 +571,6 @@ void AChair::PlayerSweep(const float _deltatime)
 	}
 }
 
-void AChair::PlayerPowerChange(const float _deltatime)
-{
-	//☆
-	//if (m_input_value_.Y != 0.f)
-	//{
-	//	// 現在座標を取得
-	//	FVector nowLocation = GetActorLocation();
-
-	//	// 入力値からどのくらい動くか計算
-	//	m_player_location_ = (m_input_value_.Y * m_input_speed_scale_) * _deltatime;
-
-	//	// 1フレームで動く最大値を計算(誤差の計算に使用)
-	//	float OneFrameMovement = m_input_speed_scale_ * _deltatime;
-
-	//	// デフォルトの座標より大きい値にならない かつ 
-	//	if (nowLocation.X + m_player_location_ <= m_def_player_posX_ + OneFrameMovement && nowLocation.X + m_player_location_ > m_def_player_posX_ - m_powerchange_movement_max_val_ - OneFrameMovement)
-	//	{
-	//		this->SetActorLocation(FVector(nowLocation.X + m_player_location_, nowLocation.Y, nowLocation.Z), true);
-
-	//		SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), m_target_point_location_));
-	//	}
-	//	 
-	//	m_floating_pawn_movement_->MaxSpeed = m_def_speed_ + (m_def_player_posX_ - GetActorLocation().X) * m_powerchange_velocity_val_;
-	//	if (m_floating_pawn_movement_->MaxSpeed > m_max_speed_)
-	//	{
-	//		m_floating_pawn_movement_->MaxSpeed = m_max_speed_;
-	//	}
-	//	else if (m_floating_pawn_movement_->MaxSpeed < m_min_speed_)
-	//	{
-	//		m_floating_pawn_movement_->MaxSpeed = m_min_speed_;
-	//	}
-
-	//	if (m_debugmode_)
-	//	{
-	//		FString SpeedLog = FString::SanitizeFloat(m_floating_pawn_movement_->MaxSpeed);
-	//		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, SpeedLog);
-	//	}
-	//}
-	//☆
-
-	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
-	 // スティックの下方向（最小）
-	if (m_input_value_.Y == -1.f)
-	{
-		if (GetActorLocation().X - 1000.f < m_def_player_posX_)
-		{
-			m_def_player_posX_ -= 500 * _deltatime;
-			this->SetActorLocation(FVector(m_def_player_posX_, GetActorLocation().Y, GetActorLocation().Z));
-		}
-
-		//a = true;
-		//b = false;
-	}
-	// スティックの上方向（最大）
-	else if (m_input_value_.Y == 1.f)
-	{
-		if (GetActorLocation().X >= m_def_player_posX_)
-		{
-			m_def_player_posX_ += 500 * _deltatime;
-			this->SetActorLocation(FVector(m_def_player_posX_, GetActorLocation().Y, GetActorLocation().Z));
-		}
-	}
-	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
-}
-
-void AChair::InputDecide()
-{
-	if (!m_can_input_)
-	{
-		return;
-	}
-
-	if (m_in_ride_flag_)
-	{
-		if (m_phase_ == EPhase::kRide)
-		{
-			SetPhase(EPhase((int)m_phase_ + 1));
-		}
-	}
-	else
-	{
-		if (m_phase_ >= EPhase(3))
-		{
-			return;
-		}
-		else
-		{
-			SetPhase(EPhase((int)m_phase_ + 1));
-		}
-	}
-}
-
 void AChair::EnableTargetCollision(bool _flag)
 {
 	if (_flag)
@@ -768,9 +594,8 @@ void AChair::SetPlayerSweepFlag()
 void AChair::SetSlipPower(const float _deltatime)
 {
 	// スティックが一番したまで引かれたら処理
-	if (m_input_value_.Y < 0.f)
+	if (m_input_value_.Y == -1.f)
 	{
-		// UE_LOG(LogTemp, Error, TEXT("%f"), m_input_value_.Y);
 		// カウントスタート
 		FrameCountStart = true;
 	}
@@ -789,7 +614,6 @@ void AChair::SetSlipPower(const float _deltatime)
 			// 割合を掛け算
 			m_floating_pawn_movement_->MaxSpeed *= Alpha;
 			SetPhase(EPhase::kSlip);
-			FrameCountStart = false;
 		}
 	}
 }
