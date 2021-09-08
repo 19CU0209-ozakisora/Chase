@@ -106,15 +106,6 @@ AChair::AChair()
 	, m_chair_roll_sound_(NULL)
 	, m_chair_collide_sound_(NULL)
 	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
-	//, PlayerLocation(FVector::ZeroVector)
-
-	//, axisval(0.f)
-	//, LocationX(0.f)
-	, LocationXPut(0.f)
-	, FrameCount(600.f)
-	, FramePut(0.f)
-
-	, MovePull(true)
 	, FrameCountStart(false)
 	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 {
@@ -220,7 +211,6 @@ void AChair::Tick(float DeltaTime)
 	else if (m_phase_ == EPhase::kSlip)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Slip")));
-		//PlayerMove(DeltaTime);
 
 		PlayerSpin(DeltaTime);
 		PlayerSlip(DeltaTime);
@@ -526,28 +516,6 @@ void AChair::SetPhase(const EPhase _phase)
 	m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_deside_sound_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
 }
 
-// ☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
-void AChair::PlayerMove(float _deltatime)
-{
-	// 移動
-	//LocationX += FramePut * 5.f * _deltatime;
-	m_def_player_posX_ += 600.f - FramePut * 5.f * _deltatime;
-	this->SetActorLocation(FVector(m_def_player_posX_, GetActorLocation().Y, GetActorLocation().Z));
-
-	// 移動を徐々に遅くする
-	FramePut++;
-	// UE_LOG(LogTemp, Error, TEXT("%f"), FramePut);
-
-	// 移動が止まったら
-	if (FramePut == 600.f)
-	{
-		MovePull = false;
-	}
-
-	UE_LOG(LogTemp, Error, TEXT("--------------------------------------------------------------------------"), );
-}
-// ☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
-
 void AChair::PlayerRotation(const float _deltatime)
 {
 	// 現在の位置を取得し、入力値に補正をかけて計算後反映
@@ -729,7 +697,7 @@ void AChair::PlayerPowerChange(const float _deltatime)
 	 // スティックの下方向（最小）
 	if (m_input_value_.Y == -1.f)
 	{
-		if (GetActorLocation().X - 1000.f < m_def_player_posX_ && !MovePull)
+		if (GetActorLocation().X - 1000.f < m_def_player_posX_)
 		{
 			m_def_player_posX_ -= 500 * _deltatime;
 			this->SetActorLocation(FVector(m_def_player_posX_, GetActorLocation().Y, GetActorLocation().Z));
@@ -741,7 +709,7 @@ void AChair::PlayerPowerChange(const float _deltatime)
 	// スティックの上方向（最大）
 	else if (m_input_value_.Y == 1.f)
 	{
-		if (GetActorLocation().X >= m_def_player_posX_ && !MovePull)
+		if (GetActorLocation().X >= m_def_player_posX_)
 		{
 			m_def_player_posX_ += 500 * _deltatime;
 			this->SetActorLocation(FVector(m_def_player_posX_, GetActorLocation().Y, GetActorLocation().Z));
@@ -800,8 +768,9 @@ void AChair::SetPlayerSweepFlag()
 void AChair::SetSlipPower(const float _deltatime)
 {
 	// スティックが一番したまで引かれたら処理
-	if (m_input_value_.Y == -1.f)
+	if (m_input_value_.Y < 0.f)
 	{
+		// UE_LOG(LogTemp, Error, TEXT("%f"), m_input_value_.Y);
 		// カウントスタート
 		FrameCountStart = true;
 	}
@@ -820,6 +789,7 @@ void AChair::SetSlipPower(const float _deltatime)
 			// 割合を掛け算
 			m_floating_pawn_movement_->MaxSpeed *= Alpha;
 			SetPhase(EPhase::kSlip);
+			FrameCountStart = false;
 		}
 	}
 }
