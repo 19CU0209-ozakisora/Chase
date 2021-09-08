@@ -94,15 +94,6 @@ AChair::AChair()
 	, m_chair_roll_sound_(NULL)
 	, m_chair_collide_sound_(NULL)
 	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
-	//, PlayerLocation(FVector::ZeroVector)
-
-	//, axisval(0.f)
-	//, LocationX(0.f)
-	, LocationXPut(0.f)
-	, FrameCount(600.f)
-	, FramePut(0.f)
-
-	, MovePull(true)
 	, FrameCountStart(false)
 	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 {
@@ -594,7 +585,7 @@ void AChair::SetPlayerSweepFlag()
 void AChair::SetSlipPower(const float _deltatime)
 {
 	// スティックが一番したまで引かれたら処理
-	if (m_input_value_.Y == -1.f)
+	if (m_input_value_.Y < 0.f)
 	{
 		// カウントスタート
 		FrameCountStart = true;
@@ -614,6 +605,7 @@ void AChair::SetSlipPower(const float _deltatime)
 			// 割合を掛け算
 			m_floating_pawn_movement_->MaxSpeed *= Alpha;
 			SetPhase(EPhase::kSlip);
+			FrameCountStart = false;
 		}
 	}
 }

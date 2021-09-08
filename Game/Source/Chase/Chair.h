@@ -269,26 +269,6 @@ public:
 //☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 // 青木
 private:
-	// 尾崎 2021/09/07
-	// コメント化(変数の値が変わっていないためGetActorLocationで処理させる)
-	//FVector PlayerLocation;
-
-	// 尾崎 2021/09/07
-	// コメント化(m_input_value_で同じことをしているため)
-	//float axisval;
-	
-	// 尾崎 2021/09/07
-	// コメント化(m_def_player_posX_で処理させる)
-	//float LocationX;
-	float LocationXPut;
-	float FrameCount;
-	float FramePut;
-
-	bool MovePull;
 	bool FrameCountStart;
-
-	// 尾崎 2021/09/07
-	// PlayerMove関数に処理を移動(検索がかけにくい為)
-	//void Move(float _deltatime);
 //☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 };
