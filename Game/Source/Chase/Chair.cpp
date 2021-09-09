@@ -46,6 +46,7 @@
 //								, PlayerEntrance(const float _deltatime)
 //								, PlayerRotation(const float _deltatime)
 //								, PlayerPowerChange(const float _deltatime)
+//			2021/09/09 尾崎蒼宙 , m_pplayer_mesh_をUStaticMeshComponent*からUSkeltalMeshComponent*に変更
 //--------------------------------------------------------------
 
 #include "Chair.h"
@@ -71,7 +72,7 @@ AChair::AChair()
 // public
 	, m_pscore_obj_()
 	, m_debugmode_(false)
-	, m_is_jumpanimation_end_(false)
+	, m_is_jumpanimation_end_(true)
 	, m_ishit_(false)
 	, m_can_input_(true)
 	, m_default_speed_(0.f)
@@ -104,7 +105,7 @@ AChair::AChair()
 
 	// 椅子のメッシュの設定
 
-	m_pplayermesh_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_pplayermesh_"));
+	m_pplayermesh_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("m_pplayermesh_"));
 	m_pplayermesh_->SetupAttachment(RootComponent);
 
 

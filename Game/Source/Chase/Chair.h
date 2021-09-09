@@ -74,20 +74,21 @@
 // 								, float m_def_speed_;							// 初期速度(コンポーネントから取得)
 // 								
 //								public
-// 								, bool is_entrance_;								// 助走中か
-// 								, bool m_in_ride_flag_;								// BP_Ride内に入ったかどうかの変数
-// 								, float m_input_speed_scale_;										// 移動の倍率
-// 								, float m_input_rotation_scale_;									// 角度を決めるときの入力倍率
-// 								, float m_min_speed_;								// 椅子の最低速度
-// 								, float m_input_add_speed_val_;									// 力の変更の倍率(どの位上げるか)
-// 								, float m_input_slip_curve_;										// 滑っているときに曲がる量
-// 								, float m_rotation_max_val;									// 横移動の最大量
-// 								, float m_powerchange_max_move_val_;								// 前後の移動の最大量
+// 								, bool is_entrance_;							// 助走中か
+// 								, bool m_in_ride_flag_;							// BP_Ride内に入ったかどうかの変数
+// 								, float m_input_speed_scale_;					// 移動の倍率
+// 								, float m_input_rotation_scale_;				// 角度を決めるときの入力倍率
+// 								, float m_min_speed_;							// 椅子の最低速度
+// 								, float m_input_add_speed_val_;					// 力の変更の倍率(どの位上げるか)
+// 								, float m_input_slip_curve_;					// 滑っているときに曲がる量
+// 								, float m_rotation_max_val;						// 横移動の最大量
+// 								, float m_powerchange_max_move_val_;			// 前後の移動の最大量
 // 								, float m_speed_percent_;						// 椅子に乗るときの押したタイミングの割合を保有する変数
-// 								, float m_min_ride_percent_;		// 乗る状態の最小%
-// 								, float m_max_ride_percent_;		// 乗る状態の最大% (m_max_ride_percent_ 以上なら100%とする)
-// 								, float m_powerchange_movement_max_val_;												// パワー変更時の移動できる量
-// 								, float m_powerchange_velocity_val_;													// パワー変更時にどれだけ速度の変更をかけるか(座標が1ずれると m_powerchange_velocity_val_ 分変更)
+// 								, float m_min_ride_percent_;					// 乗る状態の最小%
+// 								, float m_max_ride_percent_;					// 乗る状態の最大% (m_max_ride_percent_ 以上なら100%とする)
+// 								, float m_powerchange_movement_max_val_;		// パワー変更時の移動できる量
+// 								, float m_powerchange_velocity_val_;			// パワー変更時にどれだけ速度の変更をかけるか(座標が1ずれると m_powerchange_velocity_val_ 分変更)
+//			2021/09/09 尾崎蒼宙 , m_pplayer_mesh_をUStaticMeshComponent*からUSkeltalMeshComponent*に変更
 //--------------------------------------------------------------
 #pragma once
 
@@ -225,8 +226,7 @@ public:
 		FString m_name_;												// 椅子の名前を入れる変数(P1 or P2しか入れないけど)
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
-		// USkeletalMeshComponent* m_pplayermesh_;
-		class UStaticMeshComponent* m_pplayermesh_;						// 椅子のメッシュ
+		class USkeletalMeshComponent* m_pplayermesh_;						// 椅子のメッシュ
 
 	// BPで初期設定出来ない不具合あり -> 再度BPを作り直すことで解消
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
@@ -257,8 +257,7 @@ public:
 		void SetPhase(const EPhase _phase);								// 次の状態に変更する関数
 
 	UFUNCTION(BlueprintCallable, Category = "MyF")
-		void SetForwardVec(const FVector _vec) { m_forward_vec_ = _vec; };		// 次の状態に変更する関数
-
+		void SetForwardVec(const FVector _vec) { m_forward_vec_ = _vec; };
 	UFUNCTION(BlueprintCallable, Category = "MyF")
 		EPhase GetPhase() { return m_phase_; }
 
