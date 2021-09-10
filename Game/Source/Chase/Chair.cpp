@@ -167,6 +167,7 @@ void AChair::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	m_wall_time += DeltaTime;
+	m_floating_pawn_movement_->Velocity.Z = 0.f;
 
 	// ☆
 	// UE_LOG(LogTemp, Warning, TEXT("m_player_spin_value_ = %f"), m_player_spin_value_);
@@ -240,6 +241,9 @@ void AChair::Tick(float DeltaTime)
 		{
 			m_audiocomponent_->Stop();
 		}
+
+
+		m_floating_pawn_movement_->MaxSpeed = m_default_speed_;
 	}
 
 	m_is_input_add_slip_power_ = false;
@@ -350,13 +354,20 @@ void AChair::ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 			// 椅子に当てられた為trueに
 			Cast<AChair>(OtherActor)->m_ishit_ = true;
 
+			UE_LOG(LogTemp, Warning, TEXT("----------------------------------------------------------------------------------"));
+			UE_LOG(LogTemp, Warning, TEXT("m_forward_vec_ : X = %f, Y = %f, Z = %f"), m_forward_vec_.X, m_forward_vec_.Y, m_forward_vec_.Z);
+			UE_LOG(LogTemp, Warning, TEXT("m_floating_pawn_movement_->Velocity : X = %f, Y = %f, Z = %f"), m_floating_pawn_movement_->Velocity.X, m_floating_pawn_movement_->Velocity.Y, m_floating_pawn_movement_->Velocity.Z);
+			UE_LOG(LogTemp, Warning, TEXT("----------------------------------------------------------------------------------"));
+
 			// 当たった椅子に速度を与える(現状前方向ベクトルと速度で計算)
-			Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity = m_pplayermesh_->GetForwardVector() * m_floating_pawn_movement_->Velocity * m_is_movement_scale_;
+			//Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity = m_pplayermesh_->GetForwardVector() * m_floating_pawn_movement_->Velocity * m_is_movement_scale_;
+			Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity = m_forward_vec_ * m_floating_pawn_movement_->Velocity * m_is_movement_scale_;
+			Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.Z = 0.f;
 
 			// 椅子の減速処理(X Y Z のいずれかが0だと計算してくれないっぽい？？？？)
 			m_floating_pawn_movement_->Velocity.X /= m_hitstop_scale_;
 			m_floating_pawn_movement_->Velocity.Y /= m_hitstop_scale_;
-			m_floating_pawn_movement_->Velocity.Z /= m_hitstop_scale_;
+			m_floating_pawn_movement_->Velocity.Z = 0.f;
 
 			Cast<AChair>(OtherActor)->Ragdoll();
 
