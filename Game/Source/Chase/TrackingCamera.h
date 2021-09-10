@@ -54,7 +54,7 @@ public:
 
 	AChair* m_control_chair_;
 
-	UPROPERTY(EditAnyWhere, Category = "Information")
+	UPROPERTY(EditAnyWhere, BluePrintReadWrite, Category = "Information")
 		AGameManager* m_pgamemanager_;
 
 	UPROPERTY(EditAnyWhere, Category = "Default Setting")
