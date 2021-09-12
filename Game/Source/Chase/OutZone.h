@@ -5,13 +5,18 @@
 //作成者　：渡邊龍音
 //更新履歴：2021/08/10 渡邊龍音 BPから移行
 //		　：2021/08/18 渡邊龍音 UIの表示
+//		　：2021/09/10 渡邊龍音 Chair型にキャストしChairのm_Phaseを調べるように
+//							　  当たり判定ではなくTargetPointで範囲を指定するように
 //--------------------------------------------------------------
 
 
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Chair.h"
 #include "Blueprint/UserWidget.h"
+#include "Engine/TargetPoint.h"
+#include "Components/ChildActorComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/Actor.h"
 #include "OutZone.generated.h"
@@ -29,14 +34,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UFUNCTION()
-		void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult);
-
-	UFUNCTION()
-		void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
 private:
-	TArray<AActor*> deleteActor;
+	TArray<AChair*> deleteChair;
 
 public:	
 	// Called every frame
@@ -44,17 +43,17 @@ public:
 	
 public:
 	UFUNCTION(BlueprintCallable)
-		void DeleteActor(AActor* _actor);
+		void DeleteActor(AChair* _chair);
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		USceneComponent* Root;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		UStaticMeshComponent* Cube;
+		UChildActorComponent* TargetStart;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FName DeleteActorTag;
+		UChildActorComponent* TargetEnd;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TSubclassOf<UUserWidget> outWidget;

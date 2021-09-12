@@ -5,15 +5,18 @@
 //作成者　：渡邊龍音
 //更新履歴：2021/08/10 渡邊龍音 BPから移行
 //		　：2021/08/18 渡邊龍音 UIの表示
+//		　：2021/09/10 渡邊龍音 Chair型にキャストしChairのm_Phaseを調べるように
+//							　  当たり判定ではなくTargetPointで範囲を指定するように
 //--------------------------------------------------------------
 
 #include "OutZone.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 AOutZone::AOutZone()
 	: Root(nullptr)
-	, Cube(nullptr)
-	, DeleteActorTag("Player")
+	, TargetStart(nullptr)
+	, TargetEnd(nullptr)
 	, outWidget(nullptr)
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -22,17 +25,31 @@ AOutZone::AOutZone()
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	RootComponent = Root;
 
+	/*
 	// StaticMeshComponent（Cube）の設定
 	Cube = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Cube"));
 	Cube->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
 	Cube->SetupAttachment(RootComponent);
 	Cube->bMultiBodyOverlap = true;
 	Cube->SetUseCCD(true);
+	*/
+
+	// TargetPointの設定
+	TargetStart = CreateDefaultSubobject<UChildActorComponent>(TEXT("Start"));
+	TargetEnd = CreateDefaultSubobject<UChildActorComponent>(TEXT("End"));
+
+	TargetStart->SetChildActorClass(ATargetPoint::StaticClass());
+	TargetEnd->SetChildActorClass(ATargetPoint::StaticClass());
+
+	TargetStart->SetRelativeLocation(FVector(-100.0f, 0.0f, 0.0f));
+	TargetEnd->SetRelativeLocation(FVector(100.0f, 0.0f, 0.0f));
+
+	TargetStart->SetupAttachment(RootComponent);
+	TargetEnd->SetupAttachment(RootComponent);
 
 	// コンポーネントのゲーム中非表示設定・モビリティやキャストシャドウの設定
 	SetActorHiddenInGame(true);
 	Root->SetMobility(EComponentMobility::Static);
-	Cube->SetCastShadow(false);
 
 	// OUT時Widgetのデフォルト設定
 	ConstructorHelpers::FObjectFinder<UClass> tmpWidget(TEXT("/Game/Widget/OUT_Widget.OUT_Widget_C"));
@@ -43,9 +60,14 @@ AOutZone::AOutZone()
 void AOutZone::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	TArray<AActor*> getActor;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AChair::StaticClass(), getActor);
 
-	Cube->OnComponentBeginOverlap.AddDynamic(this, &AOutZone::OnOverlapBegin);
-	Cube->OnComponentEndOverlap.AddDynamic(this, &AOutZone::OnOverlapEnd);
+	for (AActor* act : getActor)
+	{
+		deleteChair.Add(Cast<AChair>(act));
+	}
 }
 
 void AOutZone::Tick(float DeltaTime)
@@ -53,45 +75,27 @@ void AOutZone::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	// コリジョン内に入っている全ActorのVelocityを調べる
-	for (AActor* Actor : deleteActor)
+	for (AChair* Chair : deleteChair)
 	{
-		// 動いていなければ削除
-		if (Actor != nullptr && UKismetMathLibrary::EqualEqual_VectorVector(Actor->GetVelocity(), FVector::ZeroVector))
+		// 停止状態であれば削除
+		if (Chair != nullptr && Chair->GetActorLocation().X >= TargetStart->GetComponentLocation().X && Chair->GetActorLocation().X <= TargetEnd->GetComponentLocation().X && Chair->GetPhase() == EPhase::kEnd)
 		{
-			DeleteActor(Actor);			
+			DeleteActor(Chair);
 		}
 	}
 
 }
 
-void AOutZone::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult &SweepResult)
+void AOutZone::DeleteActor(AChair* _chair)
 {
-	// 相手のActorが動いていて、削除するActorのタグがついていれば削除Actor配列に追加
-	if (bFromSweep && OtherActor->ActorHasTag(DeleteActorTag))
-	{
-		deleteActor.AddUnique(OtherActor);
-	}
-}
-
-void AOutZone::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	// コリジョンから出た時に削除Actor配列から削除
-	if (deleteActor.Contains(OtherActor))
-	{
-		deleteActor.Remove(OtherActor);
-	}
-}
-
-void AOutZone::DeleteActor(AActor* _actor)
-{
-	if (_actor != nullptr)
+	if (_chair != nullptr)
 	{
 		// Actorのコリジョンを無効化し、見えなくする
-		_actor->SetActorEnableCollision(false);
-		_actor->GetRootComponent()->SetVisibility(false, true);
+		_chair->SetActorEnableCollision(false);
+		_chair->GetRootComponent()->SetVisibility(false, true);
 
 		// 配列から削除
-		deleteActor.Remove(_actor);
+		deleteChair.Remove(_chair);
 
 		// Widget表示
 		if (outWidget != nullptr)
