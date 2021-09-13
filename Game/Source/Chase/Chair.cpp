@@ -47,6 +47,8 @@
 //								, PlayerRotation(const float _deltatime)
 //								, PlayerPowerChange(const float _deltatime)
 //			2021/09/09 尾崎蒼宙 , m_pplayer_mesh_をUStaticMeshComponent*からUSkeltalMeshComponent*に変更
+//			2021/09/13 渡邊龍音 スティック移動をしやすく、仕様通りに変更
+//								移動コンポーネントをFloatPawnMovementからProjectileMovementに変更
 //--------------------------------------------------------------
 
 #include "Chair.h"
@@ -69,13 +71,14 @@ AChair::AChair()
 	, m_forward_vec_(FVector::ZeroVector)
 	//, m_target_point_location_(FVector::ZeroVector)
 	, m_audiocomponent_(NULL)
-// public
+	// public
 	, m_pscore_obj_()
 	, m_debugmode_(false)
 	, m_is_jumpanimation_end_(true)
 	, m_ishit_(false)
 	, m_can_input_(true)
-	, m_default_speed_(0.f)
+	, m_stickUpFrame(2)
+	, m_default_speed_(5000.0f)
 	, m_deceleration_val_(0.f)
 	, m_sweep_scale_(0.f)
 	, m_hitstop_scale_(0.f)
@@ -85,12 +88,15 @@ AChair::AChair()
 	, input_spin_scale_(0.f)
 	, m_hit_wall_reflection_power_(0.f)
 	, m_max_stick_slide_time_(0.f)
+	, m_SlipPowerMin(0.2f)
+	, m_SlipPowerMax(1.2f)
+	, m_stick_min_(0.0f)
 	, m_input_value_(FVector2D::ZeroVector)
 	, m_name_("")
 	, m_pplayermesh_(NULL)
 	, m_parrow_(NULL)
 	, m_target_point_mesh_(NULL)
-	, m_floating_pawn_movement_(NULL)
+	, m_projectile_movement_(NULL)
 	, m_deside_sound_(NULL)
 	, m_chair_roll_sound_(NULL)
 	, m_chair_collide_sound_(NULL)
@@ -110,7 +116,15 @@ AChair::AChair()
 
 
 	// 移動関係のコンポーネントの追加
-	m_floating_pawn_movement_ = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("m_floating_pawn_movement_"));
+	m_projectile_movement_ = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("m_projectile_movement_"));
+	m_projectile_movement_->ProjectileGravityScale = 0.0f;
+	m_projectile_movement_->Velocity = FVector(0.0f, 1.0f, 0.0f);
+	m_projectile_movement_->bSimulationEnabled = false;
+	m_projectile_movement_->bShouldBounce = true;
+
+	// 物理挙動
+	m_pplayermesh_->SetSimulatePhysics(true);
+	m_pplayermesh_->SetConstraintMode(EDOFMode::XYPlane);
 
 	m_target_point_mesh_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_target_point_mesh_"));
 	m_target_point_mesh_->SetupAttachment(m_pplayermesh_);
@@ -151,8 +165,6 @@ void AChair::BeginPlay()
 	// m_floating_pawn_movement_ の最大速度を格納
 	m_forward_vec_ = FVector::ForwardVector;
 
-	m_default_speed_ = m_floating_pawn_movement_->GetMaxSpeed();
-
 	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 	// m_pMeshの初期座標を保持
 	//PlayerLocation = GetActorLocation();
@@ -167,7 +179,21 @@ void AChair::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	m_wall_time += DeltaTime;
-	m_floating_pawn_movement_->Velocity.Z = 0.f;
+	m_projectile_movement_->Velocity.Z = 0.f;
+
+	// 壁にあたった場合タイマー加算
+	if (m_hit_wall_)
+	{
+		m_wall_time += DeltaTime;
+
+		// 一定時間経過したら当たった判定を下ろす
+		if (m_wall_time >= 1.0f)
+		{
+			m_wall_time = 0.0f;
+			m_pplayermesh_->ComponentVelocity.Y = 0.0f;
+			m_hit_wall_ = false;
+		}
+	}
 
 	// ☆
 	// UE_LOG(LogTemp, Warning, TEXT("m_player_spin_value_ = %f"), m_player_spin_value_);
@@ -193,7 +219,7 @@ void AChair::Tick(float DeltaTime)
 		{
 			Deceleration(DeltaTime);
 		}
-		else if(m_is_sweep_ == true && m_is_jumpanimation_end_ == true)
+		else if (m_is_sweep_ == true && m_is_jumpanimation_end_ == true)
 		{
 			PlayerSweep(DeltaTime);
 		}
@@ -241,9 +267,8 @@ void AChair::Tick(float DeltaTime)
 		{
 			m_audiocomponent_->Stop();
 		}
-
-
-		m_floating_pawn_movement_->MaxSpeed = m_default_speed_;
+		
+		m_projectile_movement_->Velocity = FVector::ZeroVector;
 	}
 
 	m_is_input_add_slip_power_ = false;
@@ -290,7 +315,7 @@ void AChair::SetInputValue_X(const float _axisval)
 
 void AChair::SetInputValue_Y(const float _axisval)
 {
-	
+
 	if (m_can_input_)
 	{
 		if (m_debugmode_)
@@ -312,28 +337,30 @@ void AChair::SetInputValue_Y(const float _axisval)
 	{
 		m_input_value_.Y = 0.f;
 	}
-	
+
 }
 
 // カプセルコンポーネントを参照している為同じものをBPに追加 -> BPからC++に移植(2021/04/23 尾崎)
 void AChair::ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	FVector a = m_audiocomponent_->GetComponentLocation();
-	if (m_chair_collide_sound_ != NULL)
+	if (m_audiocomponent_ != nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%f, %f, %f"), a.X, a.Y, a.Z);
-		//椅子がぶつかった音を再生
-		m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_chair_collide_sound_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("NULL"));
+		FVector a = m_audiocomponent_->GetComponentLocation();
+		if (m_chair_collide_sound_ != NULL)
+		{
+			//椅子がぶつかった音を再生
+			m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_chair_collide_sound_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("NULL"));
+		}
 	}
 
 	// 椅子に当たった場合の処理
 	if (Cast<AChair>(OtherActor))
 	{
-		if (Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity == FVector::ZeroVector)
+		if (Cast<AChair>(OtherActor)->m_projectile_movement_->Velocity == FVector::ZeroVector)
 		{
 			if (m_debugmode_)
 			{
@@ -341,14 +368,13 @@ void AChair::ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 				// 椅子のメッシュの前方向ベクトル
 				UE_LOG(LogTemp, Warning, TEXT("this forwardVector = %f, %f, %f, "), m_pplayermesh_->GetForwardVector().X, m_pplayermesh_->GetForwardVector().Y, m_pplayermesh_->GetForwardVector().Z);
 				// floatingpawnmovementの速度
-				UE_LOG(LogTemp, Warning, TEXT("this component speed = %f, %f, %f, "), m_floating_pawn_movement_->Velocity.X, m_floating_pawn_movement_->Velocity.Y, m_floating_pawn_movement_->Velocity.Z);
+				UE_LOG(LogTemp, Warning, TEXT("this component speed = %f, %f, %f, "), m_projectile_movement_->Velocity.X, m_projectile_movement_->Velocity.Y, m_projectile_movement_->Velocity.Z);
 			}
 
 			// 物理の働く向きの設定
 			m_pplayermesh_->SetConstraintMode(EDOFMode::XYPlane);
 
 			// 行動終了に
-			UE_LOG(LogTemp, Warning, TEXT("a"));
 			SetPhase(EPhase::kEnd);
 
 			// 椅子に当てられた為trueに
@@ -356,34 +382,34 @@ void AChair::ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 
 			UE_LOG(LogTemp, Warning, TEXT("----------------------------------------------------------------------------------"));
 			UE_LOG(LogTemp, Warning, TEXT("m_forward_vec_ : X = %f, Y = %f, Z = %f"), m_forward_vec_.X, m_forward_vec_.Y, m_forward_vec_.Z);
-			UE_LOG(LogTemp, Warning, TEXT("m_floating_pawn_movement_->Velocity : X = %f, Y = %f, Z = %f"), m_floating_pawn_movement_->Velocity.X, m_floating_pawn_movement_->Velocity.Y, m_floating_pawn_movement_->Velocity.Z);
+			UE_LOG(LogTemp, Warning, TEXT("m_projectile_movement_->Velocity : X = %f, Y = %f, Z = %f"), m_projectile_movement_->Velocity.X, m_projectile_movement_->Velocity.Y, m_projectile_movement_->Velocity.Z);
 			UE_LOG(LogTemp, Warning, TEXT("----------------------------------------------------------------------------------"));
 
 			// 当たった椅子に速度を与える(現状前方向ベクトルと速度で計算)
 			//Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity = m_pplayermesh_->GetForwardVector() * m_floating_pawn_movement_->Velocity * m_is_movement_scale_;
-			Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity = m_forward_vec_ * m_floating_pawn_movement_->Velocity * m_is_movement_scale_;
-			Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.Z = 0.f;
+			Cast<AChair>(OtherActor)->m_projectile_movement_->Velocity = m_forward_vec_ * m_projectile_movement_->Velocity * m_is_movement_scale_;
+			Cast<AChair>(OtherActor)->m_projectile_movement_->Velocity.Z = 0.f;
 
 			// 椅子の減速処理(X Y Z のいずれかが0だと計算してくれないっぽい？？？？)
-			m_floating_pawn_movement_->Velocity.X /= m_hitstop_scale_;
-			m_floating_pawn_movement_->Velocity.Y /= m_hitstop_scale_;
-			m_floating_pawn_movement_->Velocity.Z = 0.f;
+			m_projectile_movement_->Velocity.X /= m_hitstop_scale_;
+			m_projectile_movement_->Velocity.Y /= m_hitstop_scale_;
+			m_projectile_movement_->Velocity.Z = 0.f;
 
 			Cast<AChair>(OtherActor)->Ragdoll();
 
 			if (m_debugmode_)
 			{
 				// 当たった椅子の速度
-				UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "), Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.X, Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.Y, Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity.Z);
+				UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "), Cast<AChair>(OtherActor)->m_projectile_movement_->Velocity.X, Cast<AChair>(OtherActor)->m_projectile_movement_->Velocity.Y, Cast<AChair>(OtherActor)->m_projectile_movement_->Velocity.Z);
 				// 椅子の速度
-				UE_LOG(LogTemp, Warning, TEXT("this after hit speed = %f, %f, %f,"), m_floating_pawn_movement_->Velocity.X, m_floating_pawn_movement_->Velocity.Y, m_floating_pawn_movement_->Velocity.Z);
+				UE_LOG(LogTemp, Warning, TEXT("this after hit speed = %f, %f, %f,"), m_projectile_movement_->Velocity.X, m_projectile_movement_->Velocity.Y, m_projectile_movement_->Velocity.Z);
 			}
 		}
 		else
 		{
 			if (m_debugmode_)
 			{
-				FVector vec = Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity;
+				FVector vec = Cast<AChair>(OtherActor)->m_projectile_movement_->Velocity;
 				UE_LOG(LogTemp, Warning, TEXT("false(X = %f, Y = %f, Z = %f)"), vec.X, vec.Y, vec.Z);
 			}
 		}
@@ -433,6 +459,9 @@ void AChair::SetPhase(const EPhase _phase)
 	// 各Phaseに変更した際の初期設定
 	if (m_phase_ == EPhase::kPowerChange)
 	{
+		m_stick_min_ = 0.0f;
+		m_stick_max_ = 0.0f;
+
 		//m_target_point_location_ = m_target_point_mesh_->GetComponentLocation();
 		if (m_parrow_ != NULL)
 		{
@@ -479,14 +508,14 @@ void AChair::SetPhase(const EPhase _phase)
 
 void AChair::PlayerSpin(const float _deltatime)
 {
+
+	FVector test;
 	// 左右入力が入っていたら
 	if (FMath::Abs(m_input_value_.X) > 0.001f || m_hit_wall_)
 	{
 		float test1;
 		float rot_x;
 		float rot_y;
-
-		FVector test;
 
 		// このフレーム間で回転させる値の取得
 		m_player_spin_value_ += m_input_value_.X * _deltatime * input_spin_scale_;
@@ -496,15 +525,11 @@ void AChair::PlayerSpin(const float _deltatime)
 		rot_x = FMath::Sin(test1);
 		rot_y = FMath::Cos(test1);
 
+		// 代入
+		//FVector test = FVector(rot_x, rot_y, 0.f);
+		test = FVector(rot_y, rot_x, 0.f);
 
-		if (!m_hit_wall_)
-		{
-			// 代入
-			//FVector test = FVector(rot_x, rot_y, 0.f);
-			test = FVector(rot_y, rot_x, 0.f);
-
-			m_forward_vec_ = test;
-		}
+		m_forward_vec_ = test;
 	}
 
 	if (FMath::Abs(m_player_spin_value_) > m_max_spin_add_rotation_value_)
@@ -535,8 +560,15 @@ void AChair::PlayerSpin(const float _deltatime)
 void AChair::PlayerSlip(const float _deltatime)
 {
 	// 前方向ベクトルに向かって移動
-	AddMovementInput(m_forward_vec_, 1.f);
+	//AddMovementInput(m_forward_vec_, 1.f);
+	FVector newActorPos = GetActorLocation() + FVector(0.0f, m_forward_vec_.Y, 0.0f) * 20;
+	SetActorLocation(newActorPos);
 
+	if (m_projectile_movement_->Velocity.X > 0.0f)
+	{
+		m_projectile_movement_->AddForce(FVector(-m_deceleration_val_, 0.0f, 0.0f));
+	}
+	
 	if (m_debugmode_)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "), m_forward_vec_.X, m_forward_vec_.Y, m_forward_vec_.Z);
@@ -547,15 +579,15 @@ void AChair::Deceleration(const float _deltatime)
 {
 	if (!m_is_input_add_slip_power_)
 	{
-		m_floating_pawn_movement_->MaxSpeed -= m_deceleration_val_ * _deltatime;
-		if (m_floating_pawn_movement_->MaxSpeed < 0.f && m_phase_ == EPhase::kSlip)
+		m_projectile_movement_->MaxSpeed -= m_deceleration_val_ * _deltatime;
+		if (m_projectile_movement_->Velocity.X <= 0.f && m_phase_ == EPhase::kSlip)
 		{
 			SetPhase(EPhase::kEnd);
 		}
 
 		if (m_debugmode_)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Deceleration/  MaxSpeed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
+			UE_LOG(LogTemp, Warning, TEXT("Deceleration/  MaxSpeed = %f"), m_projectile_movement_->GetMaxSpeed());
 		}
 	}
 }
@@ -564,16 +596,16 @@ void AChair::PlayerSweep(const float _deltatime)
 {
 	m_is_sweep_ = true;
 
-	m_floating_pawn_movement_->MaxSpeed -= (m_deceleration_val_ / m_sweep_scale_) * _deltatime;
+	m_projectile_movement_->MaxSpeed -= (m_deceleration_val_ / m_sweep_scale_) * _deltatime;
 
-	if (m_floating_pawn_movement_->MaxSpeed < 0.f && m_phase_ == EPhase::kSlip)
+	if (m_projectile_movement_->MaxSpeed < 0.f && m_phase_ == EPhase::kSlip)
 	{
 		SetPhase(EPhase::kEnd);
 	}
 
 	if (m_debugmode_)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Sweep/  MaxSpeed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
+		UE_LOG(LogTemp, Warning, TEXT("Sweep/  MaxSpeed = %f"), m_projectile_movement_->GetMaxSpeed());
 	}
 }
 
@@ -599,61 +631,77 @@ void AChair::SetPlayerSweepFlag()
 
 void AChair::SetSlipPower(const float _deltatime)
 {
-	if (!f7)
+	static int stickFrameCnt = 0;
+	static float totalDeltaTime = 0.0f;
+
+	float minSpeed = m_default_speed_ * m_SlipPowerMin;
+	float maxSpeed = m_default_speed_ * m_SlipPowerMax;
+	
+	// スティックが一番したまで引かれたら処理
+	if (m_input_value_.Y < 0.f)
 	{
-		// スティックが一番したまで引かれたら処理
-		if (m_input_value_.Y < 0.f)
-		{
-			// UE_LOG(LogTemp, Error, TEXT("%f"), m_input_value_.Y);
-			// カウントスタート
-			FrameCountStart = true;
-		}
+		// UE_LOG(LogTemp, Error, TEXT("%f"), m_input_value_.Y);
+		// カウントスタート
+		FrameCountStart = true;
 
-		//	カウントスタートしてからスティックがはじかれ中の時
-		if (m_input_value_.Y != -1.f && FrameCountStart)
+		if (m_input_value_.Y < m_stick_min_)
 		{
-			// 時間を加算
-			m_stick_slide_time_ += _deltatime;
-
-			// スティックの上方向（最大）の時
-			if (m_input_value_.Y == 1.f)
-			{
-				// かかった時間/最大の時間に 1.0f - を追加することで、弾いた時間が短い程早くなるように
-				float Alpha = 1.f - (m_stick_slide_time_ / m_max_stick_slide_time_);
-				// 割合を掛け算
-				m_floating_pawn_movement_->MaxSpeed *= Alpha;
-				SetPhase(EPhase::kSlip);
-				FrameCountStart = false;
-			}
+			m_stick_min_ = m_input_value_.Y;
 		}
 	}
 
-	if (f7)
+	// 上までスティック入力モード
+	if (!m_isStickDownOnly)
 	{
-		// スティックが一番したまで引かれたら処理
-		if (m_input_value_.Y < 0.f)
+		// スティックが上方向に入力された場合
+		if (FrameCountStart && m_input_value_.Y > 0.f)
 		{
-			// UE_LOG(LogTemp, Error, TEXT("%f"), m_input_value_.Y);
-			// カウントスタート
-			FrameCountStart = true;
+			FrameCountStart = false;
+			m_stick_up = true;
 		}
 
-		//	カウントスタートしてからスティックがはじかれ中の時
-		if (m_input_value_.Y != -1.f && FrameCountStart)
+		if (m_stick_up)
 		{
-			// 時間を加算
 			m_stick_slide_time_ += _deltatime;
 
-			// スティックの上方向（最大）の時
-			if (m_input_value_.Y >= 0.f)
+			if (m_input_value_.Y > m_stick_max_)
 			{
-				// かかった時間/最大の時間に 1.0f - を追加することで、弾いた時間が短い程早くなるように
-				float Alpha = 1.f - (m_stick_slide_time_ / m_max_stick_slide_time_);
-				// 割合を掛け算
-				m_floating_pawn_movement_->MaxSpeed *= Alpha;
-				SetPhase(EPhase::kSlip);
-				FrameCountStart = false;
+				m_stick_max_ = m_input_value_.Y;
 			}
+
+			// 平均フレーム算出
+			stickFrameCnt++;
+			totalDeltaTime += _deltatime;
+			float averageFPS = 1 / (totalDeltaTime / stickFrameCnt);
+			
+			if (m_stick_slide_time_ > (1.0f / averageFPS) * m_stickUpFrame)
+			{
+				float speedAlpha = FMath::Abs(m_stick_min_ * m_stick_max_);
+				// 割合を掛け算
+				m_projectile_movement_->Velocity *= FMath::Lerp(minSpeed, maxSpeed, speedAlpha);
+				m_projectile_movement_->bSimulationEnabled = true;
+				UE_LOG(LogTemp, Warning, TEXT("[Chair] min = %f, max = %f, mag = %f (%f)"), m_stick_min_, m_stick_max_, speedAlpha, m_projectile_movement_->Velocity.X);
+				SetPhase(EPhase::kSlip);
+
+				stickFrameCnt = 0;
+				totalDeltaTime = 0.0f;
+				m_stick_slide_time_ = 0.0f;
+				m_stick_up = false;
+			}
+		}
+	}
+	// 下だけスティック入力モード
+	else
+	{
+		// スティックがニュートラル以上の場合
+		if (FrameCountStart && m_input_value_.Y >= 0.f)
+		{
+			float speedAlpha = FMath::Abs(m_stick_min_ * m_stick_max_);
+			// 割合を掛け算
+			m_projectile_movement_->Velocity *= FMath::Lerp(minSpeed, maxSpeed, speedAlpha);
+			m_projectile_movement_->bSimulationEnabled = true;
+			UE_LOG(LogTemp, Warning, TEXT("[Chair] min = %f, mag = %f (%f)"), m_stick_min_, speedAlpha, m_projectile_movement_->Velocity.X);
+			SetPhase(EPhase::kSlip);
 		}
 	}
 }

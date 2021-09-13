@@ -89,6 +89,7 @@
 // 								, float m_powerchange_movement_max_val_;		// パワー変更時の移動できる量
 // 								, float m_powerchange_velocity_val_;			// パワー変更時にどれだけ速度の変更をかけるか(座標が1ずれると m_powerchange_velocity_val_ 分変更)
 //			2021/09/09 尾崎蒼宙 , m_pplayer_mesh_をUStaticMeshComponent*からUSkeltalMeshComponent*に変更
+//			2021/09/13 渡邊龍音 スティック移動をしやすく、仕様通りに変更
 //--------------------------------------------------------------
 #pragma once
 
@@ -97,6 +98,7 @@
 #include "Engine/Engine.h"			// スクリーンログ出力用
 #include "Math/Vector.h"
 #include "GameFramework/FloatingPawnMovement.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"		// FindLookAtRotationを使うため
 #include "Components/BoxComponent.h"
 #include "AddScoreTrigger.h"
@@ -143,11 +145,14 @@ private:
 	
 	bool m_hit_wall_;								// 壁に当たったかどうか
 	bool m_is_sweep_;								// スウィープボタンを押したかどうか
+	bool m_stick_up;								// スティック上入力
 	EPhase m_phase_;								// 現在のフェーズ格納用
 	float m_wall_time;								// 壁に当たった時間
 	float m_player_spin_value_;						// 現在何度分の回転量が入っているか
 	float m_before_slip_rotation_;					// 前フレームの角度
-	float m_stick_slide_time_;				// スティックを倒すのにかかった時間
+	float m_stick_slide_time_;						// スティックを倒すのにかかった時間
+	float m_stick_min_;								// 左スティック最小値
+	float m_stick_max_;								// 左スティック最大値
 	FVector m_forward_vec_;							// 前方向ベクトル
 	//FVector m_target_point_location_;				// 目標地点の座標
 
@@ -177,6 +182,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		bool m_debugmode_;							// デバッグモードをONにするかどうか
 
+	UPROPERTY(EditAnywhere, Category = "Default Setting")
+		bool m_isStickDownOnly;						// スティック入力モード切り替え（下入力だけで移動できるように）
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		bool m_is_jumpanimation_end_;				// ジャンプアニメーションが終わったかどうか(ジャンプアニメーションが終わるまではスウィープ処理を行わせない)
 
@@ -188,6 +196,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
 		bool m_can_input_;		// 入力可能かどうか
+
+	UPROPERTY(EditAnywhere, Category = "Default Setting")
+		int m_stickUpFrame;												// スティックの上入力の猶予フレーム
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		float m_default_speed_;											// 椅子の初期速度
@@ -219,6 +230,12 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		float m_max_stick_slide_time_;		// スティックを倒すまでにかかる時間の最大値
 
+	UPROPERTY(EditAnywhere, Category = "Default Setting")
+		float m_SlipPowerMin;												// 滑らせるパワーの最小倍率
+
+	UPROPERTY(EditAnywhere, Category = "Default Setting")
+		float m_SlipPowerMax;												// 滑らせるパワーの最大倍率
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
 		FVector2D m_input_value_;						// 入力値
 
@@ -236,7 +253,7 @@ public:
 		class UStaticMeshComponent* m_target_point_mesh_;					// 目標地点のメッシュ
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
-		UFloatingPawnMovement* m_floating_pawn_movement_;				// FloatingPawnMovementコンポーネント
+		UProjectileMovementComponent* m_projectile_movement_;				// FloatingPawnMovementコンポーネント
 
 	UPROPERTY()
 		USoundBase* m_deside_sound_;									//サウンドを入れるコンポーネント
@@ -263,6 +280,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "MyF")
 		bool GetIsSweep() { return m_is_sweep_; }
+
+	UFUNCTION(BlueprintPure, Category = "MyF")
+		float GetStickValueMin() { return m_stick_min_; }
+
+	UFUNCTION(BlueprintPure, Category = "MyF")
+		float GetStickValueMax() { return m_stick_max_; }
 
 
 //☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
