@@ -80,7 +80,7 @@ AChair::AChair()
 	, m_stickUpFrame(2)
 	, m_default_speed_(5000.0f)
 	, m_deceleration_val_(0.f)
-	, m_sweep_scale_(0.f)
+	, m_sweep_scale_(3.f)
 	, m_hitstop_scale_(0.f)
 	, m_is_movement_scale_(0.f)
 	, m_def_player_posX_(0.f)
@@ -178,6 +178,7 @@ void AChair::BeginPlay()
 void AChair::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
 	m_wall_time += DeltaTime;
 	m_projectile_movement_->Velocity.Z = 0.f;
 
@@ -562,12 +563,7 @@ void AChair::PlayerSlip(const float _deltatime)
 	// 前方向ベクトルに向かって移動
 	//AddMovementInput(m_forward_vec_, 1.f);
 	FVector newActorPos = GetActorLocation() + FVector(0.0f, m_forward_vec_.Y, 0.0f) * 20;
-	SetActorLocation(newActorPos);
-
-	if (m_projectile_movement_->Velocity.X > 0.0f)
-	{
-		m_projectile_movement_->AddForce(FVector(-m_deceleration_val_, 0.0f, 0.0f));
-	}
+	SetActorLocation(newActorPos);	
 	
 	if (m_debugmode_)
 	{
@@ -579,9 +575,15 @@ void AChair::Deceleration(const float _deltatime)
 {
 	if (!m_is_input_add_slip_power_)
 	{
-		m_projectile_movement_->MaxSpeed -= m_deceleration_val_ * _deltatime;
+		//m_projectile_movement_->Velocity.X -= m_deceleration_val_ * _deltatime;
+		if (m_projectile_movement_->Velocity.X > 0.0f)
+		{
+			m_projectile_movement_->AddForce(FVector(-m_deceleration_val_, 0.0f, 0.0f));
+		}
+
 		if (m_projectile_movement_->Velocity.X <= 0.f && m_phase_ == EPhase::kSlip)
 		{
+			m_projectile_movement_->ClearPendingForce();
 			SetPhase(EPhase::kEnd);
 		}
 
@@ -596,10 +598,15 @@ void AChair::PlayerSweep(const float _deltatime)
 {
 	m_is_sweep_ = true;
 
-	m_projectile_movement_->MaxSpeed -= (m_deceleration_val_ / m_sweep_scale_) * _deltatime;
-
-	if (m_projectile_movement_->MaxSpeed < 0.f && m_phase_ == EPhase::kSlip)
+	//m_projectile_movement_->Velocity.X -= (m_deceleration_val_ / m_sweep_scale_) * _deltatime;
+	if (m_projectile_movement_->Velocity.X > 0.0f)
 	{
+		m_projectile_movement_->AddForce(FVector(-(m_deceleration_val_ / m_sweep_scale_), 0.0f, 0.0f));
+	}
+
+	if (m_projectile_movement_->Velocity.X <= 0.f && m_phase_ == EPhase::kSlip)
+	{
+		m_projectile_movement_->ClearPendingForce();
 		SetPhase(EPhase::kEnd);
 	}
 

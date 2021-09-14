@@ -237,7 +237,7 @@ bool AGameManager::TimeCheck(float _deltatime)
 	{
 		for (int i = 0; i < m_chairs_.Num(); i++)
 		{
-			m_chairs_[i]->m_projectile_movement_->Velocity = FVector::ZeroVector;
+			//m_chairs_[i]->m_projectile_movement_->Velocity = FVector::ZeroVector;
 		}
 		time_cnt_ = 0.f;
 		return true;
