@@ -49,6 +49,7 @@
 //			2021/09/09 尾崎蒼宙 , m_pplayer_mesh_をUStaticMeshComponent*からUSkeltalMeshComponent*に変更
 //			2021/09/13 渡邊龍音 スティック移動をしやすく、仕様通りに変更
 //								移動コンポーネントをFloatPawnMovementからProjectileMovementに変更
+//			2021/09/14 尾崎蒼宙 End時にTickでVelocity = Zerovectorにしている処理を初回時のみに変更
 //--------------------------------------------------------------
 
 #include "Chair.h"
@@ -268,8 +269,15 @@ void AChair::Tick(float DeltaTime)
 		{
 			m_audiocomponent_->Stop();
 		}
-		
-		m_projectile_movement_->Velocity = FVector::ZeroVector;
+
+		if (m_projectile_movement_->Velocity.X < 0.f)
+		{
+			m_projectile_movement_->Velocity = FVector::ZeroVector;
+		}
+		else if(m_projectile_movement_->Velocity.X > 0.f)
+		{
+			Deceleration(DeltaTime);
+		}
 	}
 
 	m_is_input_add_slip_power_ = false;

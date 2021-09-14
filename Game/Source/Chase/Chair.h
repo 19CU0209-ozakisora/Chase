@@ -90,6 +90,7 @@
 // 								, float m_powerchange_velocity_val_;			// パワー変更時にどれだけ速度の変更をかけるか(座標が1ずれると m_powerchange_velocity_val_ 分変更)
 //			2021/09/09 尾崎蒼宙 , m_pplayer_mesh_をUStaticMeshComponent*からUSkeltalMeshComponent*に変更
 //			2021/09/13 渡邊龍音 スティック移動をしやすく、仕様通りに変更
+//			2021/09/14 尾崎蒼宙 m_end_phase_flag_ を追加
 //--------------------------------------------------------------
 #pragma once
 
@@ -143,6 +144,7 @@ private:
 
 	bool m_is_input_add_slip_power_;				// 速度を増やすボタンが押されたかどうか
 	
+	bool m_end_phase_flag_;							// EndPhase時にコンポーネントの速度を初期化する変数
 	bool m_hit_wall_;								// 壁に当たったかどうか
 	bool m_is_sweep_;								// スウィープボタンを押したかどうか
 	bool m_stick_up;								// スティック上入力
