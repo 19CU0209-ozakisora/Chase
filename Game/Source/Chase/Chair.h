@@ -91,6 +91,7 @@
 //			2021/09/09 尾崎蒼宙 , m_pplayer_mesh_をUStaticMeshComponent*からUSkeltalMeshComponent*に変更
 //			2021/09/13 渡邊龍音 スティック移動をしやすく、仕様通りに変更
 //			2021/09/14 尾崎蒼宙 m_end_phase_flag_ を追加
+//					   渡邊龍音 タイミングに合わせて実況の追加
 //--------------------------------------------------------------
 #pragma once
 
@@ -103,6 +104,7 @@
 #include "Kismet/KismetMathLibrary.h"		// FindLookAtRotationを使うため
 #include "Components/BoxComponent.h"
 #include "AddScoreTrigger.h"
+#include "EnumObject.h"					// 実況のEnum使用
 #include "Kismet/KismetSystemLibrary.h"	// レイ
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
@@ -110,7 +112,6 @@
 
 //前方宣言
 class UAudioComponent;
-
 
 // 椅子のフェーズの列挙型
 UENUM(BlueprintType)
@@ -237,6 +238,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		float m_SlipPowerMax;												// 滑らせるパワーの最大倍率
+	
+	UPROPERTY(EditAnywhere, Category = "Commentary")
+		float m_PowerThreshold;												// 滑らせるパワーの最大倍率
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
 		FVector2D m_input_value_;						// 入力値
@@ -257,6 +261,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		UProjectileMovementComponent* m_projectile_movement_;				// FloatingPawnMovementコンポーネント
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Commentary")
+		TArray<ECommentID> m_throwStrong;								// 強く投げた時
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Commentary")
+		TArray<ECommentID> m_throwWeak;									// 弱く投げた時
+
 	UPROPERTY()
 		USoundBase* m_deside_sound_;									//サウンドを入れるコンポーネント
 																		//決定音
@@ -265,7 +275,7 @@ public:
 
 	UPROPERTY()
 		USoundBase* m_chair_collide_sound_;								//椅子がぶつかった時の音
-
+	
 	UFUNCTION(BlueprintImplementableEvent, Category = "MyF")
 		void Ragdoll();													// ラグドール化させる関数
 
@@ -277,6 +287,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "MyF")
 		void SetForwardVec(const FVector _vec) { m_forward_vec_ = _vec; };
+
 	UFUNCTION(BlueprintCallable, Category = "MyF")
 		EPhase GetPhase() { return m_phase_; }
 
@@ -288,6 +299,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "MyF")
 		float GetStickValueMax() { return m_stick_max_; }
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "MyF")
+		void LiveComment(ECommentID commentID, float voiceVolume);
 
 
 //☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆

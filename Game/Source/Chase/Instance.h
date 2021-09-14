@@ -6,12 +6,14 @@
 //更新履歴：2021/08/10 青木拓洋 作成
 //			2021/08/31 野田八雲 チームごとの合計得点を格納する変数追加（ウィジェット出力用）
 //			2021/09/07 野田八雲 各椅子がとった得点を計算する変数追加（ウィジェット出力用）
+//			2021/09/09 渡邊龍音 実況のウィジェットを作成し、保持する
 //--------------------------------------------------------------
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
+#include "Blueprint/UserWidget.h"
 #include "Instance.generated.h"
 
 UCLASS()
@@ -34,6 +36,10 @@ public:
 	//各チームの得点を格納（2P）
 	UPROPERTY(BlueprintReadWrite)
 		int m_teamPoint2P = 0;
+
+	// 実況ウィジェット
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		UUserWidget* commentWidget;
 
 	//各得点格納用
 	//ウィジェットが不可変配列非対応、TArray型だと取得した得点の型が合わないため、
