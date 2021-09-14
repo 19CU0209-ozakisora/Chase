@@ -78,7 +78,7 @@ AChair::AChair()
 	, m_ishit_(false)
 	, m_can_input_(true)
 	, m_stickUpFrame(2)
-	, m_default_speed_(5000.0f)
+	, m_default_speed_(3500.0f)
 	, m_deceleration_val_(0.f)
 	, m_sweep_scale_(3.f)
 	, m_hitstop_scale_(0.f)
@@ -703,7 +703,7 @@ void AChair::SetSlipPower(const float _deltatime)
 		// スティックがニュートラル以上の場合
 		if (FrameCountStart && m_input_value_.Y >= 0.f)
 		{
-			float speedAlpha = FMath::Abs(m_stick_min_ * m_stick_max_);
+			float speedAlpha = FMath::Abs(m_stick_min_);
 			// 割合を掛け算
 			m_projectile_movement_->Velocity *= FMath::Lerp(minSpeed, maxSpeed, speedAlpha);
 			m_projectile_movement_->bSimulationEnabled = true;
