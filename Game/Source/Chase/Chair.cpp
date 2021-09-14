@@ -652,6 +652,8 @@ void AChair::SetSlipPower(const float _deltatime)
 
 	float minSpeed = m_default_speed_ * m_SlipPowerMin;
 	float maxSpeed = m_default_speed_ * m_SlipPowerMax;
+
+	float speedAlpha = 0.0f;
 	
 	// スティックが一番したまで引かれたら処理
 	if (m_input_value_.Y < 0.f)
@@ -692,22 +694,12 @@ void AChair::SetSlipPower(const float _deltatime)
 			
 			if (m_stick_slide_time_ > (1.0f / averageFPS) * m_stickUpFrame)
 			{
-				float speedAlpha = FMath::Abs(m_stick_min_ * m_stick_max_);
+				speedAlpha = FMath::Abs(m_stick_min_ * m_stick_max_);
 				// 割合を掛け算
 				m_projectile_movement_->Velocity *= FMath::Lerp(minSpeed, maxSpeed, speedAlpha);
 				m_projectile_movement_->bSimulationEnabled = true;
 				UE_LOG(LogTemp, Warning, TEXT("[Chair] min = %f, max = %f, mag = %f (%f)"), m_stick_min_, m_stick_max_, speedAlpha, m_projectile_movement_->Velocity.X);
 				SetPhase(EPhase::kSlip);
-				
-				// 実況コメント
-				ECommentID comment;
-				comment = speedAlpha > 0.8f ? ECommentID::LC_4_2 : ECommentID::LC_5_1;
-
-				// 値の初期化
-				stickFrameCnt = 0;
-				totalDeltaTime = 0.0f;
-				m_stick_slide_time_ = 0.0f;
-				m_stick_up = false;
 			}
 		}
 	}
@@ -717,13 +709,27 @@ void AChair::SetSlipPower(const float _deltatime)
 		// スティックがニュートラル以上の場合
 		if (FrameCountStart && m_input_value_.Y >= 0.f)
 		{
-			float speedAlpha = FMath::Abs(m_stick_min_);
+			speedAlpha = FMath::Abs(m_stick_min_);
 			// 割合を掛け算
 			m_projectile_movement_->Velocity *= FMath::Lerp(minSpeed, maxSpeed, speedAlpha);
 			m_projectile_movement_->bSimulationEnabled = true;
 			UE_LOG(LogTemp, Warning, TEXT("[Chair] min = %f, mag = %f (%f)"), m_stick_min_, speedAlpha, m_projectile_movement_->Velocity.X);
 			SetPhase(EPhase::kSlip);
 		}
+	}
+
+	if (GetPhase() == EPhase::kSlip)
+	{
+		// 実況コメント
+		TArray<ECommentID> commentArray;
+		commentArray = speedAlpha > 0.8f ? m_throwStrongComment : m_throwWeakComment;
+		LiveComment(commentArray[0], 10.0f);
+
+		// 値の初期化
+		stickFrameCnt = 0;
+		totalDeltaTime = 0.0f;
+		m_stick_slide_time_ = 0.0f;
+		m_stick_up = false;
 	}
 }
 

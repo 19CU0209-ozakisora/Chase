@@ -47,6 +47,9 @@ public:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool isEnable;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		USceneComponent* Root;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

@@ -262,10 +262,10 @@ public:
 		UProjectileMovementComponent* m_projectile_movement_;				// FloatingPawnMovementコンポーネント
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Commentary")
-		TArray<ECommentID> m_throwStrong;								// 強く投げた時
+		TArray<ECommentID> m_throwStrongComment;								// 強く投げた時
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Commentary")
-		TArray<ECommentID> m_throwWeak;									// 弱く投げた時
+		TArray<ECommentID> m_throwWeakComment;									// 弱く投げた時
 
 	UPROPERTY()
 		USoundBase* m_deside_sound_;									//サウンドを入れるコンポーネント

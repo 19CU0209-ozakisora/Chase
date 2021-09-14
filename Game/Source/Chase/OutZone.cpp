@@ -14,7 +14,8 @@
 #include "Kismet/GameplayStatics.h"
 
 AOutZone::AOutZone()
-	: Root(nullptr)
+	: isEnable(true)
+	, Root(nullptr)
 	, TargetStart(nullptr)
 	, TargetEnd(nullptr)
 	, outWidget(nullptr)
@@ -74,21 +75,24 @@ void AOutZone::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (deleteChair.Num() > 0)
+	if (isEnable)
 	{
-		// コリジョン内に入っている全ActorのVelocityを調べる
-		for (int i = 0; i < deleteChair.Num(); ++i)
+		if (deleteChair.Num() > 0)
 		{
-			// 停止状態であれば削除
-			if (deleteChair[i] != nullptr && deleteChair[i]->GetActorLocation().X >= TargetStart->GetComponentLocation().X && deleteChair[i]->GetActorLocation().X <= TargetEnd->GetComponentLocation().X && deleteChair[i]->GetPhase() == EPhase::kEnd)
+			// コリジョン内に入っている全ActorのVelocityを調べる
+			for (int i = 0; i < deleteChair.Num(); ++i)
 			{
-				DeleteActor(deleteChair[i]);
+				// 停止状態であれば削除
+				if (deleteChair[i] != nullptr && deleteChair[i]->GetActorLocation().X >= TargetStart->GetComponentLocation().X && deleteChair[i]->GetActorLocation().X <= TargetEnd->GetComponentLocation().X && deleteChair[i]->GetPhase() == EPhase::kEnd)
+				{
+					DeleteActor(deleteChair[i]);
+				}
 			}
 		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[OutZone] Chair is not found."))
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[OutZone] Chair is not found."))
+		}
 	}
 }
 
