@@ -90,6 +90,7 @@ AChair::AChair()
 	, m_max_stick_slide_time_(0.f)
 	, m_SlipPowerMin(0.2f)
 	, m_SlipPowerMax(1.2f)
+	, m_PowerThreshold(0.8f)
 	, m_stick_min_(0.0f)
 	, m_input_value_(FVector2D::ZeroVector)
 	, m_name_("")
@@ -689,7 +690,12 @@ void AChair::SetSlipPower(const float _deltatime)
 				m_projectile_movement_->bSimulationEnabled = true;
 				UE_LOG(LogTemp, Warning, TEXT("[Chair] min = %f, max = %f, mag = %f (%f)"), m_stick_min_, m_stick_max_, speedAlpha, m_projectile_movement_->Velocity.X);
 				SetPhase(EPhase::kSlip);
+				
+				// À‹µƒRƒƒ“ƒg
+				ECommentID comment;
+				comment = speedAlpha > 0.8f ? ECommentID::LC_4_2 : ECommentID::LC_5_1;
 
+				// ’l‚Ì‰Šú‰»
 				stickFrameCnt = 0;
 				totalDeltaTime = 0.0f;
 				m_stick_slide_time_ = 0.0f;
