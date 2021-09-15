@@ -92,6 +92,8 @@
 //			2021/09/13 渡邊龍音 スティック移動をしやすく、仕様通りに変更
 //			2021/09/14 尾崎蒼宙 m_end_phase_flag_ を追加
 //					   渡邊龍音 タイミングに合わせて実況の追加
+//			2021/09/14 尾崎蒼宙 m_end_phase_flag_ を削除
+//								m_chair_reflection_を追加
 //--------------------------------------------------------------
 #pragma once
 
@@ -145,7 +147,8 @@ private:
 
 	bool m_is_input_add_slip_power_;				// 速度を増やすボタンが押されたかどうか
 	
-	bool m_end_phase_flag_;							// EndPhase時にコンポーネントの速度を初期化する変数
+
+	bool m_chair_reflection_;						// 椅子に当たった時に反射状態にさせるフラグ
 	bool m_hit_wall_;								// 壁に当たったかどうか
 	bool m_is_sweep_;								// スウィープボタンを押したかどうか
 	bool m_stick_up;								// スティック上入力

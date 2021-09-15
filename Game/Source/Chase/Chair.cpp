@@ -50,6 +50,7 @@
 //			2021/09/13 渡邊龍音 スティック移動をしやすく、仕様通りに変更
 //								移動コンポーネントをFloatPawnMovementからProjectileMovementに変更
 //			2021/09/14 尾崎蒼宙 End時にTickでVelocity = Zerovectorにしている処理を初回時のみに変更
+//			2021/09/15 尾崎蒼宙 椅子に当たった時にフラグを追加し、End時にif文で減速に関する分岐処理の作成
 //--------------------------------------------------------------
 
 #include "Chair.h"
@@ -61,7 +62,8 @@
 // Sets default values
 AChair::AChair()
 // private
-	: m_is_input_add_slip_power_(false)
+	: m_chair_reflection_(false)
+	, m_is_input_add_slip_power_(false)
 	, m_hit_wall_(false)
 	, m_is_sweep_(false)
 	, m_phase_(EPhase::kStay)
@@ -271,14 +273,31 @@ void AChair::Tick(float DeltaTime)
 			m_audiocomponent_->Stop();
 		}
 
-		if (m_projectile_movement_->Velocity.X < 0.f)
+		if (m_chair_reflection_)
 		{
-			m_projectile_movement_->Velocity = FVector::ZeroVector;
+			if (m_projectile_movement_->Velocity.X < 0.f)
+			{
+				Deceleration(DeltaTime);
+			}
+			else if (m_projectile_movement_->Velocity.X > 0.f)
+			{
+				m_projectile_movement_->Velocity = FVector::ZeroVector;
+				// 反射移動が終わった為falseにして次回以降ぶつかられた際もDecelerationで正しい減速処理が行われるようにする
+				m_chair_reflection_ = false;
+			}
 		}
-		else if(m_projectile_movement_->Velocity.X > 0.f)
+		else
 		{
-			Deceleration(DeltaTime);
+			if (m_projectile_movement_->Velocity.X < 0.f)
+			{
+				m_projectile_movement_->Velocity = FVector::ZeroVector;
+			}
+			else if (m_projectile_movement_->Velocity.X > 0.f)
+			{
+				Deceleration(DeltaTime);
+			}
 		}
+
 	}
 
 	m_is_input_add_slip_power_ = false;
@@ -389,11 +408,7 @@ void AChair::ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 
 			// 椅子に当てられた為trueに
 			Cast<AChair>(OtherActor)->m_ishit_ = true;
-
-			UE_LOG(LogTemp, Warning, TEXT("----------------------------------------------------------------------------------"));
-			UE_LOG(LogTemp, Warning, TEXT("m_forward_vec_ : X = %f, Y = %f, Z = %f"), m_forward_vec_.X, m_forward_vec_.Y, m_forward_vec_.Z);
-			UE_LOG(LogTemp, Warning, TEXT("m_projectile_movement_->Velocity : X = %f, Y = %f, Z = %f"), m_projectile_movement_->Velocity.X, m_projectile_movement_->Velocity.Y, m_projectile_movement_->Velocity.Z);
-			UE_LOG(LogTemp, Warning, TEXT("----------------------------------------------------------------------------------"));
+			m_chair_reflection_ = true;
 
 			// 当たった椅子に速度を与える(現状前方向ベクトルと速度で計算)
 			//Cast<AChair>(OtherActor)->m_floating_pawn_movement_->Velocity = m_pplayermesh_->GetForwardVector() * m_floating_pawn_movement_->Velocity * m_is_movement_scale_;
@@ -427,7 +442,7 @@ void AChair::ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 	}
 
 	// 壁にあたった時
-	if (OtherComp->ComponentHasTag("Wall") && m_hit_wall_ == false)
+	if (OtherComp->ComponentHasTag("Wall") && m_hit_wall_ == false || Cast<AChair>(OtherActor))
 	{
 		m_hit_wall_ = true;
 
@@ -586,14 +601,21 @@ void AChair::Deceleration(const float _deltatime)
 		//m_projectile_movement_->Velocity.X -= m_deceleration_val_ * _deltatime;
 		if (m_projectile_movement_->Velocity.X > 0.0f)
 		{
+			// 衝突された側の椅子の処理
 			if (m_ishit_)
 			{
 				m_projectile_movement_->AddForce(FVector(-m_deceleration_val_ / m_is_movement_scale_, 0.0f, 0.0f));
 			}
+			// 通常時の減速処理
 			else
 			{
 				m_projectile_movement_->AddForce(FVector(-m_deceleration_val_, 0.0f, 0.0f));
 			}
+		}
+		// 衝突した側の椅子の処理
+		else if(m_projectile_movement_->Velocity.X < 0.0f && m_chair_reflection_)
+		{
+			m_projectile_movement_->AddForce(FVector(m_deceleration_val_, 0.f, 0.0f));
 		}
 
 		if (m_projectile_movement_->Velocity.X <= 0.f && m_phase_ == EPhase::kSlip)
