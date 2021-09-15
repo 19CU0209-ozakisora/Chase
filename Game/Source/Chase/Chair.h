@@ -170,6 +170,7 @@ private:
 	void Deceleration(const float _deltatime);		// 減速処理
 	void PlayerSweep(const float _deltatime);		// deltatime処理はしています
 	void SetSlipPower(const float _deltatime);		// 滑る時の速度調整
+	void SetCommentary(const TArray<ECommentID> _commentArray);	// ウィジェットにコメントを追加する
 
 	// カプセルコンポーネントを参照している為同じものをBPに追加
 	UFUNCTION()
@@ -239,8 +240,8 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		float m_SlipPowerMax;												// 滑らせるパワーの最大倍率
 	
-	UPROPERTY(EditAnywhere, Category = "Commentary")
-		float m_PowerThreshold;												// 滑らせるパワーの最大倍率
+	UPROPERTY(EditAnywhere, Category = "Commentary|Throw")
+		float m_PowerThreshold;												// ウィジェットを表示するしきい値
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default Setting")
 		FVector2D m_input_value_;						// 入力値
@@ -261,10 +262,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		UProjectileMovementComponent* m_projectile_movement_;				// FloatingPawnMovementコンポーネント
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Commentary")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Commentary|Throw")
 		TArray<ECommentID> m_throwStrongComment;								// 強く投げた時
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Commentary")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Commentary|Throw")
 		TArray<ECommentID> m_throwWeakComment;									// 弱く投げた時
 
 	UPROPERTY()
