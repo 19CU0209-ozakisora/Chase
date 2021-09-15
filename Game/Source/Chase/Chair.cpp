@@ -722,14 +722,30 @@ void AChair::SetSlipPower(const float _deltatime)
 	{
 		// À‹µƒRƒƒ“ƒg
 		TArray<ECommentID> commentArray;
-		commentArray = speedAlpha > 0.8f ? m_throwStrongComment : m_throwWeakComment;
-		LiveComment(commentArray[0], 10.0f);
+		commentArray = speedAlpha > m_PowerThreshold ? m_throwStrongComment : m_throwWeakComment;
+
+		SetCommentary(commentArray);
 
 		// ’l‚Ì‰Šú‰»
 		stickFrameCnt = 0;
 		totalDeltaTime = 0.0f;
 		m_stick_slide_time_ = 0.0f;
 		m_stick_up = false;
+	}
+}
+
+void AChair::SetCommentary(const TArray<ECommentID> _commentArray)
+{
+	if (_commentArray.Num() > 0)
+	{
+		for (ECommentID id : _commentArray)
+		{
+			LiveComment(id, 10.0f);
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Chair] comment is not set."));
 	}
 }
 
