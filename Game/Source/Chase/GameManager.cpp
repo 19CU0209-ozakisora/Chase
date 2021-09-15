@@ -101,16 +101,12 @@ void AGameManager::BeginPlay()
 	//インスタンスで宣言した変数の初期化
 	Instance->m_teamPoint1P = 0;
 	Instance->m_teamPoint2P = 0;
-	Instance->m_chairEachPoint1P_1 = 0;
-	Instance->m_chairEachPoint1P_2 = 0;
-	Instance->m_chairEachPoint1P_3 = 0;
-	Instance->m_chairEachPoint1P_4 = 0;
-	Instance->m_chairEachPoint1P_5 = 0;
-	Instance->m_chairEachPoint2P_1 = 0;
-	Instance->m_chairEachPoint2P_2 = 0;
-	Instance->m_chairEachPoint2P_3 = 0;
-	Instance->m_chairEachPoint2P_4 = 0;
-	Instance->m_chairEachPoint2P_5 = 0;
+	Instance->m_chairGet10P_1P = 0;
+	Instance->m_chairGet30P_1P = 0;
+	Instance->m_chairGet50P_1P = 0;
+	Instance->m_chairGet10P_2P = 0;
+	Instance->m_chairGet30P_2P = 0;
+	Instance->m_chairGet50P_2P = 0;
 
 	if (Instance)
 	{
@@ -383,23 +379,16 @@ void AGameManager::AddScore()
 							//チームの合計得点を加算
 							Instance->m_teamPoint1P += m_chairs_[i]->m_pscore_obj_[0]->m_score_;
 
-							//椅子カウント用変数の値を確認し、その値によって椅子のそれぞれの得点を格納
-							switch (m_countChair1P)
+							switch (m_chairs_[i]->m_pscore_obj_[0]->m_score_)
 							{
-							case 0:
-								Instance->m_chairEachPoint1P_1 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;								
+							case 10:
+								Instance->m_chairGet10P_1P++;
 								break;
-							case 1:
-								Instance->m_chairEachPoint1P_2 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;							
+							case 30:
+								Instance->m_chairGet30P_1P++;
 								break;
-							case 2:
-								Instance->m_chairEachPoint1P_3 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;
-								break;
-							case 3:
-								Instance->m_chairEachPoint1P_4 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;								
-								break;
-							case 4:
-								Instance->m_chairEachPoint1P_5 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;								
+							case 50:
+								Instance->m_chairGet50P_1P++;
 								break;
 							default:
 								break;
@@ -410,23 +399,16 @@ void AGameManager::AddScore()
 							//チームの合計得点を加算
 							Instance->m_teamPoint2P += m_chairs_[i]->m_pscore_obj_[0]->m_score_;
 
-							//椅子カウント用変数の値を確認し、その値によって椅子のそれぞれの得点を格納
-							switch (m_countChair2P)
+							switch (m_chairs_[i]->m_pscore_obj_[0]->m_score_)
 							{
-							case 0:
-								Instance->m_chairEachPoint2P_1 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;								
+							case 10:
+								Instance->m_chairGet10P_2P++;
 								break;
-							case 1:
-								Instance->m_chairEachPoint2P_2 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;								
+							case 30:
+								Instance->m_chairGet30P_2P++;
 								break;
-							case 2:
-								Instance->m_chairEachPoint2P_3 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;								
-								break;
-							case 3:
-								Instance->m_chairEachPoint2P_4 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;								
-								break;
-							case 4:
-								Instance->m_chairEachPoint2P_5 = m_chairs_[i]->m_pscore_obj_[0]->m_score_;								
+							case 50:
+								Instance->m_chairGet50P_2P++;
 								break;
 							default:
 								break;
@@ -446,23 +428,16 @@ void AGameManager::AddScore()
 							//チームの合計得点を加算
 							Instance->m_teamPoint1P += m_chairs_[i]->m_pscore_obj_[1]->m_score_;
 
-							//椅子カウント用変数の値を確認し、その値によって椅子のそれぞれの得点を格納
-							switch (m_countChair1P)
+							switch (m_chairs_[i]->m_pscore_obj_[1]->m_score_)
 							{
-							case 0:
-								Instance->m_chairEachPoint1P_1 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
+							case 10:
+								Instance->m_chairGet10P_1P++;
 								break;
-							case 1:
-								Instance->m_chairEachPoint1P_2 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
+							case 30:
+								Instance->m_chairGet30P_1P++;
 								break;
-							case 2:
-								Instance->m_chairEachPoint1P_3 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
-								break;
-							case 3:
-								Instance->m_chairEachPoint1P_4 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
-								break;
-							case 4:
-								Instance->m_chairEachPoint1P_5 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
+							case 50:
+								Instance->m_chairGet50P_1P++;
 								break;
 							default:
 								break;
@@ -473,23 +448,16 @@ void AGameManager::AddScore()
 							//チームの合計得点を加算
 							Instance->m_teamPoint2P += m_chairs_[i]->m_pscore_obj_[1]->m_score_;
 
-							//椅子カウント用変数の値を確認し、その値によって椅子のそれぞれの得点を格納
-							switch (m_countChair2P)
+							switch (m_chairs_[i]->m_pscore_obj_[1]->m_score_)
 							{
-							case 0:
-								Instance->m_chairEachPoint2P_1 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
+							case 10:
+								Instance->m_chairGet10P_2P++;
 								break;
-							case 1:
-								Instance->m_chairEachPoint2P_2 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
+							case 30:
+								Instance->m_chairGet30P_2P++;
 								break;
-							case 2:
-								Instance->m_chairEachPoint2P_3 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
-								break;
-							case 3:
-								Instance->m_chairEachPoint2P_4 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
-								break;
-							case 4:
-								Instance->m_chairEachPoint2P_5 = m_chairs_[i]->m_pscore_obj_[1]->m_score_;								
+							case 50:
+								Instance->m_chairGet50P_2P++;
 								break;
 							default:
 								break;
@@ -520,16 +488,6 @@ void AGameManager::AddScore()
 
 	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_countChair1P %d"), m_countChair1P);
 	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_countChair2P %d"), m_countChair2P);
-	/*UE_LOG(LogTemp, Warning, TEXT("Instance->1P_1 %d"), Instance->m_chairEachPoint1P_1);
-	UE_LOG(LogTemp, Warning, TEXT("Instance->1P_2 %d"), Instance->m_chairEachPoint1P_2);
-	UE_LOG(LogTemp, Warning, TEXT("Instance->1P_3 %d"), Instance->m_chairEachPoint1P_3);
-	UE_LOG(LogTemp, Warning, TEXT("Instance->1P_4 %d"), Instance->m_chairEachPoint1P_4);
-	UE_LOG(LogTemp, Warning, TEXT("Instance->1P_5 %d"), Instance->m_chairEachPoint1P_5);
-	UE_LOG(LogTemp, Warning, TEXT("Instance->2P_1 %d"), Instance->m_chairEachPoint2P_1);
-	UE_LOG(LogTemp, Warning, TEXT("Instance->2P_2 %d"), Instance->m_chairEachPoint2P_2);
-	UE_LOG(LogTemp, Warning, TEXT("Instance->2P_3 %d"), Instance->m_chairEachPoint2P_3);
-	UE_LOG(LogTemp, Warning, TEXT("Instance->2P_4 %d"), Instance->m_chairEachPoint2P_4);
-	UE_LOG(LogTemp, Warning, TEXT("Instance->2P_5 %d"), Instance->m_chairEachPoint2P_5);*/
 	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_teamPoint1P %d"), Instance->m_teamPoint1P);
 	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_teamPoint2P %d"), Instance->m_teamPoint2P);
 

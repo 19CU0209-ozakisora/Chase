@@ -41,28 +41,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		UUserWidget* commentWidget;
 
-	//各得点格納用
-	//ウィジェットが不可変配列非対応、TArray型だと取得した得点の型が合わないため、
-	//無理やりではあるがそれぞれの得点配列を追加。直せれば直す。
 	UPROPERTY(BlueprintReadWrite)
-		int m_chairEachPoint1P_1 = 0;
+		int m_chairGet10P_1P = 0;
 	UPROPERTY(BlueprintReadWrite)
-		int m_chairEachPoint1P_2 = 0;
+		int m_chairGet30P_1P = 0;
 	UPROPERTY(BlueprintReadWrite)
-		int m_chairEachPoint1P_3 = 0;
+		int m_chairGet50P_1P = 0;
 	UPROPERTY(BlueprintReadWrite)
-		int m_chairEachPoint1P_4 = 0;
+		int m_chairGet10P_2P = 0;
 	UPROPERTY(BlueprintReadWrite)
-		int m_chairEachPoint1P_5 = 0;
+		int m_chairGet30P_2P = 0;
 	UPROPERTY(BlueprintReadWrite)
-		int m_chairEachPoint2P_1 = 0;
-	UPROPERTY(BlueprintReadWrite)
-		int m_chairEachPoint2P_2 = 0;
-	UPROPERTY(BlueprintReadWrite)
-		int m_chairEachPoint2P_3 = 0;
-	UPROPERTY(BlueprintReadWrite)
-		int m_chairEachPoint2P_4 = 0;
-	UPROPERTY(BlueprintReadWrite)
-		int m_chairEachPoint2P_5 = 0;
+		int m_chairGet50P_2P = 0;
 
 };
