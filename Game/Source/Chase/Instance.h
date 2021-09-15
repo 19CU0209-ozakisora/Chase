@@ -44,14 +44,14 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 		int m_chairGet10P_1P = 0;
 	UPROPERTY(BlueprintReadWrite)
-		int m_chairGet30P_1P = 0;
+		int m_chairGet20P_1P = 0;
 	UPROPERTY(BlueprintReadWrite)
-		int m_chairGet50P_1P = 0;
+		int m_chairGet30P_1P = 0;
 	UPROPERTY(BlueprintReadWrite)
 		int m_chairGet10P_2P = 0;
 	UPROPERTY(BlueprintReadWrite)
-		int m_chairGet30P_2P = 0;
+		int m_chairGet20P_2P = 0;
 	UPROPERTY(BlueprintReadWrite)
-		int m_chairGet50P_2P = 0;
+		int m_chairGet30P_2P = 0;
 
 };
