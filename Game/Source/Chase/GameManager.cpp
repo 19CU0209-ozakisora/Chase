@@ -102,11 +102,11 @@ void AGameManager::BeginPlay()
 	Instance->m_teamPoint1P = 0;
 	Instance->m_teamPoint2P = 0;
 	Instance->m_chairGet10P_1P = 0;
+	Instance->m_chairGet20P_1P = 0;
 	Instance->m_chairGet30P_1P = 0;
-	Instance->m_chairGet50P_1P = 0;
 	Instance->m_chairGet10P_2P = 0;
+	Instance->m_chairGet20P_2P = 0;
 	Instance->m_chairGet30P_2P = 0;
-	Instance->m_chairGet50P_2P = 0;
 
 	if (Instance)
 	{
@@ -384,11 +384,11 @@ void AGameManager::AddScore()
 							case 10:
 								Instance->m_chairGet10P_1P++;
 								break;
+							case 20:
+								Instance->m_chairGet20P_1P++;
+								break;
 							case 30:
 								Instance->m_chairGet30P_1P++;
-								break;
-							case 50:
-								Instance->m_chairGet50P_1P++;
 								break;
 							default:
 								break;
@@ -404,11 +404,11 @@ void AGameManager::AddScore()
 							case 10:
 								Instance->m_chairGet10P_2P++;
 								break;
+							case 20:
+								Instance->m_chairGet20P_2P++;
+								break;
 							case 30:
 								Instance->m_chairGet30P_2P++;
-								break;
-							case 50:
-								Instance->m_chairGet50P_2P++;
 								break;
 							default:
 								break;
@@ -433,11 +433,11 @@ void AGameManager::AddScore()
 							case 10:
 								Instance->m_chairGet10P_1P++;
 								break;
+							case 20:
+								Instance->m_chairGet20P_1P++;
+								break;
 							case 30:
 								Instance->m_chairGet30P_1P++;
-								break;
-							case 50:
-								Instance->m_chairGet50P_1P++;
 								break;
 							default:
 								break;
@@ -453,11 +453,11 @@ void AGameManager::AddScore()
 							case 10:
 								Instance->m_chairGet10P_2P++;
 								break;
+							case 20:
+								Instance->m_chairGet20P_2P++;
+								break;
 							case 30:
 								Instance->m_chairGet30P_2P++;
-								break;
-							case 50:
-								Instance->m_chairGet50P_2P++;
 								break;
 							default:
 								break;
