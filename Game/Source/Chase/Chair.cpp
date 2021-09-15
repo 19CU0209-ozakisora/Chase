@@ -472,7 +472,6 @@ void AChair::SetPhase(const EPhase _phase)
 		m_stick_min_ = 0.0f;
 		m_stick_max_ = 0.0f;
 
-		//m_target_point_location_ = m_target_point_mesh_->GetComponentLocation();
 		if (m_parrow_ != NULL)
 		{
 			Cast<USceneComponent>(m_target_point_mesh_)->DestroyComponent();
@@ -587,7 +586,14 @@ void AChair::Deceleration(const float _deltatime)
 		//m_projectile_movement_->Velocity.X -= m_deceleration_val_ * _deltatime;
 		if (m_projectile_movement_->Velocity.X > 0.0f)
 		{
-			m_projectile_movement_->AddForce(FVector(-m_deceleration_val_, 0.0f, 0.0f));
+			if (m_ishit_)
+			{
+				m_projectile_movement_->AddForce(FVector(-m_deceleration_val_ / m_is_movement_scale_, 0.0f, 0.0f));
+			}
+			else
+			{
+				m_projectile_movement_->AddForce(FVector(-m_deceleration_val_, 0.0f, 0.0f));
+			}
 		}
 
 		if (m_projectile_movement_->Velocity.X <= 0.f && m_phase_ == EPhase::kSlip)
@@ -658,7 +664,6 @@ void AChair::SetSlipPower(const float _deltatime)
 	// スティックが一番したまで引かれたら処理
 	if (m_input_value_.Y < 0.f)
 	{
-		// UE_LOG(LogTemp, Error, TEXT("%f"), m_input_value_.Y);
 		// カウントスタート
 		FrameCountStart = true;
 
