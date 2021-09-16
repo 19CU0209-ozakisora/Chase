@@ -43,6 +43,16 @@ enum class ECommentID : uint8
 	C_9			UMETA(DisplayName = "9_C"	, ToolTip = "Event 2")	,
 };
 
+// LiveCommentaryWidget—p‚Ì—ñ‹“Œ^
+UENUM(BlueprintType)
+enum class ECommentaryTextBox : uint8
+{
+	LineTextBox = 0		UMETA(ToolTip = "LineTextBox"),
+	NameTextBox			UMETA(ToolTip = "NameTextBox"),
+	ColonTextBox		UMETA(ToolTip = "ColonTextBox"),
+	CommentTextBox		UMETA(ToolTip = "CommentTextBox"),
+};
+
 UCLASS()
 class CHASE_API UEnumObject : public UObject
 {
