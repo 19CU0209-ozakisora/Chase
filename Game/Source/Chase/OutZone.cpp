@@ -39,9 +39,6 @@ AOutZone::AOutZone()
 	TargetStart = CreateDefaultSubobject<UChildActorComponent>(TEXT("Start"));
 	TargetEnd = CreateDefaultSubobject<UChildActorComponent>(TEXT("End"));
 
-	TargetStart->SetChildActorClass(ATargetPoint::StaticClass());
-	TargetEnd->SetChildActorClass(ATargetPoint::StaticClass());
-
 	TargetStart->SetRelativeLocation(FVector(-100.0f, 0.0f, 0.0f));
 	TargetEnd->SetRelativeLocation(FVector(100.0f, 0.0f, 0.0f));
 
@@ -69,6 +66,14 @@ void AOutZone::BeginPlay()
 	{
 		deleteChair.Add(Cast<AChair>(act));
 	}
+}
+
+void AOutZone::PostInitializeCompenents()
+{
+	Super::PostInitializeComponents();
+
+	TargetStart->SetChildActorClass(ATargetPoint::StaticClass());
+	TargetEnd->SetChildActorClass(ATargetPoint::StaticClass());
 }
 
 void AOutZone::Tick(float DeltaTime)
