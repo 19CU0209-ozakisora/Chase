@@ -7,6 +7,7 @@
 //		　：2021/08/18 渡邊龍音 UIの表示
 //		　：2021/09/10 渡邊龍音 Chair型にキャストしChairのm_Phaseを調べるように
 //							　  当たり判定ではなくTargetPointで範囲を指定するように
+//			2021/09/16 渡邊龍音 パッケージ化でエラーが起きるためTargetPointからSceneComponentへ
 //--------------------------------------------------------------
 
 #include "OutZone.h"
@@ -36,11 +37,14 @@ AOutZone::AOutZone()
 	*/
 
 	// TargetPointの設定
-	TargetStart = CreateDefaultSubobject<UChildActorComponent>(TEXT("Start"));
-	TargetEnd = CreateDefaultSubobject<UChildActorComponent>(TEXT("End"));
+	TargetStart = CreateDefaultSubobject<UArrowComponent>(TEXT("Start"));
+	TargetEnd = CreateDefaultSubobject<UArrowComponent>(TEXT("End"));
 
-	TargetStart->SetRelativeLocation(FVector(-100.0f, 0.0f, 0.0f));
-	TargetEnd->SetRelativeLocation(FVector(100.0f, 0.0f, 0.0f));
+	TargetStart->SetRelativeLocation(FVector(100.0f, 0.0f, 100.0f));
+	TargetEnd->SetRelativeLocation(FVector(100.0f, 0.0f, 100.0f));
+
+	TargetStart->SetRelativeRotation(FRotator(-90.0f, 0.0f, 0.0f));
+	TargetEnd->SetRelativeRotation(FRotator(-90.0f, 0.0f, 0.0f));
 
 	TargetStart->SetupAttachment(RootComponent);
 	TargetEnd->SetupAttachment(RootComponent);
@@ -66,14 +70,6 @@ void AOutZone::BeginPlay()
 	{
 		deleteChair.Add(Cast<AChair>(act));
 	}
-}
-
-void AOutZone::PostInitializeCompenents()
-{
-	Super::PostInitializeComponents();
-
-	TargetStart->SetChildActorClass(ATargetPoint::StaticClass());
-	TargetEnd->SetChildActorClass(ATargetPoint::StaticClass());
 }
 
 void AOutZone::Tick(float DeltaTime)

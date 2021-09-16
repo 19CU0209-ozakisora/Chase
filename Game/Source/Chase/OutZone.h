@@ -7,6 +7,7 @@
 //		　：2021/08/18 渡邊龍音 UIの表示
 //		　：2021/09/10 渡邊龍音 Chair型にキャストしChairのm_Phaseを調べるように
 //							　  当たり判定ではなくTargetPointで範囲を指定するように
+//			2021/09/16 渡邊龍音 パッケージ化でエラーが起きるためTargetPointからSceneComponentへ
 //--------------------------------------------------------------
 
 
@@ -16,7 +17,7 @@
 #include "Chair.h"
 #include "Blueprint/UserWidget.h"
 #include "Engine/TargetPoint.h"
-#include "Components/ChildActorComponent.h"
+#include "Components/ArrowComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/Actor.h"
 #include "OutZone.generated.h"
@@ -40,8 +41,6 @@ private:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	virtual void PostInitializeCompenents();
 	
 public:
 	UFUNCTION(BlueprintCallable)
@@ -55,10 +54,10 @@ public:
 		USceneComponent* Root;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		UChildActorComponent* TargetStart;
+		UArrowComponent* TargetStart;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		UChildActorComponent* TargetEnd;
+		UArrowComponent* TargetEnd;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TSubclassOf<UUserWidget> outWidget;
