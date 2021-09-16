@@ -36,6 +36,8 @@ enum class ECommentID : uint8
 	C_7_1		UMETA(DisplayName = "7_1_C"	, ToolTip = "In outzone"),
 	C_7_2		UMETA(DisplayName = "7_2_C"	, ToolTip = "In outzone"),
 	LC_8		UMETA(DisplayName = "8_LC"	, ToolTip = "Event 1")	,
+	LC_8_1		UMETA(DisplayName = "8_1_LC", ToolTip = "Event 1"),
+	LC_8_2		UMETA(DisplayName = "8_2_LC", ToolTip = "Event 1"),
 	C_8			UMETA(DisplayName = "8_C"	, ToolTip = "Event 1")	,
 	LC_9		UMETA(DisplayName = "9_LC"	, ToolTip = "Event 2")	,
 	C_9			UMETA(DisplayName = "9_C"	, ToolTip = "Event 2")	,
