@@ -95,6 +95,7 @@
 //			2021/09/14 尾崎蒼宙 m_end_phase_flag_ を削除
 //								m_chair_reflection_を追加
 //			2021/09/15 渡邊龍音 実況の追加のためにアウトゾーンに居るのかどうかをチェックする変数を追加
+// //		2021/09/16 渡邊龍音 スティックの下方向入力を今までの最低値ではなく、発射する数フレーム前の値を使用するように変更
 //--------------------------------------------------------------
 #pragma once
 
@@ -160,10 +161,12 @@ private:
 	float m_player_spin_value_;						// 現在何度分の回転量が入っているか
 	float m_before_slip_rotation_;					// 前フレームの角度
 	float m_stick_slide_time_;						// スティックを倒すのにかかった時間
-	float m_stick_min_;								// 左スティック最小値
+	float m_stick_down_;								// 左スティック最大値
 	float m_stick_max_;								// 左スティック最大値
 	FVector m_forward_vec_;							// 前方向ベクトル
 	//FVector m_target_point_location_;				// 目標地点の座標
+
+	TArray<float> m_stick_minArray;								// 左スティック最小値
 
 	UAudioComponent* m_audiocomponent_;				//音楽を入れるコンポーネント
 
@@ -209,6 +212,12 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		int m_stickUpFrame;												// スティックの上入力の猶予フレーム
+
+	UPROPERTY(EditAnywhere, Category = "Default Setting")
+		int m_stickDownFrame;												// どのぐらい前のスティックの下入力の値を適用するか
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		float m_StopVectorX;											// この速度以下なら停止とみなす
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		float m_default_speed_;											// 椅子の初期速度
@@ -308,7 +317,7 @@ public:
 		bool GetIsSweep() { return m_is_sweep_; }
 
 	UFUNCTION(BlueprintPure, Category = "MyF")
-		float GetStickValueMin() { return m_stick_min_; }
+		float GetStickValueDown() { return m_stick_down_; }
 
 	UFUNCTION(BlueprintPure, Category = "MyF")
 		float GetStickValueMax() { return m_stick_max_; }
