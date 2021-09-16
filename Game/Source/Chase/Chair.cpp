@@ -62,8 +62,10 @@
 AChair::AChair()
 // private
 	: m_is_input_add_slip_power_(false)
+	, m_addComment(false)
 	, m_hit_wall_(false)
 	, m_is_sweep_(false)
+	, m_IsOutZone(false)
 	, m_phase_(EPhase::kStay)
 	, m_wall_time(0.f)
 	, m_player_spin_value_(0.f)
@@ -278,6 +280,19 @@ void AChair::Tick(float DeltaTime)
 		else if(m_projectile_movement_->Velocity.X > 0.f)
 		{
 			Deceleration(DeltaTime);
+		}
+
+		if (!m_addComment)
+		{
+			if (m_IsOutZone)
+			{
+				SetCommentary(m_OutZoneComment);
+			}
+			else
+			{
+				SetCommentary(m_InHouseComment);
+			}
+			m_addComment = true;
 		}
 	}
 

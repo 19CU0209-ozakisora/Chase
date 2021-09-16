@@ -85,6 +85,7 @@ void AOutZone::Tick(float DeltaTime)
 				// ’âŽ~ó‘Ô‚Å‚ ‚ê‚Îíœ
 				if (deleteChair[i] != nullptr && deleteChair[i]->GetActorLocation().X >= TargetStart->GetComponentLocation().X && deleteChair[i]->GetActorLocation().X <= TargetEnd->GetComponentLocation().X && deleteChair[i]->GetPhase() == EPhase::kEnd)
 				{
+					deleteChair[i]->SetIsOutZone(true);
 					DeleteActor(deleteChair[i]);
 				}
 			}
