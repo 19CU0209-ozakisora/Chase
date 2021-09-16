@@ -24,6 +24,8 @@ NL,[改行コード],"
 7_2_C,解,厳しい戦いになりそうですね,SoundWave'/Game/Voice/Commentary/07_02.07_02',
 8_LC,実,"おっと、ここでアクシデントが発生しました！女子がコースに入ってきます。
 あーっと！転んでしまったー。床が水浸しだー。",SoundWave'/Game/Voice/LiveCommnentary/08.08',イベント１で女子が廊下に侵入した時。
+8_1_LC,実,おっと、ここでアクシデントが発生しました！女子がコースに入ってきます。,SoundWave'/Game/Voice/LiveCommnentary/08_01.08_01',
+8_2_LC,実,あーっと！転んでしまったー。床が水浸しだー。,SoundWave'/Game/Voice/LiveCommnentary/08_02.08_02',
 8_C,解,水の上はスピンがやりにくそうですね。,SoundWave'/Game/Voice/Commentary/08.08',
 9_LC,実,先ほどの床を透かさず男子が拭きに来ました。女子に優しい男子はモテます！,SoundWave'/Game/Voice/LiveCommnentary/09.09',イベント２で男子が廊下に侵入した時。
 9_C,解,磨かれた床は余計に滑りそうですね。私も拭きに参加したいです！,SoundWave'/Game/Voice/Commentary/09.09',
