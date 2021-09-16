@@ -94,6 +94,7 @@
 //					   渡邊龍音 タイミングに合わせて実況の追加
 //			2021/09/14 尾崎蒼宙 m_end_phase_flag_ を削除
 //								m_chair_reflection_を追加
+//			2021/09/15 渡邊龍音 実況の追加のためにアウトゾーンに居るのかどうかをチェックする変数を追加
 //--------------------------------------------------------------
 #pragma once
 
@@ -146,12 +147,14 @@ public:
 private:
 
 	bool m_is_input_add_slip_power_;				// 速度を増やすボタンが押されたかどうか
-	
 
 	bool m_chair_reflection_;						// 椅子に当たった時に反射状態にさせるフラグ
+	bool m_addComment;								// 実況のコメントを追加したかどうか
+	bool m_end_phase_flag_;							// EndPhase時にコンポーネントの速度を初期化する変数
 	bool m_hit_wall_;								// 壁に当たったかどうか
 	bool m_is_sweep_;								// スウィープボタンを押したかどうか
 	bool m_stick_up;								// スティック上入力
+	bool m_IsOutZone;								// アウトゾーンにいるかどうか
 	EPhase m_phase_;								// 現在のフェーズ格納用
 	float m_wall_time;								// 壁に当たった時間
 	float m_player_spin_value_;						// 現在何度分の回転量が入っているか
@@ -271,6 +274,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Commentary|Throw")
 		TArray<ECommentID> m_throwWeakComment;									// 弱く投げた時
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Commentary|Stop")
+		TArray<ECommentID> m_OutZoneComment;									// アウトゾーン
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Commentary|Stop")
+		TArray<ECommentID> m_InHouseComment;									// ハウス
+
 	UPROPERTY()
 		USoundBase* m_deside_sound_;									//サウンドを入れるコンポーネント
 																		//決定音
@@ -306,6 +315,12 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "MyF")
 		void LiveComment(ECommentID commentID, float voiceVolume);
+
+	UFUNCTION(BlueprintCallable)
+		void SetIsOutZone(bool _InOutZone)
+	{
+		m_IsOutZone = _InOutZone;
+	}
 
 
 //☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
