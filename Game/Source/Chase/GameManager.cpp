@@ -24,6 +24,8 @@
 //			2021/07/16 尾崎蒼宙 プレイヤーが止まっているマスに近い側の点数を加算する処理を追加
 //			2021/08/30 野田八雲 m_teamPoint1P/2PをInstanceに変更
 //			2021/09/07 野田八雲 各椅子がとった得点を計算する変数追加（ウィジェット出力用）
+//			2021/09/13 野田八雲 各得点版に椅子が何個乗ってるかを格納する処理に変更
+//			2021/09/17 野田八雲 09/07、09/13の件についてのコメント記入、09/07から不要になった変数の削除
 //--------------------------------------------------------------
 
 //インクルード
@@ -47,8 +49,6 @@ AGameManager::AGameManager()
 	, m_event_round_()
 	,m_teamPoint1P(0)
 	,m_teamPoint2P(0)
-	,m_countChair1P(0)
-	,m_countChair2P(0)
 	,m_thisLocation(FVector::ZeroVector)
 	, m_Player1Turn(0)
 	, m_Player2Turn(0)
@@ -379,6 +379,7 @@ void AGameManager::AddScore()
 							//チームの合計得点を加算
 							Instance->m_teamPoint1P += m_chairs_[i]->m_pscore_obj_[0]->m_score_;
 
+							//最終結果で各得点版に椅子が何個乗ってるかを表示するために必要。
 							switch (m_chairs_[i]->m_pscore_obj_[0]->m_score_)
 							{
 							case 10:
@@ -399,6 +400,7 @@ void AGameManager::AddScore()
 							//チームの合計得点を加算
 							Instance->m_teamPoint2P += m_chairs_[i]->m_pscore_obj_[0]->m_score_;
 
+							//最終結果で各得点版に椅子が何個乗ってるかを表示するために必要。
 							switch (m_chairs_[i]->m_pscore_obj_[0]->m_score_)
 							{
 							case 10:
@@ -428,6 +430,7 @@ void AGameManager::AddScore()
 							//チームの合計得点を加算
 							Instance->m_teamPoint1P += m_chairs_[i]->m_pscore_obj_[1]->m_score_;
 
+							//最終結果で各得点版に椅子が何個乗ってるかを表示するために必要。
 							switch (m_chairs_[i]->m_pscore_obj_[1]->m_score_)
 							{
 							case 10:
@@ -448,6 +451,7 @@ void AGameManager::AddScore()
 							//チームの合計得点を加算
 							Instance->m_teamPoint2P += m_chairs_[i]->m_pscore_obj_[1]->m_score_;
 
+							//最終結果で各得点版に椅子が何個乗ってるかを表示するために必要。
 							switch (m_chairs_[i]->m_pscore_obj_[1]->m_score_)
 							{
 							case 10:
@@ -471,23 +475,9 @@ void AGameManager::AddScore()
 		{
 			UE_LOG(LogTemp, Warning, TEXT("chair[%f] is NULL"), i);
 		}
-
-		//椅子が取った得点が0の場合、上の処理が通らないため、結果画面での何投目の椅子が何点
-		//取ったがが正しく表示されるように、ここで椅子のカウントを足す。
-		if (i % 2 == 0)
-		{
-			m_countChair1P++;
-		}
-		else if (i % 2 == 1)
-		{
-			m_countChair2P++;
-		}
 	}
-
-	//各椅子の得点、チーム合計得点のログ確認用（ここで出た得点がウィジェットに出力される）
-
-	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_countChair1P %d"), m_countChair1P);
-	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_countChair2P %d"), m_countChair2P);
+	
+	//ログ確認用
 	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_teamPoint1P %d"), Instance->m_teamPoint1P);
 	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_teamPoint2P %d"), Instance->m_teamPoint2P);
 

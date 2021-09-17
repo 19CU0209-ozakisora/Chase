@@ -7,10 +7,14 @@
 //			2021/08/31 野田八雲 チームごとの合計得点を格納する変数追加（ウィジェット出力用）
 //			2021/09/07 野田八雲 各椅子がとった得点を計算する変数追加（ウィジェット出力用）
 //			2021/09/09 渡邊龍音 実況のウィジェットを作成し、保持する
+//			2021/09/13 野田八雲 各得点版に椅子が何個乗ってるかを格納する処理に変更
+//			2021/09/13 野田八雲 ↑のコメント記入
 //--------------------------------------------------------------
 
+//インクルードカード
 #pragma once
 
+//インクルード
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "Blueprint/UserWidget.h"
@@ -41,6 +45,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		UUserWidget* commentWidget;
 
+	//各得点版に椅子が何個乗ってるかを格納する変数（結果画面で使用）
 	UPROPERTY(BlueprintReadWrite)
 		int m_chairGet10P_1P = 0;
 	UPROPERTY(BlueprintReadWrite)
