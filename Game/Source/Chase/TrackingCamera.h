@@ -14,6 +14,7 @@
 #include "Chair.h"
 #include "GameManager.h"
 #include "GameFramework/SpringArmComponent.h"	// スプリングアーム
+#include "Curves/CurveFloat.h"					// カーブコンポーネント追加
 #include "Camera/CameraComponent.h"
 #include "TrackingCamera.generated.h"
 
@@ -36,23 +37,36 @@ public:
 
 private:
 
+	bool m_switch_;
 	float m_leap_alpha_;
 	FVector m_input_tracking_offset_;
 	FVector m_temp_;
+	float m_time_cnt_;
 
 
 public:
 
 	UPROPERTY(EditAnyWhere, Category = "Default Setting")
+		float m_advance_time_;			// 前進時間
+
+	UPROPERTY(EditAnyWhere, Category = "Default Setting")
 		float m_time_;
+
+	UPROPERTY(EditAnyWhere, Category = "Default Setting")
+		float m_speed_;
 
 	UPROPERTY(EditAnyWhere, Category = "Default Setting")
 		FVector m_camera_offset_;
 
 	UPROPERTY(EditAnyWhere, Category = "Default Setting")
-		FVector m_max_input_tracking_offset_;					// スティック入力時の最大の引き具合
+		FVector m_max_recession_offset_;					// カメラの最大の引き
 
-	AChair* m_control_chair_;
+	UPROPERTY(EditAnyWhere, Category = "Default Setting")
+		FVector m_max_advance_offset_;					// カメラの最大の引き
+
+
+	UPROPERTY(EditAnyWhere, Category = "Default Setting")
+		AChair* m_control_chair_;
 
 	UPROPERTY(EditAnyWhere, BluePrintReadWrite, Category = "Information")
 		AGameManager* m_pgamemanager_;
@@ -62,4 +76,7 @@ public:
 
 	UPROPERTY(EditAnyWhere, Category = "Default Setting")
 		UCameraComponent* m_pcamera_component_;				// カメラのコンポーネント
+
+	UPROPERTY(EditAnyWhere, Category = "Default Setting")
+		UCurveFloat* m_padvance_curve_;		//	カーブ
 };

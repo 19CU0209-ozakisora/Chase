@@ -16,7 +16,6 @@ ATrackingCamera::ATrackingCamera()
 	, m_temp_(FVector::ZeroVector)
 	, m_time_(0.f)
 	, m_camera_offset_(FVector::ZeroVector)
-	, m_max_input_tracking_offset_(FVector::ZeroVector)
 	, m_control_chair_(NULL)
 	, m_pgamemanager_(NULL)
 	, m_pspringarm_component_(NULL)
@@ -52,35 +51,46 @@ void ATrackingCamera::Tick(float DeltaTime)
 
 		if (m_control_chair_->GetPhase() == EPhase::kPowerChange)
 		{
-			if (Inputvalue <= 0.f)
+			if (Inputvalue < 0.f)
 			{
-				m_input_tracking_offset_.X = m_max_input_tracking_offset_.X * FMath::Abs(Inputvalue);
-				m_input_tracking_offset_.Y = m_max_input_tracking_offset_.Y * FMath::Abs(Inputvalue);
-				m_input_tracking_offset_.Z = m_max_input_tracking_offset_.Z * FMath::Abs(Inputvalue);
+				m_input_tracking_offset_.X = m_max_recession_offset_.X * FMath::Abs(Inputvalue);
+				m_input_tracking_offset_.Y = m_max_recession_offset_.Y * FMath::Abs(Inputvalue);
+				m_input_tracking_offset_.Z = m_max_recession_offset_.Z * FMath::Abs(Inputvalue);
+				m_temp_ = m_input_tracking_offset_;
 			}
 			else
 			{
-				m_input_tracking_offset_.X = m_max_input_tracking_offset_.X * -Inputvalue / 4.f;
-				m_input_tracking_offset_.Y = m_max_input_tracking_offset_.Y * -Inputvalue / 4.f;
-				m_input_tracking_offset_.Z = m_max_input_tracking_offset_.Z * FMath::Abs(Inputvalue / 4.f);
-				m_temp_ = m_input_tracking_offset_;
+				m_input_tracking_offset_.X = 0.f;
+				m_input_tracking_offset_.Y = 0.f;
+				m_input_tracking_offset_.Z = 0.f;
 			}
 		}
 		else if (m_control_chair_->GetPhase() == EPhase::kSlip)
 		{
-
-			UE_LOG(LogTemp, Warning, TEXT("m_leap_alpha_ = %f"), m_leap_alpha_);
-			m_input_tracking_offset_ = FMath::Lerp(m_temp_, FVector::ZeroVector, m_leap_alpha_);
-
-			
-			if (m_leap_alpha_ <= 1.f)
+			if (!m_switch_)
 			{
-				m_leap_alpha_ += DeltaTime / m_time_;
-				if (m_leap_alpha_ > 1.f)
+				UE_LOG(LogTemp, Warning, TEXT("m_switch_ = false"));
+				m_advance_time_ += DeltaTime * m_speed_;
+				if (m_advance_time_ >= 1.f)
 				{
-					m_leap_alpha_ = 1.f;
+					m_advance_time_ = 1.f;
+					m_switch_ = true;
 				}
+				//float sin = FMath::Sin(m_advance_time_);
+				m_input_tracking_offset_ = FMath::Lerp(m_temp_, m_max_advance_offset_, m_padvance_curve_->GetFloatValue(m_advance_time_));
 			}
+			/*
+			else if (m_switch_)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("m_switch_ = true"));
+				m_advance_time_ -= DeltaTime * m_speed_;
+				if (m_advance_time_ <= 0.f)
+				{
+					m_advance_time_ = 0.f;
+				}
+				m_input_tracking_offset_ = FMath::Lerp(m_temp_, m_max_advance_offset_, FMath::Abs(m_advance_time_));
+			}
+			*/
 		}
 		
 
@@ -89,7 +99,5 @@ void ATrackingCamera::Tick(float DeltaTime)
 		//FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ChairLocation);
 		//SetActorRotation(Rotation);
 	}
-
-
 }
 
