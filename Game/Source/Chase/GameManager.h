@@ -126,11 +126,28 @@ public:
 	UPROPERTY(EditAnyWhere, BlueprintReadOnly)
 		int m_teamPoint1P;
 
-	//チームポイント（2P用）]
+	//チームポイント（2P用）
 	UPROPERTY(EditAnyWhere, BlueprintReadOnly)
 		int m_teamPoint2P;
 
+	//スコアトリガーの座標格納用
+	UFUNCTION(BlueprintCallable, Category = "My Functions")
+		void GetScoreTriggerLocation(FVector pos_);
+
+	FVector TriggerXY[3][3];
+
+	UFUNCTION(BlueprintCallable, Category = "My Functions")
+	void TriggerXYInit();
+
+	//スコアトリガーの座標
+	FVector ScoreTrigger_pos_;
+
+	int PointArray[3][3];
+
 private:
+
+	//ポイント取得
+	void GetChairPoint();
 
 	//自分自身の座標
 	FVector m_thisLocation;

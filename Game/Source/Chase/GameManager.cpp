@@ -49,6 +49,7 @@ AGameManager::AGameManager()
 	, m_event_round_()
 	,m_teamPoint1P(0)
 	,m_teamPoint2P(0)
+	,ScoreTrigger_pos_(FVector::ZeroVector)
 	,m_thisLocation(FVector::ZeroVector)
 	, m_Player1Turn(0)
 	, m_Player2Turn(0)
@@ -107,6 +108,23 @@ void AGameManager::BeginPlay()
 	Instance->m_chairGet10P_2P = 0;
 	Instance->m_chairGet20P_2P = 0;
 	Instance->m_chairGet30P_2P = 0;
+
+	int tmparray[3][3] =
+	{
+		10,20,10,
+		20,30,20,
+		10,20,10,
+	};
+	
+	for (int x = 0; x < 3; ++x)
+	{
+		for (int y = 0; y < 3; ++y)
+		{
+			PointArray[x][y] = tmparray[x][y];
+		}
+	}
+
+	
 
 	if (Instance)
 	{
@@ -212,13 +230,99 @@ void AGameManager::Tick(float DeltaTime)
 		}
 	}
 
-	//ラウンドが10になったら
 	if (m_nowroundnum_ == m_maxroundnum_ && m_players_[1]->control_chair_->GetPhase() == EPhase::kEnd)
 	{
-		//椅子が10個止まった時の処理
-		//StopChair();
-		AddScore();
+		GetChairPoint();
 	}
+}
+
+void AGameManager::TriggerXYInit()
+{
+	FVector pos_;
+
+	pos_.X = ScoreTrigger_pos_.X + 375;
+	pos_.Y = ScoreTrigger_pos_.Y - 375;
+
+	for (int x = 0; x < 3; ++x)
+	{
+		for (int y = 0; y < 3; ++y)
+		{
+			TriggerXY[y][x].X = (x * 250) + pos_.X;
+			TriggerXY[y][x].Y = (y * 250) + pos_.Y;
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[Pos]TriggerXY = %f"), TriggerXY[0][0].X);
+	UE_LOG(LogTemp, Warning, TEXT("[Pos]TriggerXY = %f"), TriggerXY[0][0].Y);
+}
+
+
+//スコアトリガーの座標格納用
+void AGameManager::GetScoreTriggerLocation(FVector pos_)
+{
+	ScoreTrigger_pos_ = pos_;
+}
+
+void AGameManager::GetChairPoint()
+{
+	for (int i = 0; i < m_chairs_.Num(); ++i)
+	{
+		FVector chair_pos_ = m_chairs_[i]->GetActorLocation();
+
+		int posCalculationX, posCalculationY;
+		posCalculationX = floor((TriggerXY[0][0].X - chair_pos_.X ) / 250);
+		posCalculationY = floor((chair_pos_.Y - TriggerXY[0][0].Y) / 250);
+
+		if ((posCalculationX >= 0 && posCalculationX <= 2) && (posCalculationY >= 0 && posCalculationY <= 2))
+		{
+			switch (i % 2)
+			{
+			case 0:
+				switch (PointArray[posCalculationY][posCalculationX])
+				{
+				case 10:
+					Instance->m_chairGet10P_1P++;
+					Instance->m_teamPoint1P += 10;
+					break;
+				case 20:
+					Instance->m_chairGet20P_1P++;
+					Instance->m_teamPoint1P += 20;
+					break;
+				case 30:
+					Instance->m_chairGet30P_1P++;
+					Instance->m_teamPoint1P += 30;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 1:
+				switch (PointArray[posCalculationY][posCalculationX])
+				{
+				case 10:
+					Instance->m_chairGet10P_2P++;
+					Instance->m_teamPoint2P += 10;
+					break;
+				case 20:
+					Instance->m_chairGet20P_2P++;
+					Instance->m_teamPoint2P += 20;
+					break;
+				case 30:
+					Instance->m_chairGet30P_2P++;
+					Instance->m_teamPoint2P += 30;
+					break;
+				default:
+					break;
+				}
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	//得点計算後、Tick()を無効にする
+	PrimaryActorTick.SetTickFunctionEnable(false);
+
 }
 
 bool AGameManager::TimeCheck(float _deltatime)
@@ -352,7 +456,9 @@ void AGameManager::AddScore()
 		// NULLチェック
 		if (m_chairs_[i] != NULL)
 		{
-			// 椅子とそれぞれのスコアコリジョンの距離を格納するための変数
+		}
+	}
+			/*// 椅子とそれぞれのスコアコリジョンの距離を格納するための変数
 			float Scoreobj1_Distance = 0.f;
 			float Scoreobj2_Distance = 0.f;
 
@@ -479,7 +585,7 @@ void AGameManager::AddScore()
 	
 	//ログ確認用
 	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_teamPoint1P %d"), Instance->m_teamPoint1P);
-	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_teamPoint2P %d"), Instance->m_teamPoint2P);
+	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_teamPoint2P %d"), Instance->m_teamPoint2P);*/
 
 	//得点計算後、Tick()を無効にする
 	PrimaryActorTick.SetTickFunctionEnable(false);
