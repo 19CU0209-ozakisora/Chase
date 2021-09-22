@@ -95,7 +95,8 @@
 //			2021/09/14 尾崎蒼宙 m_end_phase_flag_ を削除
 //								m_chair_reflection_を追加
 //			2021/09/15 渡邊龍音 実況の追加のためにアウトゾーンに居るのかどうかをチェックする変数を追加
-// //		2021/09/16 渡邊龍音 スティックの下方向入力を今までの最低値ではなく、発射する数フレーム前の値を使用するように変更
+//			2021/09/16 渡邊龍音 スティックの下方向入力を今までの最低値ではなく、発射する数フレーム前の値を使用するように変更
+//			2021/09/17 渡邊龍音 横移動の倍率を変えられるように
 //--------------------------------------------------------------
 #pragma once
 
@@ -158,10 +159,11 @@ private:
 	bool m_IsOutZone;								// アウトゾーンにいるかどうか
 	EPhase m_phase_;								// 現在のフェーズ格納用
 	float m_wall_time;								// 壁に当たった時間
+	float m_hitWallVelocityY;						// 壁にあたった際のYのベロシティー
 	float m_player_spin_value_;						// 現在何度分の回転量が入っているか
 	float m_before_slip_rotation_;					// 前フレームの角度
 	float m_stick_slide_time_;						// スティックを倒すのにかかった時間
-	float m_stick_down_;								// 左スティック最大値
+	float m_stick_down_;							// 左スティック最大値
 	float m_stick_max_;								// 左スティック最大値
 	FVector m_forward_vec_;							// 前方向ベクトル
 	//FVector m_target_point_location_;				// 目標地点の座標
@@ -189,6 +191,15 @@ private:
 		void OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 public:
+	UPROPERTY(EditAnywhere, Category = "Temp")
+		bool TMP_AnotherInputType;					// スティック入力タイプを切りかえる（テスト用）
+
+	UPROPERTY(EditAnywhere, Category = "Temp")
+		float TMP_StickDifferenceThreshold;			// スティック入力の差（テスト用）
+
+	UPROPERTY(VisibleAnyWhere, Category = "Temp")
+		float TMP_PrevStick;						// 全フレームのスティック入力値（テスト用）
+
 	UPROPERTY(EditAnywhere)
 		AAddScoreTrigger* m_pscore_obj_[2];			// スコアトリガーを入れる用
 
@@ -223,6 +234,9 @@ public:
 		float m_default_speed_;											// 椅子の初期速度
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
+		float m_spinScale;											// この速度以下なら停止とみなす
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
 		float m_deceleration_val_;										// 減速量
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Setting")
@@ -243,8 +257,14 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		float input_spin_scale_;
 
-	UPROPERTY(EditAnywhere, Category = "Default Setting")
+	UPROPERTY(EditAnywhere, Category = "Default Setting|Wall")
 		float m_hit_wall_reflection_power_;
+
+	UPROPERTY(EditAnywhere, Category = "Default Setting|Wall")
+		float m_HitWallReflectionTime;							// デバッグモードをONにするかどうか
+
+	UPROPERTY(EditAnywhere, Category = "Default Setting")
+		float m_hit_chair_reflection_power_;
 
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		float m_max_stick_slide_time_;		// スティックを倒すまでにかかる時間の最大値
@@ -254,7 +274,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		float m_SlipPowerMax;												// 滑らせるパワーの最大倍率
-	
+
 	UPROPERTY(EditAnywhere, Category = "Commentary|Throw")
 		float m_PowerThreshold;												// ウィジェットを表示するしきい値
 
@@ -297,7 +317,7 @@ public:
 
 	UPROPERTY()
 		USoundBase* m_chair_collide_sound_;								//椅子がぶつかった時の音
-	
+
 	UFUNCTION(BlueprintImplementableEvent, Category = "MyF")
 		void Ragdoll();													// ラグドール化させる関数
 
@@ -310,7 +330,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "MyF")
 		void SetForwardVec(const FVector _vec) { m_forward_vec_ = _vec; };
 
-	UFUNCTION(BlueprintCallable, Category = "MyF")
+	UFUNCTION(BlueprintPure, Category = "MyF")
 		EPhase GetPhase() { return m_phase_; }
 
 	UFUNCTION(BlueprintCallable, Category = "MyF")
@@ -332,13 +352,13 @@ public:
 	}
 
 
-//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
-// 青木
+	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
+	// 青木
 private:
 	bool FrameCountStart;
 	bool f7;
 
 public:
 	void F7();
-//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
+	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 };

@@ -51,6 +51,9 @@
 //								移動コンポーネントをFloatPawnMovementからProjectileMovementに変更
 //			2021/09/14 尾崎蒼宙 End時にTickでVelocity = Zerovectorにしている処理を初回時のみに変更
 //			2021/09/15 尾崎蒼宙 椅子に当たった時にフラグを追加し、End時にif文で減速に関する分岐処理の作成
+//			2021/09/15 渡邊龍音 実況の追加のためにアウトゾーンに居るのかどうかをチェックする変数を追加
+//			2021/09/16 渡邊龍音 スティックの下方向入力を今までの最低値ではなく、発射する数フレーム前の値を使用するように変更
+//			2021/09/17 渡邊龍音 横移動の倍率を変えられるように
 //--------------------------------------------------------------
 
 #include "Chair.h"
@@ -59,6 +62,7 @@
 #include "Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 #include "ActiveSound.h"
+
 // Sets default values
 AChair::AChair()
 // private
@@ -88,6 +92,7 @@ AChair::AChair()
 	, m_stickDownFrame(5)
 	, m_StopVectorX(10.0f)
 	, m_default_speed_(3500.0f)
+	, m_spinScale(15.0f)
 	, m_deceleration_val_(0.f)
 	, m_sweep_scale_(3.f)
 	, m_hitstop_scale_(0.f)
@@ -95,7 +100,9 @@ AChair::AChair()
 	, m_def_player_posX_(0.f)
 	, m_max_spin_add_rotation_value_(0.f)
 	, input_spin_scale_(0.f)
-	, m_hit_wall_reflection_power_(0.f)
+	, m_hit_wall_reflection_power_(1.f)
+	, m_hit_chair_reflection_power_(5000.0f)
+	, m_HitWallReflectionTime(0.3f)
 	, m_max_stick_slide_time_(0.f)
 	, m_SlipPowerMin(0.2f)
 	, m_SlipPowerMax(1.2f)
@@ -113,6 +120,10 @@ AChair::AChair()
 	, FrameCountStart(false)
 	, f7(false)
 	//☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
+
+	, TMP_AnotherInputType(false)
+	, TMP_StickDifferenceThreshold(0.1f)
+	, TMP_PrevStick(0.0f)
 {
 
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -188,24 +199,24 @@ void AChair::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	UE_LOG(LogTemp, Warning, TEXT("[Chair] Velocity X = %f"), m_projectile_movement_->Velocity.X);
-
-	m_wall_time += DeltaTime;
 	m_projectile_movement_->Velocity.Z = 0.f;
 
 	// 壁にあたった場合タイマー加算
 	if (m_hit_wall_)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[Chair (%s)] Wall is true"));
 		m_wall_time += DeltaTime;
 
 		// 一定時間経過したら当たった判定を下ろす
-		if (m_wall_time >= 1.0f)
+		if (m_wall_time >= m_HitWallReflectionTime)
 		{
+			m_projectile_movement_->Velocity.Y = 0.0f;
 			m_wall_time = 0.0f;
-			m_pplayermesh_->ComponentVelocity.Y = 0.0f;
 			m_hit_wall_ = false;
 		}
 	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[Chair (%s)]Velocity = %s"), *GetName(), *m_projectile_movement_->Velocity.ToString());
 
 	// ☆
 	// UE_LOG(LogTemp, Warning, TEXT("m_player_spin_value_ = %f"), m_player_spin_value_);
@@ -227,13 +238,14 @@ void AChair::Tick(float DeltaTime)
 
 		PlayerSpin(DeltaTime);
 		PlayerSlip(DeltaTime);
-		if (!m_is_sweep_)
-		{
-			Deceleration(DeltaTime);
-		}
-		else if (m_is_sweep_ == true && m_is_jumpanimation_end_ == true)
+
+		if (m_is_sweep_ == true && m_is_jumpanimation_end_ == true)
 		{
 			PlayerSweep(DeltaTime);
+		}
+		else
+		{
+			Deceleration(DeltaTime);
 		}
 
 		//音楽再生（椅子が転がる音）
@@ -295,11 +307,11 @@ void AChair::Tick(float DeltaTime)
 		}
 		else
 		{
-			if (m_projectile_movement_->Velocity.X < 0.f)
+			if (FMath::Abs(m_projectile_movement_->Velocity.X) < m_StopVectorX)
 			{
 				m_projectile_movement_->Velocity = FVector::ZeroVector;
 			}
-			else if (m_projectile_movement_->Velocity.X > 0.f)
+			else
 			{
 				Deceleration(DeltaTime);
 			}
@@ -467,6 +479,8 @@ void AChair::ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 
 		m_player_spin_value_ *= -1.0f;
 
+		m_hitWallVelocityY = -m_projectile_movement_->Velocity.Y * m_hit_wall_reflection_power_;
+
 		FVector reverseVec = m_forward_vec_;
 		reverseVec.Y *= -m_hit_wall_reflection_power_;
 		m_forward_vec_ = reverseVec;
@@ -555,15 +569,14 @@ void AChair::SetPhase(const EPhase _phase)
 
 void AChair::PlayerSpin(const float _deltatime)
 {
-
 	FVector test;
+	float test1;
+	float rot_x;
+	float rot_y;
+
 	// 左右入力が入っていたら
 	if (FMath::Abs(m_input_value_.X) > 0.001f || m_hit_wall_)
 	{
-		float test1;
-		float rot_x;
-		float rot_y;
-
 		// このフレーム間で回転させる値の取得
 		m_player_spin_value_ += m_input_value_.X * _deltatime * input_spin_scale_;
 		test1 = FMath::DegreesToRadians(m_before_slip_rotation_ + m_player_spin_value_);
@@ -584,18 +597,14 @@ void AChair::PlayerSpin(const float _deltatime)
 		if (m_player_spin_value_ > 0.f)
 		{
 			m_player_spin_value_ = m_max_spin_add_rotation_value_;
-			m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 		}
 		else
 		{
 			m_player_spin_value_ = m_max_spin_add_rotation_value_ * -1.f;
-			m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 		}
 	}
-	else
-	{
-		m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
-	}
+
+	m_pplayermesh_->AddRelativeRotation(FRotator(0.f, m_player_spin_value_, 0.f));
 
 	if (m_debugmode_)
 	{
@@ -608,9 +617,21 @@ void AChair::PlayerSlip(const float _deltatime)
 {
 	// 前方向ベクトルに向かって移動
 	//AddMovementInput(m_forward_vec_, 1.f);
-	FVector newActorPos = GetActorLocation() + FVector(0.0f, m_forward_vec_.Y, 0.0f) * 20;
-	SetActorLocation(newActorPos);	
-	
+
+	/*
+	FVector newActorPos = GetActorLocation() + FVector(0.0f, m_forward_vec_.Y, 0.0f) * m_spinScale;
+	SetActorLocation(newActorPos);
+	*/
+
+	if (m_hit_wall_)
+	{
+		m_projectile_movement_->Velocity.Y = FMath::Lerp(m_hitWallVelocityY, 0.0f, (m_wall_time / m_HitWallReflectionTime));
+	}
+	else
+	{
+		m_projectile_movement_->Velocity.Y += m_forward_vec_.Y * m_spinScale;
+	}
+
 	if (m_debugmode_)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("hit chair speed = %f, %f, %f, "), m_forward_vec_.X, m_forward_vec_.Y, m_forward_vec_.Z);
@@ -639,9 +660,12 @@ void AChair::Deceleration(const float _deltatime)
 			}
 		}
 		// 衝突した側の椅子の処理
-		else if(FMath::Abs(m_projectile_movement_->Velocity.X) < m_StopVectorX && m_chair_reflection_)
+		else if (FMath::Abs(m_projectile_movement_->Velocity.X) < m_StopVectorX && m_chair_reflection_)
 		{
-			m_projectile_movement_->AddForce(FVector(m_deceleration_val_, 0.f, 0.0f));
+			FVector normalVector = m_projectile_movement_->Velocity;
+			//normalVector.Normalize();
+			//m_projectile_movement_->AddForce(-normalVector);
+			m_projectile_movement_->Velocity = -normalVector;
 		}
 
 		if (FMath::Abs(m_projectile_movement_->Velocity.X) <= m_StopVectorX && m_phase_ == EPhase::kSlip)
@@ -711,31 +735,51 @@ void AChair::SetSlipPower(const float _deltatime)
 	float maxSpeed = m_default_speed_ * m_SlipPowerMax;
 
 	float speedAlpha = 0.0f;
-	
+
 	// スティックが下方向に入力されたら
 	if (m_input_value_.Y < 0.f)
 	{
 		// カウントスタート
 		FrameCountStart = true;
+		UE_LOG(LogTemp, Warning, TEXT("[Chair] Stick = %f"), m_input_value_.Y);
 	}
 
-	if (FrameCountStart && m_input_value_.Y <=  0.0f)
+	if (TMP_AnotherInputType)
 	{
-		m_stick_minArray.Add(m_input_value_.Y);
-
-		if (m_stick_minArray.Num() > m_stickDownFrame)
+		if (FrameCountStart && m_input_value_.Y <= 0.0f)
 		{
-			m_stick_minArray.RemoveAt(0);
+			float diff = FMath::Abs(TMP_PrevStick - m_input_value_.Y);
+			UE_LOG(LogTemp, Warning, TEXT("[Chair] Stick Diff = %f"), diff);
+
+			if (diff < TMP_StickDifferenceThreshold)
+			{
+				m_stick_down_ = m_input_value_.Y;
+				UE_LOG(LogTemp, Warning, TEXT("[Chair] Set Stick Down (%f)"), m_stick_down_);
+			}
 		}
 
-		if (m_stick_minArray.IsValidIndex(0))
+		TMP_PrevStick = m_input_value_.Y;
+	}
+	else
+	{
+		if (FrameCountStart && m_input_value_.Y <= 0.0f)
 		{
-			m_stick_down_ = m_stick_minArray[0];
-			UE_LOG(LogTemp, Warning, TEXT("[Chair] Power(Before %d Frame) = %f, Now Input = %f"), m_stickDownFrame, m_stick_down_, m_input_value_.Y);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("[Chair] m_stickDownFrame is not"))
+			m_stick_minArray.Add(m_input_value_.Y);
+
+			if (m_stick_minArray.Num() > m_stickDownFrame)
+			{
+				m_stick_minArray.RemoveAt(0);
+			}
+
+			if (m_stick_minArray.IsValidIndex(0))
+			{
+				m_stick_down_ = m_stick_minArray[0];
+				UE_LOG(LogTemp, Warning, TEXT("[Chair] Power(Before %d Frame) = %f, Now Input = %f"), m_stickDownFrame, m_stick_down_, m_input_value_.Y);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("[Chair] m_stickDownFrame is not"))
+			}
 		}
 	}
 
@@ -762,7 +806,7 @@ void AChair::SetSlipPower(const float _deltatime)
 			stickFrameCnt++;
 			totalDeltaTime += _deltatime;
 			float averageFPS = 1 / (totalDeltaTime / stickFrameCnt);
-			
+
 			if (m_stick_slide_time_ > (1.0f / averageFPS) * m_stickUpFrame)
 			{
 				speedAlpha = FMath::Abs(m_stick_down_ * m_stick_max_);
