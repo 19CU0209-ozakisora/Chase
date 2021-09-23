@@ -97,6 +97,7 @@
 //			2021/09/15 渡邊龍音 実況の追加のためにアウトゾーンに居るのかどうかをチェックする変数を追加
 //			2021/09/16 渡邊龍音 スティックの下方向入力を今までの最低値ではなく、発射する数フレーム前の値を使用するように変更
 //			2021/09/17 渡邊龍音 横移動の倍率を変えられるように
+// //		2021/09/23 渡邊龍音 椅子同士がぶつかったときの処理を変更
 //--------------------------------------------------------------
 #pragma once
 
@@ -144,6 +145,8 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void NotifyHit(class UPrimitiveComponent* MyComp, AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
+
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
@@ -165,6 +168,7 @@ private:
 	float m_stick_slide_time_;						// スティックを倒すのにかかった時間
 	float m_stick_down_;							// 左スティック最大値
 	float m_stick_max_;								// 左スティック最大値
+	float m_OriginPosZ;								// 滑るときのZ位置
 	FVector m_forward_vec_;							// 前方向ベクトル
 	//FVector m_target_point_location_;				// 目標地点の座標
 

@@ -54,6 +54,7 @@
 //			2021/09/15 渡邊龍音 実況の追加のためにアウトゾーンに居るのかどうかをチェックする変数を追加
 //			2021/09/16 渡邊龍音 スティックの下方向入力を今までの最低値ではなく、発射する数フレーム前の値を使用するように変更
 //			2021/09/17 渡邊龍音 横移動の倍率を変えられるように
+// //		2021/09/23 渡邊龍音 椅子同士がぶつかったときの処理を変更
 //--------------------------------------------------------------
 
 #include "Chair.h"
@@ -96,11 +97,11 @@ AChair::AChair()
 	, m_deceleration_val_(0.f)
 	, m_sweep_scale_(3.f)
 	, m_hitstop_scale_(0.f)
-	, m_is_movement_scale_(0.f)
+	, m_is_movement_scale_(0.35f)
 	, m_def_player_posX_(0.f)
 	, m_max_spin_add_rotation_value_(0.f)
 	, input_spin_scale_(0.f)
-	, m_hit_wall_reflection_power_(1.f)
+	, m_hit_wall_reflection_power_(3.f)
 	, m_hit_chair_reflection_power_(5000.0f)
 	, m_HitWallReflectionTime(0.3f)
 	, m_max_stick_slide_time_(0.f)
@@ -204,7 +205,7 @@ void AChair::Tick(float DeltaTime)
 	// 壁にあたった場合タイマー加算
 	if (m_hit_wall_)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[Chair (%s)] Wall is true"));
+		UE_LOG(LogTemp, Warning, TEXT("[Chair (%s)] Wall is true"), *GetName());
 		m_wall_time += DeltaTime;
 
 		// 一定時間経過したら当たった判定を下ろす
@@ -234,6 +235,10 @@ void AChair::Tick(float DeltaTime)
 	// 滑り
 	else if (m_phase_ == EPhase::kSlip)
 	{
+		FVector pos = GetActorLocation();
+		pos.Z = m_OriginPosZ;
+		SetActorLocation(pos);
+
 		GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("Slip")));
 
 		PlayerSpin(DeltaTime);
@@ -292,6 +297,7 @@ void AChair::Tick(float DeltaTime)
 			m_audiocomponent_->Stop();
 		}
 
+		/*
 		if (m_chair_reflection_)
 		{
 			if (FMath::Abs(m_projectile_movement_->Velocity.X) < m_StopVectorX)
@@ -315,23 +321,24 @@ void AChair::Tick(float DeltaTime)
 			{
 				Deceleration(DeltaTime);
 			}
-		}
-
-		if (!m_addComment)
-		{
-			if (m_IsOutZone)
-			{
-				SetCommentary(m_OutZoneComment);
-			}
-			else
-			{
-				SetCommentary(m_InHouseComment);
-			}
-			m_addComment = true;
-		}
+		}*/
 	}
 
 	m_is_input_add_slip_power_ = false;
+}
+
+void AChair::NotifyHit(class UPrimitiveComponent* MyComp, AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
+{
+	Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
+
+	if (bSelfMoved)
+	{
+		if (Cast<AChair>(Other))
+		{
+			Cast<AChair>(Other)->SetPhase(EPhase::kSlip);
+			Cast<AChair>(Other)->m_projectile_movement_->Velocity = m_forward_vec_ * m_projectile_movement_->Velocity * m_is_movement_scale_;
+		}
+	}
 }
 
 // Called to bind functionality to input
@@ -420,6 +427,7 @@ void AChair::ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 	// 椅子に当たった場合の処理
 	if (Cast<AChair>(OtherActor))
 	{
+		/*
 		if (Cast<AChair>(OtherActor)->m_projectile_movement_->Velocity == FVector::ZeroVector)
 		{
 			if (m_debugmode_)
@@ -469,17 +477,20 @@ void AChair::ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 				UE_LOG(LogTemp, Warning, TEXT("false(X = %f, Y = %f, Z = %f)"), vec.X, vec.Y, vec.Z);
 			}
 		}
-
+		*/
 	}
 
 	// 壁にあたった時
-	if (OtherComp->ComponentHasTag("Wall") && m_hit_wall_ == false || Cast<AChair>(OtherActor))
+	if (OtherComp->ComponentHasTag("Wall") && m_hit_wall_ == false)
 	{
 		m_hit_wall_ = true;
 
 		m_player_spin_value_ *= -1.0f;
 
-		m_hitWallVelocityY = -m_projectile_movement_->Velocity.Y * m_hit_wall_reflection_power_;
+		FVector normalVelocity = m_projectile_movement_->Velocity;
+		normalVelocity.Normalize();
+
+		m_hitWallVelocityY = -m_projectile_movement_->Velocity.Y * m_hit_wall_reflection_power_ * normalVelocity.X;
 
 		FVector reverseVec = m_forward_vec_;
 		reverseVec.Y *= -m_hit_wall_reflection_power_;
@@ -527,10 +538,25 @@ void AChair::SetPhase(const EPhase _phase)
 
 		EnableTargetCollision(false);
 		m_def_player_posX_ = this->GetActorLocation().X;
+
+		m_OriginPosZ = GetActorLocation().Z;
 	}
 	else if (m_phase_ == EPhase::kEnd)
 	{
 		m_projectile_movement_->Velocity = FVector::ZeroVector;
+
+		if (!m_addComment)
+		{
+			if (m_IsOutZone)
+			{
+				SetCommentary(m_OutZoneComment);
+			}
+			else
+			{
+				SetCommentary(m_InHouseComment);
+			}
+			m_addComment = true;
+		}
 	}
 	/*
 	else if (m_phase_ == EPhase::kSlip)
