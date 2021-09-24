@@ -99,5 +99,25 @@ void ATrackingCamera::Tick(float DeltaTime)
 		//FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ChairLocation);
 		//SetActorRotation(Rotation);
 	}
+
+	if (m_ChangeFOV)
+	{
+		m_ChangeTimer += DeltaTime;
+		m_pcamera_component_->FieldOfView = FMath::Lerp(m_prevFOV, m_newFOV, m_ChangeTimer / m_ChangeTimeMax);
+
+		if (m_ChangeTimer >= m_ChangeTimeMax)
+		{
+			m_ChangeFOV = false;
+		}
+	}
+}
+
+void ATrackingCamera::SetFOV(float _newFOV, float _changeTime)
+{
+	m_ChangeFOV = true;
+	m_prevFOV = m_pcamera_component_->FieldOfView;
+	m_newFOV = _newFOV;
+	m_ChangeTimer = 0.0f;
+	m_ChangeTimeMax = _changeTime;
 }
 

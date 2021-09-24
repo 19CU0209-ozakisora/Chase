@@ -38,7 +38,12 @@ public:
 private:
 
 	bool m_switch_;
+	bool m_ChangeFOV;
 	float m_leap_alpha_;
+	float m_prevFOV;
+	float m_newFOV;
+	float m_ChangeTimer;
+	float m_ChangeTimeMax;
 	FVector m_input_tracking_offset_;
 	FVector m_temp_;
 	float m_time_cnt_;
@@ -64,7 +69,6 @@ public:
 	UPROPERTY(EditAnyWhere, Category = "Default Setting")
 		FVector m_max_advance_offset_;					// カメラの最大の引き
 
-
 	UPROPERTY(EditAnyWhere, Category = "Default Setting")
 		AChair* m_control_chair_;
 
@@ -79,4 +83,7 @@ public:
 
 	UPROPERTY(EditAnyWhere, Category = "Default Setting")
 		UCurveFloat* m_padvance_curve_;		//	カーブ
+
+	UFUNCTION(BlueprintCallable)
+		void SetFOV(float _newFOV, float _changeTime = 1.0f);
 };
