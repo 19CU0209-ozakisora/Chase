@@ -22,10 +22,14 @@
 //			2021/09/07 野田八雲 各椅子がとった得点を計算する変数追加（ウィジェット出力用）
 //			2021/09/13 野田八雲 各得点版に椅子が何個乗ってるかを格納する処理に変更
 //			2021/09/17 野田八雲 09/07、09/13の件についてのコメント記入、09/07から不要になった変数の削除
+//			2021/09/22 野田八雲 得点計算方法変更（スコアトリガーごとではなく、座標ごとの処理に変更）
+//			2021/09/25 野田八雲 ↑のコメント追加
 //--------------------------------------------------------------
 
+//インクルードカード
 #pragma once
 
+//インクルード
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Chair.h"
@@ -105,14 +109,14 @@ public:
 //---------------------------------------------------------
 //2021/05/06:　野田　変数、関数追加
 public:
-	//椅子がすべて止まった時の処理
-	void StopChair();
+	//椅子がすべて止まった時の処理(仕様変更によりコメント化)
+	//void StopChair();
 
-	//椅子の距離ソート用
-	void ChairSort();
+	//椅子の距離ソート用(仕様変更によりコメント化)
+	//void ChairSort();
 
-	//得点計算
-	void SetPoint();
+	//得点計算(仕様変更によりコメント化)
+	//void SetPoint();
 
 	//ウィジェット出力1P
 	UFUNCTION(BlueprintCallable, Category = "My Functions")
@@ -134,14 +138,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "My Functions")
 		void GetScoreTriggerLocation(FVector pos_);
 
+	//トリガーの座標格納用（BeginPlayにて初期化）
 	FVector TriggerXY[3][3];
 
+	//ブループリント呼び出し
 	UFUNCTION(BlueprintCallable, Category = "My Functions")
 	void TriggerXYInit();
 
 	//スコアトリガーの座標
 	FVector ScoreTrigger_pos_;
 
+	//スコアトリガーの各得点格納用
 	int PointArray[3][3];
 
 private:
@@ -151,9 +158,6 @@ private:
 
 	//自分自身の座標
 	FVector m_thisLocation;
-
-	//カウント用変数
-	bool m_bFunctionCheck;
 
 //-------------------------------------------------------
 

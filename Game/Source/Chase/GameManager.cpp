@@ -26,6 +26,8 @@
 //			2021/09/07 野田八雲 各椅子がとった得点を計算する変数追加（ウィジェット出力用）
 //			2021/09/13 野田八雲 各得点版に椅子が何個乗ってるかを格納する処理に変更
 //			2021/09/17 野田八雲 09/07、09/13の件についてのコメント記入、09/07から不要になった変数の削除
+//			2021/09/22 野田八雲 得点計算方法変更（スコアトリガーごとではなく、座標ごとの処理に変更）
+//			2021/09/25 野田八雲 ↑のコメント追加
 //--------------------------------------------------------------
 
 //インクルード
@@ -109,6 +111,7 @@ void AGameManager::BeginPlay()
 	Instance->m_chairGet20P_2P = 0;
 	Instance->m_chairGet30P_2P = 0;
 
+	//変数初期化得点計算用。スコアトリガーの3*3の形に合わせて点数を格納。
 	int tmparray[3][3] =
 	{
 		10,20,10,
@@ -116,6 +119,7 @@ void AGameManager::BeginPlay()
 		10,20,10,
 	};
 	
+	//それぞれを格納
 	for (int x = 0; x < 3; ++x)
 	{
 		for (int y = 0; y < 3; ++y)
@@ -123,8 +127,6 @@ void AGameManager::BeginPlay()
 			PointArray[x][y] = tmparray[x][y];
 		}
 	}
-
-	
 
 	if (Instance)
 	{
@@ -230,19 +232,30 @@ void AGameManager::Tick(float DeltaTime)
 		}
 	}
 
+	//ラウンド数が指定したターン数に達したら
 	if (m_nowroundnum_ == m_maxroundnum_ && m_players_[1]->control_chair_->GetPhase() == EPhase::kEnd)
 	{
+		//得点計算処理
 		GetChairPoint();
 	}
 }
 
+//ブループリントで呼び出す用。ここでは、3*3のスコアトリガーの一番左上の頂点座標を格納する。
 void AGameManager::TriggerXYInit()
 {
+	//一番左上のスコアトリガーの左上の頂点を格納する用変数。
 	FVector pos_;
 
+	//ここで格納。
 	pos_.X = ScoreTrigger_pos_.X + 375;
 	pos_.Y = ScoreTrigger_pos_.Y - 375;
 
+	//↑の座標からスコアトリガーの半径分ずらすたびにトリガーごとの座標を格納。
+	//Trigger[y][x]のy,xはそれぞれ左上から
+	//00,01,02
+	//10,11,12
+	//20,21,22
+	//となる。
 	for (int x = 0; x < 3; ++x)
 	{
 		for (int y = 0; y < 3; ++y)
@@ -252,31 +265,39 @@ void AGameManager::TriggerXYInit()
 		}
 	}
 
+	//ログ確認用
 	UE_LOG(LogTemp, Warning, TEXT("[Pos]TriggerXY = %f"), TriggerXY[0][0].X);
 	UE_LOG(LogTemp, Warning, TEXT("[Pos]TriggerXY = %f"), TriggerXY[0][0].Y);
 }
 
 
-//スコアトリガーの座標格納用
+//スコアトリガーの座標格納用（ブループリント呼び出し）
 void AGameManager::GetScoreTriggerLocation(FVector pos_)
 {
 	ScoreTrigger_pos_ = pos_;
 }
 
+//得点計算処理
 void AGameManager::GetChairPoint()
 {
+	//椅子の数だけ行う
 	for (int i = 0; i < m_chairs_.Num(); ++i)
 	{
+		//その瞬間の椅子の座標を格納
 		FVector chair_pos_ = m_chairs_[i]->GetActorLocation();
 
+		//TriggerXY変数のy,xの値を確認
 		int posCalculationX, posCalculationY;
 		posCalculationX = floor((TriggerXY[0][0].X - chair_pos_.X ) / 250);
 		posCalculationY = floor((chair_pos_.Y - TriggerXY[0][0].Y) / 250);
 
+		//TriggerXY変数のy,xの値は0～2なので、それ以外の座標の椅子は計算しないようにする。
 		if ((posCalculationX >= 0 && posCalculationX <= 2) && (posCalculationY >= 0 && posCalculationY <= 2))
 		{
+			//アウトになった椅子でも非表示、当たり判定が消えるだけなので、椅子のなげた順番ごとに行われる。
 			switch (i % 2)
 			{
+				//1Pの椅子
 			case 0:
 				switch (PointArray[posCalculationY][posCalculationX])
 				{
@@ -296,6 +317,7 @@ void AGameManager::GetChairPoint()
 					break;
 				}
 				break;
+				//2Pの椅子
 			case 1:
 				switch (PointArray[posCalculationY][posCalculationX])
 				{
@@ -344,8 +366,8 @@ bool AGameManager::TimeCheck(float _deltatime)
 	}
 }
 
-//椅子が止まった時の処理
-void AGameManager::StopChair()
+//椅子が止まった時の処理（仕様変更によりコメント化）
+/*void AGameManager::StopChair()
 {
 	//見つかった椅子のオブジェクト、座標を取得
 	for (int i = 0; i < 10; ++i)
@@ -373,10 +395,10 @@ void AGameManager::StopChair()
 	ChairSort();
 	//得点計算
 	SetPoint();
-}
+}*/
 
-//椅子の近い順にソート
-void AGameManager::ChairSort()
+//椅子の近い順にソート(仕様変更によりコメント化)
+/*void AGameManager::ChairSort()
 {
 	//変数宣言
 	//交換用変数
@@ -414,10 +436,10 @@ void AGameManager::ChairSort()
 			UE_LOG(LogTemp, Warning, TEXT("P2Chair"));
 		}
 	}
-}
+}*/
 
-//得点計算
-void AGameManager::SetPoint()
+//得点計算(仕様変更によりコメント化)
+/*void AGameManager::SetPoint()
 {
 	int i = 0;
 	for (; i < 10; ++i)
@@ -446,9 +468,10 @@ void AGameManager::SetPoint()
 
 	//得点計算後、Tick()を無効にする
 	PrimaryActorTick.SetTickFunctionEnable(false);
-}
+}*/
 
-void AGameManager::AddScore()
+//得点計算処理(仕様変更によりコメント化)
+/*void AGameManager::AddScore()
 {
 	// 椅子の数だけ繰り返す
 	for (int i = 0; i < m_chairs_.Num(); ++i)
@@ -456,9 +479,7 @@ void AGameManager::AddScore()
 		// NULLチェック
 		if (m_chairs_[i] != NULL)
 		{
-		}
-	}
-			/*// 椅子とそれぞれのスコアコリジョンの距離を格納するための変数
+			// 椅子とそれぞれのスコアコリジョンの距離を格納するための変数
 			float Scoreobj1_Distance = 0.f;
 			float Scoreobj2_Distance = 0.f;
 
@@ -582,14 +603,17 @@ void AGameManager::AddScore()
 			UE_LOG(LogTemp, Warning, TEXT("chair[%f] is NULL"), i);
 		}
 	}
+}
+
+
 	
 	//ログ確認用
 	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_teamPoint1P %d"), Instance->m_teamPoint1P);
-	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_teamPoint2P %d"), Instance->m_teamPoint2P);*/
+	//UE_LOG(LogTemp, Warning, TEXT("Instance->m_teamPoint2P %d"), Instance->m_teamPoint2P);
 
 	//得点計算後、Tick()を無効にする
 	PrimaryActorTick.SetTickFunctionEnable(false);
-}
+}*/
 
 void AGameManager::NextRound()
 {
