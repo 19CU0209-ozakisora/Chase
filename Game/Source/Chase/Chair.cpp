@@ -62,6 +62,7 @@
 //サウンド系インクルード
 #include "Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "ActiveSound.h"
 
 // Sets default values
@@ -547,13 +548,16 @@ void AChair::SetPhase(const EPhase _phase)
 
 		if (!m_addComment)
 		{
+			int inNum = UKismetMathLibrary::RandomInteger(m_InHouseComment.Num());
+			int outNum = UKismetMathLibrary::RandomInteger(m_OutZoneComment.Num());
+
 			if (m_IsOutZone)
 			{
-				SetCommentary(m_OutZoneComment);
+				SetCommentary(m_OutZoneComment[inNum].CommentID);
 			}
 			else
 			{
-				SetCommentary(m_InHouseComment);
+				SetCommentary(m_InHouseComment[outNum].CommentID);
 			}
 			m_addComment = true;
 		}
@@ -863,7 +867,11 @@ void AChair::SetSlipPower(const float _deltatime)
 	{
 		// 実況コメント
 		TArray<ECommentID> commentArray;
-		commentArray = speedAlpha > m_PowerThreshold ? m_throwStrongComment : m_throwWeakComment;
+
+		int strongNum = UKismetMathLibrary::RandomInteger(m_throwStrongComment.Num());
+		int weakNum = UKismetMathLibrary::RandomInteger(m_throwWeakComment.Num());
+
+		commentArray = speedAlpha > m_PowerThreshold ? m_throwStrongComment[strongNum].CommentID : m_throwWeakComment[weakNum].CommentID;
 
 		SetCommentary(commentArray);
 

@@ -129,6 +129,15 @@ enum class EPhase : uint8
 	kEnd UMETA(DisplayName = "End"),
 };
 
+USTRUCT(BlueprintType)
+struct FCommentStruct
+{
+	GENERATED_BODY()
+
+		UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TArray<ECommentID> CommentID;
+};
+
 UCLASS()
 class CHASE_API AChair : public APawn
 {
@@ -302,16 +311,16 @@ public:
 		UProjectileMovementComponent* m_projectile_movement_;				// FloatingPawnMovementコンポーネント
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Commentary|Throw")
-		TArray<ECommentID> m_throwStrongComment;								// 強く投げた時
+		TArray<FCommentStruct> m_throwStrongComment;								// 強く投げた時
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Commentary|Throw")
-		TArray<ECommentID> m_throwWeakComment;									// 弱く投げた時
+		TArray<FCommentStruct> m_throwWeakComment;									// 弱く投げた時
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Commentary|Stop")
-		TArray<ECommentID> m_OutZoneComment;									// アウトゾーン
+		TArray<FCommentStruct> m_OutZoneComment;									// アウトゾーン
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Commentary|Stop")
-		TArray<ECommentID> m_InHouseComment;									// ハウス
+		TArray<FCommentStruct> m_InHouseComment;									// ハウス
 
 	UPROPERTY()
 		USoundBase* m_deside_sound_;									//サウンドを入れるコンポーネント
