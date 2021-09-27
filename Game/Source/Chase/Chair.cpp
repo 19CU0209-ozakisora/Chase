@@ -298,6 +298,22 @@ void AChair::Tick(float DeltaTime)
 			m_audiocomponent_->Stop();
 		}
 
+		if (!m_addComment)
+		{
+			int inNum = UKismetMathLibrary::RandomInteger(m_InHouseComment.Num());
+			int outNum = UKismetMathLibrary::RandomInteger(m_OutZoneComment.Num());
+
+			if (m_IsOutZone)
+			{
+				SetCommentary(m_OutZoneComment[outNum].CommentID);
+			}
+			else
+			{
+				SetCommentary(m_InHouseComment[inNum].CommentID);
+			}
+			m_addComment = true;
+		}
+
 		/*
 		if (m_chair_reflection_)
 		{
@@ -545,22 +561,6 @@ void AChair::SetPhase(const EPhase _phase)
 	else if (m_phase_ == EPhase::kEnd)
 	{
 		m_projectile_movement_->Velocity = FVector::ZeroVector;
-
-		if (!m_addComment)
-		{
-			int inNum = UKismetMathLibrary::RandomInteger(m_InHouseComment.Num());
-			int outNum = UKismetMathLibrary::RandomInteger(m_OutZoneComment.Num());
-
-			if (m_IsOutZone)
-			{
-				SetCommentary(m_OutZoneComment[inNum].CommentID);
-			}
-			else
-			{
-				SetCommentary(m_InHouseComment[outNum].CommentID);
-			}
-			m_addComment = true;
-		}
 	}
 	/*
 	else if (m_phase_ == EPhase::kSlip)
