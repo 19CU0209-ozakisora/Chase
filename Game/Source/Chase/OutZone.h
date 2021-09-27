@@ -8,6 +8,7 @@
 //		　：2021/09/10 渡邊龍音 Chair型にキャストしChairのm_Phaseを調べるように
 //							　  当たり判定ではなくTargetPointで範囲を指定するように
 //			2021/09/16 渡邊龍音 パッケージ化でエラーが起きるためTargetPointからSceneComponentへ
+//			2021/09/27 渡邊龍音 BeginPlayでプレイヤーを取得できなくなってしまったので修正
 //--------------------------------------------------------------
 
 
@@ -36,6 +37,7 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	bool isSetActor;
 	TArray<AChair*> deleteChair;
 
 public:	

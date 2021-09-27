@@ -8,6 +8,7 @@
 //		　：2021/09/10 渡邊龍音 Chair型にキャストしChairのm_Phaseを調べるように
 //							　  当たり判定ではなくTargetPointで範囲を指定するように
 //			2021/09/16 渡邊龍音 パッケージ化でエラーが起きるためTargetPointからSceneComponentへ
+//			2021/09/27 渡邊龍音 BeginPlayでプレイヤーを取得できなくなってしまったので修正
 //--------------------------------------------------------------
 
 #include "OutZone.h"
@@ -16,6 +17,7 @@
 
 AOutZone::AOutZone()
 	: isEnable(true)
+	, isSetActor(false)
 	, Root(nullptr)
 	, TargetStart(nullptr)
 	, TargetEnd(nullptr)
@@ -61,20 +63,25 @@ AOutZone::AOutZone()
 
 void AOutZone::BeginPlay()
 {
-	Super::BeginPlay();
-	
-	TArray<AActor*> getActor;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AChair::StaticClass(), getActor);
-
-	for (AActor* act : getActor)
-	{
-		deleteChair.Add(Cast<AChair>(act));
-	}
+	Super::BeginPlay();	
 }
 
 void AOutZone::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (!isSetActor)
+	{
+		isSetActor = true;
+
+		TArray<AActor*> getActor;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AChair::StaticClass(), getActor);
+
+		for (AActor* act : getActor)
+		{
+			deleteChair.Add(Cast<AChair>(act));
+		}
+	}
 
 	if (isEnable)
 	{
