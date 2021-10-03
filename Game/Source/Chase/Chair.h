@@ -204,6 +204,9 @@ private:
 		void OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 public:
+
+	bool m_camera_impact_; 
+
 	UPROPERTY(EditAnywhere, Category = "Temp")
 		bool TMP_AnotherInputType;					// スティック入力タイプを切りかえる（テスト用）
 

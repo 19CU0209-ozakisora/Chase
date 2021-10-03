@@ -15,6 +15,7 @@
 #include "GameManager.h"
 #include "GameFramework/SpringArmComponent.h"	// スプリングアーム
 #include "Curves/CurveFloat.h"					// カーブコンポーネント追加
+#include "Curves/CurveVector.h"
 #include "Camera/CameraComponent.h"
 #include "TrackingCamera.generated.h"
 
@@ -44,12 +45,17 @@ private:
 	float m_newFOV;
 	float m_ChangeTimer;
 	float m_ChangeTimeMax;
+	float m_impact_time_cnt_;
 	FVector m_input_tracking_offset_;
+	FVector m_impact_offset_;
 	FVector m_temp_;
 	float m_time_cnt_;
 
 
 public:
+
+	UPROPERTY(EditAnyWhere, Category = "Default Setting")
+		float a;			// 前進時間
 
 	UPROPERTY(EditAnyWhere, Category = "Default Setting")
 		float m_advance_time_;			// 前進時間
@@ -58,7 +64,10 @@ public:
 		float m_time_;
 
 	UPROPERTY(EditAnyWhere, Category = "Default Setting")
-		float m_speed_;
+		float m_advance_speed_;
+
+	UPROPERTY(EditAnyWhere, Category = "Default Setting")
+		float m_impact_speed_;
 
 	UPROPERTY(EditAnyWhere, Category = "Default Setting")
 		FVector m_camera_offset_;
@@ -68,6 +77,9 @@ public:
 
 	UPROPERTY(EditAnyWhere, Category = "Default Setting")
 		FVector m_max_advance_offset_;					// カメラの最大の引き
+
+	UPROPERTY(EditAnyWhere, Category = "Default Setting")
+		FVector m_impact_scale_;					// 衝撃の規模
 
 	UPROPERTY(EditAnyWhere, Category = "Default Setting")
 		AChair* m_control_chair_;
@@ -83,6 +95,9 @@ public:
 
 	UPROPERTY(EditAnyWhere, Category = "Default Setting")
 		UCurveFloat* m_padvance_curve_;		//	カーブ
+
+	UPROPERTY(EditAnyWhere, Category = "Default Setting")
+		UCurveVector* m_pimpact_curve_;		//	衝撃用カーブ
 
 	UFUNCTION(BlueprintCallable)
 		void SetFOV(float _newFOV, float _changeTime = 1.0f);

@@ -444,6 +444,7 @@ void AChair::ComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 	// ˆÖq‚É“–‚½‚Á‚½ê‡‚Ìˆ—
 	if (Cast<AChair>(OtherActor))
 	{
+		m_camera_impact_ = true;
 		/*
 		if (Cast<AChair>(OtherActor)->m_projectile_movement_->Velocity == FVector::ZeroVector)
 		{

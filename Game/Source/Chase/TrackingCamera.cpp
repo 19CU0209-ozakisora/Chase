@@ -43,6 +43,7 @@ void ATrackingCamera::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	
 	if (m_pgamemanager_)
 	{
 		m_control_chair_ = m_pgamemanager_->m_chairs_[m_pgamemanager_->m_nowroundnum_ - 1];
@@ -57,6 +58,7 @@ void ATrackingCamera::Tick(float DeltaTime)
 				m_input_tracking_offset_.Y = m_max_recession_offset_.Y * FMath::Abs(Inputvalue);
 				m_input_tracking_offset_.Z = m_max_recession_offset_.Z * FMath::Abs(Inputvalue);
 				m_temp_ = m_input_tracking_offset_;
+			
 			}
 			else
 			{
@@ -70,34 +72,39 @@ void ATrackingCamera::Tick(float DeltaTime)
 			if (!m_switch_)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("m_switch_ = false"));
-				m_advance_time_ += DeltaTime * m_speed_;
+				m_advance_time_ += DeltaTime * m_advance_speed_;
 				if (m_advance_time_ >= 1.f)
 				{
 					m_advance_time_ = 1.f;
 					m_switch_ = true;
 				}
-				//float sin = FMath::Sin(m_advance_time_);
 				m_input_tracking_offset_ = FMath::Lerp(m_temp_, m_max_advance_offset_, m_padvance_curve_->GetFloatValue(m_advance_time_));
 			}
-			/*
-			else if (m_switch_)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("m_switch_ = true"));
-				m_advance_time_ -= DeltaTime * m_speed_;
-				if (m_advance_time_ <= 0.f)
-				{
-					m_advance_time_ = 0.f;
-				}
-				m_input_tracking_offset_ = FMath::Lerp(m_temp_, m_max_advance_offset_, FMath::Abs(m_advance_time_));
-			}
-			*/
 		}
-		
 
-		SetActorLocation(FVector(ChairLocation.X + m_camera_offset_.X + m_input_tracking_offset_.X, ChairLocation.Y + m_camera_offset_.Y + m_input_tracking_offset_.Y , ChairLocation.Z + m_camera_offset_.Z + m_input_tracking_offset_.Z));
+		if (m_control_chair_->m_camera_impact_)
+		{
+			if (m_pimpact_curve_ != NULL)
+			{
+				if (m_impact_time_cnt_ <= 1.f)
+				{
+					m_impact_time_cnt_ += DeltaTime * m_impact_speed_;
+					m_impact_offset_ = m_pimpact_curve_->GetVectorValue(m_impact_time_cnt_);
+					float ChairScale = m_control_chair_->m_projectile_movement_->Velocity.X / m_control_chair_->m_default_speed_;
+					m_impact_offset_ = m_impact_offset_ * a * -ChairScale;
+					UE_LOG(LogTemp, Warning, TEXT("ChairScale = %f"), ChairScale);
+				}
 
-		//FRotator Rotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ChairLocation);
-		//SetActorRotation(Rotation);
+			}
+		}
+		else
+		{
+			m_impact_time_cnt_ = 0.f;
+		}
+
+
+		UE_LOG(LogTemp, Warning, TEXT("m_impact_offset_.x = %f, m_impact_offset_.y = %f, m_impact_offset_.z = %f"), m_impact_offset_.X, m_impact_offset_.Y, m_impact_offset_.Z);
+		SetActorLocation(FVector(ChairLocation.X + m_camera_offset_.X + m_input_tracking_offset_.X + m_impact_offset_.X, ChairLocation.Y + m_camera_offset_.Y + m_input_tracking_offset_.Y + +m_impact_offset_.Y, ChairLocation.Z + m_camera_offset_.Z + m_input_tracking_offset_.Z + +m_impact_offset_.Z));
 	}
 
 	if (m_ChangeFOV)
