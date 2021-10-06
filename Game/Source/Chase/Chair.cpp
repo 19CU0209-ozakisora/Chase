@@ -70,6 +70,7 @@ AChair::AChair()
 // private
 	: m_chair_reflection_(false)
 	, m_is_input_add_slip_power_(false)
+	, m_IsShoot(false)
 	, m_addComment(false)
 	, m_hit_wall_(false)
 	, m_is_sweep_(false)
@@ -87,6 +88,7 @@ AChair::AChair()
 	// public
 	, m_pscore_obj_()
 	, m_debugmode_(false)
+	, m_inputKeyBoard(false)
 	, m_is_jumpanimation_end_(true)
 	, m_ishit_(false)
 	, m_can_input_(true)
@@ -108,6 +110,7 @@ AChair::AChair()
 	, m_max_stick_slide_time_(0.f)
 	, m_SlipPowerMin(0.2f)
 	, m_SlipPowerMax(1.2f)
+	, m_AddPowerForKeyBoard(0.05f)
 	, m_PowerThreshold(0.8f)
 	, m_input_value_(FVector2D::ZeroVector)
 	, m_name_("")
@@ -369,6 +372,12 @@ void AChair::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	InputComponent->BindAction("Sweep", EInputEvent::IE_Pressed, this, &AChair::SetPlayerSweepFlag);
 	InputComponent->BindAction("Sweep", EInputEvent::IE_Released, this, &AChair::SetPlayerSweepFlag);
 
+	InputComponent->BindAxis("PowerKeyboard", this, &AChair::IncrimentPower);
+	InputComponent->BindAction("Decide", EInputEvent::IE_Released, this, &AChair::DecidePower);
+
+	InputComponent->BindAction("Stop", EInputEvent::IE_Released, this, &AChair::MoveStop);
+
+
 	InputComponent->BindAction("F7", EInputEvent::IE_Released, this, &AChair::F7);
 }
 
@@ -399,29 +408,30 @@ void AChair::SetInputValue_X(const float _axisval)
 
 void AChair::SetInputValue_Y(const float _axisval)
 {
-
-	if (m_can_input_)
+	if (!m_inputKeyBoard)
 	{
-		if (m_debugmode_)
+		if (m_can_input_)
 		{
-			if (_axisval == 0.f)
+			if (m_debugmode_)
 			{
-				GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("not input Vertical")));
+				if (_axisval == 0.f)
+				{
+					GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("not input Vertical")));
+				}
+				else
+				{
+					GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Vertical")));
+				}
 			}
-			else
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Blue, FString::Printf(TEXT("input Vertical")));
-			}
+
+			// 入力された値を格納
+			m_input_value_.Y = _axisval;
 		}
-
-		// 入力された値を格納
-		m_input_value_.Y = _axisval;
+		else
+		{
+			m_input_value_.Y = 0.f;
+		}
 	}
-	else
-	{
-		m_input_value_.Y = 0.f;
-	}
-
 }
 
 // カプセルコンポーネントを参照している為同じものをBPに追加 -> BPからC++に移植(2021/04/23 尾崎)
@@ -767,93 +777,9 @@ void AChair::SetSlipPower(const float _deltatime)
 
 	float speedAlpha = 0.0f;
 
-	// スティックが下方向に入力されたら
-	if (m_input_value_.Y < 0.f)
+	if (m_inputKeyBoard)
 	{
-		// カウントスタート
-		FrameCountStart = true;
-		UE_LOG(LogTemp, Warning, TEXT("[Chair] Stick = %f"), m_input_value_.Y);
-	}
-
-	if (TMP_AnotherInputType)
-	{
-		if (FrameCountStart && m_input_value_.Y <= 0.0f)
-		{
-			float diff = FMath::Abs(TMP_PrevStick - m_input_value_.Y);
-			UE_LOG(LogTemp, Warning, TEXT("[Chair] Stick Diff = %f"), diff);
-
-			if (diff < TMP_StickDifferenceThreshold)
-			{
-				m_stick_down_ = m_input_value_.Y;
-				UE_LOG(LogTemp, Warning, TEXT("[Chair] Set Stick Down (%f)"), m_stick_down_);
-			}
-		}
-
-		TMP_PrevStick = m_input_value_.Y;
-	}
-	else
-	{
-		if (FrameCountStart && m_input_value_.Y <= 0.0f)
-		{
-			m_stick_minArray.Add(m_input_value_.Y);
-
-			if (m_stick_minArray.Num() > m_stickDownFrame)
-			{
-				m_stick_minArray.RemoveAt(0);
-			}
-
-			if (m_stick_minArray.IsValidIndex(0))
-			{
-				m_stick_down_ = m_stick_minArray[0];
-				UE_LOG(LogTemp, Warning, TEXT("[Chair] Power(Before %d Frame) = %f, Now Input = %f"), m_stickDownFrame, m_stick_down_, m_input_value_.Y);
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("[Chair] m_stickDownFrame is not"))
-			}
-		}
-	}
-
-	// 上までスティック入力モード
-	if (!m_isStickDownOnly)
-	{
-		// スティックが上方向に入力された場合
-		if (FrameCountStart && m_input_value_.Y > 0.f)
-		{
-			FrameCountStart = false;
-			m_stick_up = true;
-		}
-
-		if (m_stick_up)
-		{
-			m_stick_slide_time_ += _deltatime;
-
-			if (m_input_value_.Y > m_stick_max_)
-			{
-				m_stick_max_ = m_input_value_.Y;
-			}
-
-			// 平均フレーム算出
-			stickFrameCnt++;
-			totalDeltaTime += _deltatime;
-			float averageFPS = 1 / (totalDeltaTime / stickFrameCnt);
-
-			if (m_stick_slide_time_ > (1.0f / averageFPS) * m_stickUpFrame)
-			{
-				speedAlpha = FMath::Abs(m_stick_down_ * m_stick_max_);
-				// 割合を掛け算
-				m_projectile_movement_->Velocity *= FMath::Lerp(minSpeed, maxSpeed, speedAlpha);
-				m_projectile_movement_->bSimulationEnabled = true;
-				UE_LOG(LogTemp, Warning, TEXT("[Chair] min = %f, max = %f, mag = %f (%f)"), m_stick_down_, m_stick_max_, speedAlpha, m_projectile_movement_->Velocity.X);
-				SetPhase(EPhase::kSlip);
-			}
-		}
-	}
-	// 下だけスティック入力モード
-	else
-	{
-		// スティックがニュートラル以上の場合
-		if (FrameCountStart && m_input_value_.Y >= 0.f)
+		if (m_IsShoot)
 		{
 			speedAlpha = FMath::Abs(m_stick_down_);
 			// 割合を掛け算
@@ -863,6 +789,106 @@ void AChair::SetSlipPower(const float _deltatime)
 			SetPhase(EPhase::kSlip);
 		}
 	}
+	else
+	{
+		// スティックが下方向に入力されたら
+		if (m_input_value_.Y < 0.f)
+		{
+			// カウントスタート
+			FrameCountStart = true;
+			UE_LOG(LogTemp, Warning, TEXT("[Chair] Stick = %f"), m_input_value_.Y);
+		}
+
+		if (TMP_AnotherInputType)
+		{
+			if (FrameCountStart && m_input_value_.Y <= 0.0f)
+			{
+				float diff = FMath::Abs(TMP_PrevStick - m_input_value_.Y);
+				UE_LOG(LogTemp, Warning, TEXT("[Chair] Stick Diff = %f"), diff);
+
+				if (diff < TMP_StickDifferenceThreshold)
+				{
+					m_stick_down_ = m_input_value_.Y;
+					UE_LOG(LogTemp, Warning, TEXT("[Chair] Set Stick Down (%f)"), m_stick_down_);
+				}
+			}
+
+			TMP_PrevStick = m_input_value_.Y;
+		}
+		else
+		{
+			if (FrameCountStart && m_input_value_.Y <= 0.0f)
+			{
+				m_stick_minArray.Add(m_input_value_.Y);
+
+				if (m_stick_minArray.Num() > m_stickDownFrame)
+				{
+					m_stick_minArray.RemoveAt(0);
+				}
+
+				if (m_stick_minArray.IsValidIndex(0))
+				{
+					m_stick_down_ = m_stick_minArray[0];
+					UE_LOG(LogTemp, Warning, TEXT("[Chair] Power(Before %d Frame) = %f, Now Input = %f"), m_stickDownFrame, m_stick_down_, m_input_value_.Y);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("[Chair] m_stickDownFrame is not"))
+				}
+			}
+		}
+
+		// 上までスティック入力モード
+		if (!m_isStickDownOnly)
+		{
+			// スティックが上方向に入力された場合
+			if (FrameCountStart && m_input_value_.Y > 0.f)
+			{
+				FrameCountStart = false;
+				m_stick_up = true;
+			}
+
+			if (m_stick_up)
+			{
+				m_stick_slide_time_ += _deltatime;
+
+				if (m_input_value_.Y > m_stick_max_)
+				{
+					m_stick_max_ = m_input_value_.Y;
+				}
+
+				// 平均フレーム算出
+				stickFrameCnt++;
+				totalDeltaTime += _deltatime;
+				float averageFPS = 1 / (totalDeltaTime / stickFrameCnt);
+
+				if (m_stick_slide_time_ > (1.0f / averageFPS) * m_stickUpFrame)
+				{
+					speedAlpha = FMath::Abs(m_stick_down_ * m_stick_max_);
+					// 割合を掛け算
+					m_projectile_movement_->Velocity *= FMath::Lerp(minSpeed, maxSpeed, speedAlpha);
+					m_projectile_movement_->bSimulationEnabled = true;
+					UE_LOG(LogTemp, Warning, TEXT("[Chair] min = %f, max = %f, mag = %f (%f)"), m_stick_down_, m_stick_max_, speedAlpha, m_projectile_movement_->Velocity.X);
+					SetPhase(EPhase::kSlip);
+				}
+			}
+		}
+		// 下だけスティック入力モード
+		else
+		{
+			// スティックがニュートラル以上の場合
+			if (FrameCountStart && m_input_value_.Y >= 0.f)
+			{
+				speedAlpha = FMath::Abs(m_stick_down_);
+				// 割合を掛け算
+				m_projectile_movement_->Velocity *= FMath::Lerp(minSpeed, maxSpeed, speedAlpha);
+				m_projectile_movement_->bSimulationEnabled = true;
+				UE_LOG(LogTemp, Warning, TEXT("[Chair] min = %f, mag = %f (%f)"), m_stick_down_, speedAlpha, m_projectile_movement_->Velocity.X);
+				SetPhase(EPhase::kSlip);
+			}
+		}
+	}
+
 
 	if (GetPhase() == EPhase::kSlip)
 	{
@@ -897,6 +923,26 @@ void AChair::SetCommentary(const TArray<ECommentID> _commentArray)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[Chair] comment is not set."));
 	}
+}
+
+void AChair::IncrimentPower(const float _axisval)
+{
+	m_stick_down_ += m_AddPowerForKeyBoard * _axisval;
+	m_stick_down_ = FMath::Clamp(m_stick_down_, -1.0f, 1.0f);
+	m_input_value_.Y = m_stick_down_;
+}
+
+void AChair::DecidePower()
+{
+	if (m_phase_ == EPhase::kPowerChange)
+	{
+		m_IsShoot = true;
+	}
+}
+
+void AChair::MoveStop()
+{
+	SetPhase(EPhase::kEnd);
 }
 
 void AChair::F7()
