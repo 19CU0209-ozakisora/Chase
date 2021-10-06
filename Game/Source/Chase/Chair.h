@@ -97,7 +97,8 @@
 //			2021/09/15 渡邊龍音 実況の追加のためにアウトゾーンに居るのかどうかをチェックする変数を追加
 //			2021/09/16 渡邊龍音 スティックの下方向入力を今までの最低値ではなく、発射する数フレーム前の値を使用するように変更
 //			2021/09/17 渡邊龍音 横移動の倍率を変えられるように
-// //		2021/09/23 渡邊龍音 椅子同士がぶつかったときの処理を変更
+//			2021/09/23 渡邊龍音 椅子同士がぶつかったときの処理を変更
+//			2021/10/04 渡邊龍音 デバッグ用機能の追加（キーボード用操作の追加・ピタ止めの追加）
 //--------------------------------------------------------------
 #pragma once
 
@@ -161,7 +162,7 @@ public:
 private:
 
 	bool m_is_input_add_slip_power_;				// 速度を増やすボタンが押されたかどうか
-
+	bool m_IsShoot;									// 椅子を投げるボタン（キーボード時のみ）が押されたか
 	bool m_chair_reflection_;						// 椅子に当たった時に反射状態にさせるフラグ
 	bool m_addComment;								// 実況のコメントを追加したかどうか
 	bool m_end_phase_flag_;							// EndPhase時にコンポーネントの速度を初期化する変数
@@ -195,6 +196,9 @@ private:
 	void PlayerSweep(const float _deltatime);		// deltatime処理はしています
 	void SetSlipPower(const float _deltatime);		// 滑る時の速度調整
 	void SetCommentary(const TArray<ECommentID> _commentArray);	// ウィジェットにコメントを追加する
+	void IncrimentPower(const float _axisval);
+	void DecidePower();
+	void MoveStop();
 
 	// カプセルコンポーネントを参照している為同じものをBPに追加
 	UFUNCTION()
@@ -218,6 +222,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		bool m_debugmode_;							// デバッグモードをONにするかどうか
+
+	UPROPERTY(EditAnywhere, Category = "Default Setting|KeyBoard")
+		bool m_inputKeyBoard;						// キーボード入力モードにするかどうか
 
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		bool m_isStickDownOnly;						// スティック入力モード切り替え（下入力だけで移動できるように）
@@ -287,6 +294,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
 		float m_SlipPowerMax;												// 滑らせるパワーの最大倍率
+
+	UPROPERTY(EditAnywhere, Category = "Default Setting|KeyBoard")
+		float m_AddPowerForKeyBoard;												// 滑らせるパワーの最大倍率
 
 	UPROPERTY(EditAnywhere, Category = "Commentary|Throw")
 		float m_PowerThreshold;												// ウィジェットを表示するしきい値
