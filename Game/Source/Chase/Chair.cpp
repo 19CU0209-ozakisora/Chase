@@ -927,9 +927,12 @@ void AChair::SetCommentary(const TArray<ECommentID> _commentArray)
 
 void AChair::IncrimentPower(const float _axisval)
 {
-	m_stick_down_ += m_AddPowerForKeyBoard * _axisval;
-	m_stick_down_ = FMath::Clamp(m_stick_down_, -1.0f, 1.0f);
-	m_input_value_.Y = m_stick_down_;
+	if (m_inputKeyBoard)
+	{
+		m_stick_down_ += m_AddPowerForKeyBoard * _axisval;
+		m_stick_down_ = FMath::Clamp(m_stick_down_, -1.0f, 1.0f);
+		m_input_value_.Y = m_stick_down_;
+	}
 }
 
 void AChair::DecidePower()
