@@ -930,7 +930,7 @@ void AChair::IncrimentPower(const float _axisval)
 	if (m_inputKeyBoard)
 	{
 		m_stick_down_ += m_AddPowerForKeyBoard * _axisval;
-		m_stick_down_ = FMath::Clamp(m_stick_down_, -1.0f, 1.0f);
+		m_stick_down_ = FMath::Clamp(m_stick_down_, -1.0f, 0.0f);
 		m_input_value_.Y = m_stick_down_;
 	}
 }
