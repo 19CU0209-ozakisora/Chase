@@ -121,6 +121,7 @@ AChair::AChair()
 	, m_deside_sound_(NULL)
 	, m_chair_roll_sound_(NULL)
 	, m_chair_collide_sound_(NULL)
+	, m_PowerChair(nullptr)
 	//ÅôÅôÅôÅôÅôÅôÅôÅôÅôÅôÅôÅôÅôÅôÅôÅôÅôÅôÅôÅôÅôÅôÅô
 	, FrameCountStart(false)
 	, f7(false)
@@ -559,6 +560,12 @@ void AChair::SetPhase(const EPhase _phase)
 		m_stick_down_ = 0.0f;
 		m_stick_max_ = 0.0f;
 
+		if (m_PowerChair != nullptr)
+		{
+			m_SpawnedChair = GetWorld()->SpawnActor(m_PowerChair);
+			SetPowerChair();
+		}
+
 		if (m_parrow_ != NULL)
 		{
 			Cast<USceneComponent>(m_target_point_mesh_)->DestroyComponent();
@@ -573,9 +580,13 @@ void AChair::SetPhase(const EPhase _phase)
 	{
 		m_projectile_movement_->Velocity = FVector::ZeroVector;
 	}
-	/*
 	else if (m_phase_ == EPhase::kSlip)
 	{
+		if (m_SpawnedChair != nullptr)
+		{
+			m_SpawnedChair->Destroy();
+		}
+	/*
 		if (m_debugmode_)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("m_floating component before speed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
@@ -600,9 +611,9 @@ void AChair::SetPhase(const EPhase _phase)
 		}
 
 		m_is_input_ride_ = true;
-		m_before_slip_rotation_ = FMath::Atan2(m_target_point_location_.Y - GetActorLocation().Y, m_target_point_location_.X - GetActorLocation().X);// +90.f;
+		m_before_slip_rotation_ = FMath::Atan2(m_target_point_location_.Y - GetActorLocation().Y, m_target_point_location_.X - GetActorLocation().X);// +90.f;*/
 	}
-	*/
+	
 
 	//âπçƒê∂ÅiåàíËâπÅj
 	m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_deside_sound_, 1.0f, 1.0f, 0.0f, nullptr, false, false);

@@ -335,6 +335,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Commentary|Stop")
 		TArray<FCommentStruct> m_InHouseComment;									// ハウス
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Power Chair")
+		TSubclassOf<AActor> m_PowerChair;						// 椅子のメッシュ
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Power Chair")
+		AActor* m_SpawnedChair;							// 生成されたゲージ用椅子
+
 	UPROPERTY()
 		USoundBase* m_deside_sound_;									//サウンドを入れるコンポーネント
 																		//決定音
@@ -370,6 +376,9 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "MyF")
 		void LiveComment(ECommentID commentID, float voiceVolume);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "MyF")
+		void SetPowerChair();
 
 	UFUNCTION(BlueprintCallable)
 		void SetIsOutZone(bool _InOutZone)
