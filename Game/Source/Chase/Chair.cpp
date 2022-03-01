@@ -91,6 +91,7 @@ AChair::AChair()
 	, m_inputKeyBoard(false)
 	, m_is_jumpanimation_end_(true)
 	, m_ishit_(false)
+	, m_is_comenting_(false)
 	, m_can_input_(true)
 	, m_stickUpFrame(2)
 	, m_stickDownFrame(5)
@@ -409,6 +410,8 @@ void AChair::SetInputValue_X(const float _axisval)
 
 void AChair::SetInputValue_Y(const float _axisval)
 {
+	UE_LOG(LogTemp, Warning, TEXT("acis = %f"), _axisval);
+
 	if (!m_inputKeyBoard)
 	{
 		if (m_can_input_)
@@ -426,7 +429,14 @@ void AChair::SetInputValue_Y(const float _axisval)
 			}
 
 			// “ü—Í‚³‚ê‚½’l‚ðŠi”[
-			m_input_value_.Y = _axisval;
+			if (m_is_comenting_ )//&& _axisval < 0.f)
+			{
+				m_input_value_.Y = 0.f;
+			}
+			else
+			{
+				m_input_value_.Y = _axisval;
+			}
 		}
 		else
 		{

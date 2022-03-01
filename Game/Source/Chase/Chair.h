@@ -242,6 +242,9 @@ public:
 		bool m_is_input_ride_;	// ride状態の時に決定キーを押してslip状態に変更されたかどうか
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
+		bool m_is_comenting_;		// 実況中か否か
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Information")
 		bool m_can_input_;		// 入力可能かどうか
 
 	UPROPERTY(EditAnywhere, Category = "Default Setting")
