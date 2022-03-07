@@ -198,7 +198,6 @@ private:
 	void SetCommentary(const TArray<ECommentID> _commentArray);	// ウィジェットにコメントを追加する
 	void IncrimentPower(const float _axisval);
 	void DecidePower();
-	void MoveStop();
 
 	// カプセルコンポーネントを参照している為同じものをBPに追加
 	UFUNCTION()

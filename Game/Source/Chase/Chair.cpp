@@ -377,9 +377,6 @@ void AChair::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	InputComponent->BindAxis("PowerKeyboard", this, &AChair::IncrimentPower);
 	InputComponent->BindAction("Decide", EInputEvent::IE_Released, this, &AChair::DecidePower);
 
-	InputComponent->BindAction("Stop", EInputEvent::IE_Released, this, &AChair::MoveStop);
-
-
 	InputComponent->BindAction("F7", EInputEvent::IE_Released, this, &AChair::F7);
 }
 
@@ -626,7 +623,10 @@ void AChair::SetPhase(const EPhase _phase)
 	
 
 	//âπçƒê∂ÅiåàíËâπÅj
-	m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_deside_sound_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
+	if (m_phase_ != EPhase::kEnd)
+	{
+		m_audiocomponent_ = UGameplayStatics::SpawnSound2D(GetWorld(), m_deside_sound_, 1.0f, 1.0f, 0.0f, nullptr, false, false);
+	}
 }
 
 void AChair::PlayerSpin(const float _deltatime)
@@ -962,11 +962,6 @@ void AChair::DecidePower()
 	{
 		m_IsShoot = true;
 	}
-}
-
-void AChair::MoveStop()
-{
-	SetPhase(EPhase::kEnd);
 }
 
 void AChair::F7()
