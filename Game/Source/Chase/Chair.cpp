@@ -111,7 +111,7 @@ AChair::AChair()
 	, m_max_stick_slide_time_(0.f)
 	, m_SlipPowerMin(0.2f)
 	, m_SlipPowerMax(1.2f)
-	, m_AddPowerForKeyBoard(0.05f)
+	, m_AddPowerForKeyBoard(0.02f)
 	, m_PowerThreshold(0.8f)
 	, m_input_value_(FVector2D::ZeroVector)
 	, m_name_("")
@@ -409,9 +409,10 @@ void AChair::SetInputValue_Y(const float _axisval)
 {
 	UE_LOG(LogTemp, Warning, TEXT("acis = %f"), _axisval);
 
-	if (!m_inputKeyBoard)
+	if (m_can_input_)
 	{
-		if (m_can_input_)
+		// ゲームパッド接続
+		if (IsGamePadConnected())
 		{
 			if (m_debugmode_)
 			{
@@ -426,7 +427,7 @@ void AChair::SetInputValue_Y(const float _axisval)
 			}
 
 			// 入力された値を格納
-			if (m_is_comenting_ )//&& _axisval < 0.f)
+			if (m_is_comenting_)//&& _axisval < 0.f)
 			{
 				m_input_value_.Y = 0.f;
 			}
@@ -435,11 +436,12 @@ void AChair::SetInputValue_Y(const float _axisval)
 				m_input_value_.Y = _axisval;
 			}
 		}
-		else
-		{
-			m_input_value_.Y = 0.f;
-		}
 	}
+	else
+	{
+		m_input_value_.Y = 0.f;
+	}
+
 }
 
 // カプセルコンポーネントを参照している為同じものをBPに追加 -> BPからC++に移植(2021/04/23 尾崎)
@@ -593,34 +595,34 @@ void AChair::SetPhase(const EPhase _phase)
 		{
 			m_SpawnedChair->Destroy();
 		}
-	/*
-		if (m_debugmode_)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("m_floating component before speed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
-		}
-		//m_floating_pawn_movement_->MaxSpeed *= m_speed_percent_;
+		/*
+			if (m_debugmode_)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("m_floating component before speed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
+			}
+			//m_floating_pawn_movement_->MaxSpeed *= m_speed_percent_;
 
-		// 一定パーセント未満なら一律のパーセントに
-		if (m_speed_percent_ < m_min_ride_percent_)
-		{
-			m_speed_percent_ = m_min_ride_percent_;
-		}
-		// 一定パーセント以上なら一律のパーセントに
-		else if (m_speed_percent_ >= m_max_ride_percent_)
-		{
-			m_speed_percent_ = 1.f;
-		}
+			// 一定パーセント未満なら一律のパーセントに
+			if (m_speed_percent_ < m_min_ride_percent_)
+			{
+				m_speed_percent_ = m_min_ride_percent_;
+			}
+			// 一定パーセント以上なら一律のパーセントに
+			else if (m_speed_percent_ >= m_max_ride_percent_)
+			{
+				m_speed_percent_ = 1.f;
+			}
 
-		if (m_debugmode_)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("percent = %f"), m_speed_percent_);
-			UE_LOG(LogTemp, Warning, TEXT("m_floating component after speed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
-		}
+			if (m_debugmode_)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("percent = %f"), m_speed_percent_);
+				UE_LOG(LogTemp, Warning, TEXT("m_floating component after speed = %f"), m_floating_pawn_movement_->GetMaxSpeed());
+			}
 
-		m_is_input_ride_ = true;
-		m_before_slip_rotation_ = FMath::Atan2(m_target_point_location_.Y - GetActorLocation().Y, m_target_point_location_.X - GetActorLocation().X);// +90.f;*/
+			m_is_input_ride_ = true;
+			m_before_slip_rotation_ = FMath::Atan2(m_target_point_location_.Y - GetActorLocation().Y, m_target_point_location_.X - GetActorLocation().X);// +90.f;*/
 	}
-	
+
 
 	//音再生（決定音）
 	if (m_phase_ != EPhase::kEnd)
@@ -798,7 +800,8 @@ void AChair::SetSlipPower(const float _deltatime)
 
 	float speedAlpha = 0.0f;
 
-	if (m_inputKeyBoard)
+	// ゲームパッドが接続されていない
+	if (!IsGamePadConnected())
 	{
 		if (m_IsShoot)
 		{
@@ -810,6 +813,7 @@ void AChair::SetSlipPower(const float _deltatime)
 			SetPhase(EPhase::kSlip);
 		}
 	}
+	// ゲームパッド
 	else
 	{
 		// スティックが下方向に入力されたら
@@ -948,7 +952,7 @@ void AChair::SetCommentary(const TArray<ECommentID> _commentArray)
 
 void AChair::IncrimentPower(const float _axisval)
 {
-	if (m_inputKeyBoard)
+	if (!IsGamePadConnected())
 	{
 		m_stick_down_ += m_AddPowerForKeyBoard * _axisval;
 		m_stick_down_ = FMath::Clamp(m_stick_down_, -1.0f, 0.0f);
@@ -971,4 +975,16 @@ void AChair::F7()
 
 	if (f7) { UE_LOG(LogTemp, Error, TEXT("f7 = true")); }
 	else if (!f7) { UE_LOG(LogTemp, Error, TEXT("f7 = false")); }
+}
+
+bool AChair::IsGamePadConnected()
+{
+	auto genericApplication = FSlateApplication::Get().GetPlatformApplication();
+	if (genericApplication.Get() != nullptr &&
+		genericApplication->IsGamepadAttached())
+	{
+		return true;
+	}
+
+	return false;
 }
